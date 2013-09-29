@@ -6,7 +6,12 @@ package qubexplorer.ui;
 
 import java.io.File;
 import java.io.IOException;
+import javax.swing.DefaultRowSorter;
+import javax.swing.RowFilter;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import org.apache.maven.model.Model;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.FileOwnerQuery;
@@ -60,12 +65,28 @@ public final class SonarTopComponent extends TopComponent {
         initComponents();
         setName(Bundle.CTL_SonarTopComponent());
         setToolTipText(Bundle.HINT_SonarTopComponent());
+        filterText.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent de) {
+                filterTextChanged();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent de) {
+                filterTextChanged();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent de) {
+                filterTextChanged();
+            }
+        });
     }
 
     public void setProject(Project project) {
         this.project = project;
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -76,6 +97,8 @@ public final class SonarTopComponent extends TopComponent {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         issuesTable = new javax.swing.JTable();
+        jLabel1 = new javax.swing.JLabel();
+        filterText = new javax.swing.JTextField();
 
         issuesTable.setAutoCreateRowSorter(true);
         issuesTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -101,20 +124,38 @@ public final class SonarTopComponent extends TopComponent {
         });
         jScrollPane1.setViewportView(issuesTable);
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SonarTopComponent.class, "SonarTopComponent.jLabel1.text")); // NOI18N
+
+        filterText.setText(org.openide.util.NbBundle.getMessage(SonarTopComponent.class, "SonarTopComponent.filterText.text")); // NOI18N
+        filterText.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                filterTextPropertyChange(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 424, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 478, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(filterText)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 304, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 209, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(filterText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -124,9 +165,9 @@ public final class SonarTopComponent extends TopComponent {
             int row = issuesTable.rowAtPoint(evt.getPoint());
             if (row != -1) {
                 try {
-                    Sources sources=ProjectUtils.getSources(findProject(project, getBasicPomInfo(issues[row].componentKey())));
+                    Sources sources = ProjectUtils.getSources(findProject(project, getBasicPomInfo(issues[row].componentKey())));
                     SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
-                    File file=new File(sourceGroups[0].getRootFolder().getPath(), toPath(issues[row].componentKey())+".java");
+                    File file = new File(sourceGroups[0].getRootFolder().getPath(), toPath(issues[row].componentKey()) + ".java");
                     openFile(file, issues[row].line());
                 } catch (IOException ex) {
                     Exceptions.printStackTrace(ex);
@@ -134,8 +175,13 @@ public final class SonarTopComponent extends TopComponent {
             }
         }
     }//GEN-LAST:event_issuesTableMouseClicked
+
+    private void filterTextPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_filterTextPropertyChange
+    }//GEN-LAST:event_filterTextPropertyChange
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextField filterText;
     private javax.swing.JTable issuesTable;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
 
@@ -157,7 +203,6 @@ public final class SonarTopComponent extends TopComponent {
     }
 
     void readProperties(java.util.Properties p) {
-        
     }
 
     private void openFile(File file, int line) {
@@ -173,9 +218,24 @@ public final class SonarTopComponent extends TopComponent {
             if (lc == null) {
                 /* cannot do it */ return;
             }
-            Line l = lc.getLineSet().getOriginal(line-1);
+            Line l = lc.getLineSet().getOriginal(line - 1);
             l.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
         }
+    }
+
+    public void filterTextChanged() {
+        final String text = filterText.getText().toLowerCase();
+        ((DefaultRowSorter) issuesTable.getRowSorter()).setRowFilter(new RowFilter<Object, Object>() {
+            @Override
+            public boolean include(RowFilter.Entry<? extends Object, ? extends Object> entry) {
+                for (int c = 0; c < entry.getValueCount(); c++) {
+                    if (entry.getStringValue(c).toLowerCase().contains(text)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
     }
 
     public void setIssues(Issue... issues) {
@@ -184,37 +244,37 @@ public final class SonarTopComponent extends TopComponent {
             model.removeRow(0);
         }
         for (Issue issue : issues) {
-            String name = toPath(issue.componentKey())+".java";
+            String name = toPath(issue.componentKey()) + ".java";
             model.addRow(new Object[]{name + " [" + issue.line() + "]", issue.message(), issue.severity(), issue.ruleKey()});
         }
         this.issues = issues;
     }
-    
+
     public String toPath(String componentKey) {
-        String path=componentKey;
+        String path = componentKey;
         int index = path.lastIndexOf(':');
         if (index != -1) {
             path = path.substring(index + 1);
         }
         return path.replace(".", "/");
     }
-    
+
     private static BasicPomInfo getBasicPomInfo(String componentKey) {
         String[] tokens = componentKey.split(":");
         assert tokens.length == 3;
         return new BasicPomInfo(tokens[0], tokens[1]);
     }
-    
+
     private static FileObject findMvnDir(Model model, BasicPomInfo basicPomInfo) throws IOException {
-        MvnModelFactory factory=new MvnModelFactory();
-        for(String module: model.getModules()) {
-            FileObject moduleFile=FileUtil.toFileObject(new File(model.getProjectDirectory(), module));
+        MvnModelFactory factory = new MvnModelFactory();
+        for (String module : model.getModules()) {
+            FileObject moduleFile = FileUtil.toFileObject(new File(model.getProjectDirectory(), module));
             Model m = factory.createModel(moduleFile.getFileObject("pom.xml"));
-            if(m.getGroupId().equals(basicPomInfo.getGroupId()) && m.getArtifactId().equals(basicPomInfo.getArtifactId())) {
+            if (m.getGroupId().equals(basicPomInfo.getGroupId()) && m.getArtifactId().equals(basicPomInfo.getArtifactId())) {
                 return moduleFile;
-            }else{
+            } else {
                 FileObject o = findMvnDir(m, basicPomInfo);
-                if(o != null) {
+                if (o != null) {
                     return o;
                 }
             }
@@ -224,18 +284,19 @@ public final class SonarTopComponent extends TopComponent {
 
     private static Project findProject(Project project, BasicPomInfo basicPomInfo) throws IOException {
         Model model = new MvnModelFactory().createModel(project);
-        if(model.getGroupId().equals(basicPomInfo.getGroupId()) && model.getArtifactId().equals(basicPomInfo.getArtifactId()) ) {
+        if (model.getGroupId().equals(basicPomInfo.getGroupId()) && model.getArtifactId().equals(basicPomInfo.getArtifactId())) {
             return project;
         }
-        FileObject mavenDir=findMvnDir(model, basicPomInfo);
-        if(mavenDir != null) {
+        FileObject mavenDir = findMvnDir(model, basicPomInfo);
+        if (mavenDir != null) {
             return FileOwnerQuery.getOwner(mavenDir);
-        }else{
+        } else {
             return null;
         }
     }
-    
-    private static class BasicPomInfo{
+
+    private static class BasicPomInfo {
+
         private String groupId;
         private String artifactId;
 
@@ -251,7 +312,5 @@ public final class SonarTopComponent extends TopComponent {
         public String getArtifactId() {
             return artifactId;
         }
-        
     }
-    
 }
