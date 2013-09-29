@@ -77,6 +77,7 @@ public final class SonarTopComponent extends TopComponent {
         jScrollPane1 = new javax.swing.JScrollPane();
         issuesTable = new javax.swing.JTable();
 
+        issuesTable.setAutoCreateRowSorter(true);
         issuesTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -183,8 +184,8 @@ public final class SonarTopComponent extends TopComponent {
             model.removeRow(0);
         }
         for (Issue issue : issues) {
-            String name = toPath(issue.componentKey());
-            model.addRow(new Object[]{"<html><a href='?'>" + name + " [" + issue.line() + "]</a></html>", issue.message(), issue.severity(), issue.ruleKey()});
+            String name = toPath(issue.componentKey())+".java";
+            model.addRow(new Object[]{name + " [" + issue.line() + "]", issue.message(), issue.severity(), issue.ruleKey()});
         }
         this.issues = issues;
     }

@@ -11,9 +11,11 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
 import org.openide.util.Exceptions;
+import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
 import org.sonar.wsclient.issue.Issue;
 import qubexplorer.SonarQube;
+import qubexplorer.ui.options.SonarQubePanel;
 
 /**
  *
@@ -109,11 +111,12 @@ public class SonarQubeDialog extends javax.swing.JDialog {
         setVisible(false);
         handle.start();
         final String severity=(String) comboSeverity.getSelectedItem();
+        final String address=NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000");
         SwingWorker<List<Issue>, Void> worker=new SwingWorker<List<Issue>, Void>() {
             
             @Override
             protected List<Issue> doInBackground() throws Exception {
-                return new SonarQube().getIssues(key, severity);
+                return new SonarQube(address).getIssues(key, severity);
             }
 
             @Override
@@ -122,9 +125,10 @@ public class SonarQubeDialog extends javax.swing.JDialog {
                     sonarTopComponent.setIssues(get().toArray(new Issue[0]));
                     sonarTopComponent.open();
                     sonarTopComponent.setProject(project);
-                    handle.finish();
                 } catch (InterruptedException | ExecutionException ex) {
                     Exceptions.printStackTrace(ex);
+                }finally{
+                    handle.finish();
                 }
             }
             

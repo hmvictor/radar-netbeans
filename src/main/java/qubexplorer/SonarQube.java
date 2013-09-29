@@ -19,10 +19,17 @@ import org.sonar.wsclient.issue.IssueQuery;
  * @author Victor
  */
 public class SonarQube {
-    private String hostname="http://localhost:9000";
+    private String address="http://localhost:9000";
 
+    public SonarQube(String address) {
+        this.address=address;
+    }
+
+    public SonarQube() {
+    }
+    
     public List<Issue> getIssues(String resource, String severity) {
-        SonarClient client = SonarClient.create(hostname);
+        SonarClient client = SonarClient.create(address);
         IssueClient issueClient = client.issueClient();
         IssueQuery query = IssueQuery.create().componentRoots(resource);
         if(!severity.equalsIgnoreCase("any")) {

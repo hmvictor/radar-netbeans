@@ -113,6 +113,11 @@
             <artifactId>org-netbeans-api-progress</artifactId>
             <version>RELEASE731</version>
         </dependency>
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-netbeans-modules-options-api</artifactId>
+            <version>RELEASE731</version>
+        </dependency>
     </dependencies>
 
     <build>
