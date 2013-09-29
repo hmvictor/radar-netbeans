@@ -26,7 +26,7 @@ public class SonarQube {
         IssueClient issueClient = client.issueClient();
         IssueQuery query = IssueQuery.create().componentRoots(resource);
         if(!severity.equalsIgnoreCase("any")) {
-            query.severities(severity);
+            query.severities(severity.toUpperCase());
         }
         return issueClient.find(query).list();
     }
@@ -34,13 +34,12 @@ public class SonarQube {
     public static String toResource(Project project) {
         FileObject pomFile = project.getProjectDirectory().getFileObject("pom.xml");
         Model model = null;
-        FileReader reader = null;
         MavenXpp3Reader mavenreader = new MavenXpp3Reader();
         try {
             model = mavenreader.read(new InputStreamReader(pomFile.getInputStream()));
             model.setPomFile(new File(pomFile.getPath()));
         } catch (Exception ex) {
-            
+            throw new RuntimeException(ex);
         }
         return model.getGroupId()+":"+model.getArtifactId();
     }

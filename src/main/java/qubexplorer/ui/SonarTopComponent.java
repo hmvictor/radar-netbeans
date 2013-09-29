@@ -5,8 +5,11 @@
 package qubexplorer.ui;
 
 import java.io.File;
+import java.io.IOException;
 import javax.swing.table.DefaultTableModel;
+import org.apache.maven.model.Model;
 import org.netbeans.api.java.project.JavaProjectConstants;
+import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
@@ -20,10 +23,12 @@ import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.text.Line;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 import org.sonar.wsclient.issue.Issue;
+import qubexplorer.MvnModelFactory;
 
 /**
  * Top component which displays something.
@@ -117,10 +122,14 @@ public final class SonarTopComponent extends TopComponent {
         if (evt.getClickCount() == 2) {
             int row = issuesTable.rowAtPoint(evt.getPoint());
             if (row != -1) {
-                Sources sources=ProjectUtils.getSources(project);
-                SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
-                File file=new File(sourceGroups[0].getRootFolder().getPath(), toPath(issues[row].componentKey())+".java");
-                openFile(file, issues[row].line());
+                try {
+                    Sources sources=ProjectUtils.getSources(findProject(project, getBasicPomInfo(issues[row].componentKey())));
+                    SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
+                    File file=new File(sourceGroups[0].getRootFolder().getPath(), toPath(issues[row].componentKey())+".java");
+                    openFile(file, issues[row].line());
+                } catch (IOException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
             }
         }
     }//GEN-LAST:event_issuesTableMouseClicked
@@ -147,8 +156,7 @@ public final class SonarTopComponent extends TopComponent {
     }
 
     void readProperties(java.util.Properties p) {
-        String version = p.getProperty("version");
-        // TODO read your settings according to their version
+        
     }
 
     private void openFile(File file, int line) {
@@ -157,7 +165,7 @@ public final class SonarTopComponent extends TopComponent {
         try {
             dobj = DataObject.find(fobj);
         } catch (DataObjectNotFoundException ex) {
-            ex.printStackTrace();
+            Exceptions.printStackTrace(ex);
         }
         if (dobj != null) {
             LineCookie lc = (LineCookie) dobj.getCookie(LineCookie.class);
@@ -165,7 +173,6 @@ public final class SonarTopComponent extends TopComponent {
                 /* cannot do it */ return;
             }
             Line l = lc.getLineSet().getOriginal(line-1);
-//            l.show(Line.SHOW_GOTO);
             l.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
         }
     }
@@ -189,6 +196,61 @@ public final class SonarTopComponent extends TopComponent {
             path = path.substring(index + 1);
         }
         return path.replace(".", "/");
+    }
+    
+    private static BasicPomInfo getBasicPomInfo(String componentKey) {
+        String[] tokens = componentKey.split(":");
+        assert tokens.length == 3;
+        return new BasicPomInfo(tokens[0], tokens[1]);
+    }
+    
+    private static FileObject findMvnDir(Model model, BasicPomInfo basicPomInfo) throws IOException {
+        MvnModelFactory factory=new MvnModelFactory();
+        for(String module: model.getModules()) {
+            FileObject moduleFile=FileUtil.toFileObject(new File(model.getProjectDirectory(), module));
+            Model m = factory.createModel(moduleFile.getFileObject("pom.xml"));
+            if(m.getGroupId().equals(basicPomInfo.getGroupId()) && m.getArtifactId().equals(basicPomInfo.getArtifactId())) {
+                return moduleFile;
+            }else{
+                FileObject o = findMvnDir(m, basicPomInfo);
+                if(o != null) {
+                    return o;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Project findProject(Project project, BasicPomInfo basicPomInfo) throws IOException {
+        Model model = new MvnModelFactory().createModel(project);
+        if(model.getGroupId().equals(basicPomInfo.getGroupId()) && model.getArtifactId().equals(basicPomInfo.getArtifactId()) ) {
+            return project;
+        }
+        FileObject mavenDir=findMvnDir(model, basicPomInfo);
+        if(mavenDir != null) {
+            return FileOwnerQuery.getOwner(mavenDir);
+        }else{
+            return null;
+        }
+    }
+    
+    private static class BasicPomInfo{
+        private String groupId;
+        private String artifactId;
+
+        public BasicPomInfo(String groupId, String artifactId) {
+            this.groupId = groupId;
+            this.artifactId = artifactId;
+        }
+
+        public String getGroupId() {
+            return groupId;
+        }
+
+        public String getArtifactId() {
+            return artifactId;
+        }
+        
     }
     
 }

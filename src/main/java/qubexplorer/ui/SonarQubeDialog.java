@@ -104,7 +104,6 @@ public class SonarQubeDialog extends javax.swing.JDialog {
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         final SonarTopComponent sonarTopComponent = (SonarTopComponent) WindowManager.getDefault().findTopComponent("SonarTopComponent");
         final String key = SonarQube.toResource(project);
-        System.out.println("key: "+key);
         final ProgressHandle handle = ProgressHandleFactory.createHandle("Sonar");
         handle.switchToIndeterminate();
         setVisible(false);
