@@ -4,6 +4,7 @@
  */
 package qubexplorer.ui;
 
+import static java.awt.image.ImageObserver.WIDTH;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.DefaultRowSorter;
@@ -164,6 +165,7 @@ public final class SonarTopComponent extends TopComponent {
         if (evt.getClickCount() == 2) {
             int row = issuesTable.rowAtPoint(evt.getPoint());
             if (row != -1) {
+                row=issuesTable.getRowSorter().convertRowIndexToModel(row);
                 try {
                     Sources sources = ProjectUtils.getSources(findProject(project, getBasicPomInfo(issues[row].componentKey())));
                     SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
@@ -265,15 +267,16 @@ public final class SonarTopComponent extends TopComponent {
         return new BasicPomInfo(tokens[0], tokens[1]);
     }
 
-    private static FileObject findMvnDir(Model model, BasicPomInfo basicPomInfo) throws IOException {
+    private static FileObject findMvnDir(Model model, BasicPomInfo basicPomInfo, String groupId) throws IOException {
         MvnModelFactory factory = new MvnModelFactory();
         for (String module : model.getModules()) {
             FileObject moduleFile = FileUtil.toFileObject(new File(model.getProjectDirectory(), module));
             Model m = factory.createModel(moduleFile.getFileObject("pom.xml"));
-            if (m.getGroupId().equals(basicPomInfo.getGroupId()) && m.getArtifactId().equals(basicPomInfo.getArtifactId())) {
+            String tmpGroupId=m.getGroupId() == null ? groupId: m.getGroupId();
+            if (tmpGroupId.equals(basicPomInfo.getGroupId()) && m.getArtifactId().equals(basicPomInfo.getArtifactId())) {
                 return moduleFile;
             } else {
-                FileObject o = findMvnDir(m, basicPomInfo);
+                FileObject o = findMvnDir(m, basicPomInfo, tmpGroupId);
                 if (o != null) {
                     return o;
                 }
@@ -287,7 +290,7 @@ public final class SonarTopComponent extends TopComponent {
         if (model.getGroupId().equals(basicPomInfo.getGroupId()) && model.getArtifactId().equals(basicPomInfo.getArtifactId())) {
             return project;
         }
-        FileObject mavenDir = findMvnDir(model, basicPomInfo);
+        FileObject mavenDir = findMvnDir(model, basicPomInfo, model.getGroupId());
         if (mavenDir != null) {
             return FileOwnerQuery.getOwner(mavenDir);
         } else {

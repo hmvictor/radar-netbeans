@@ -31,7 +31,7 @@ public class SonarQube {
     public List<Issue> getIssues(String resource, String severity) {
         SonarClient client = SonarClient.create(address);
         IssueClient issueClient = client.issueClient();
-        IssueQuery query = IssueQuery.create().componentRoots(resource);
+        IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(-1);
         if(!severity.equalsIgnoreCase("any")) {
             query.severities(severity.toUpperCase());
         }
