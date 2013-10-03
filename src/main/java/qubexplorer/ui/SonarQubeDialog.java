@@ -124,6 +124,7 @@ public class SonarQubeDialog extends javax.swing.JDialog {
                 try {
                     sonarTopComponent.setIssues(get().toArray(new Issue[0]));
                     sonarTopComponent.open();
+                    sonarTopComponent.requestVisible();
                     sonarTopComponent.setProject(project);
                 } catch (InterruptedException | ExecutionException ex) {
                     Exceptions.printStackTrace(ex);

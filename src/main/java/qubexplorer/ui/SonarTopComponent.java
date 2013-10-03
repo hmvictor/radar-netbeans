@@ -96,10 +96,14 @@ public final class SonarTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jLabel2 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         issuesTable = new javax.swing.JTable();
         jLabel1 = new javax.swing.JLabel();
         filterText = new javax.swing.JTextField();
+        issuesCount = new javax.swing.JLabel();
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(SonarTopComponent.class, "SonarTopComponent.jLabel2.text")); // NOI18N
 
         issuesTable.setAutoCreateRowSorter(true);
         issuesTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -134,15 +138,19 @@ public final class SonarTopComponent extends TopComponent {
             }
         });
 
+        issuesCount.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        org.openide.awt.Mnemonics.setLocalizedText(issuesCount, org.openide.util.NbBundle.getMessage(SonarTopComponent.class, "SonarTopComponent.issuesCount.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 478, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(issuesCount, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 478, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(filterText)))
@@ -152,7 +160,9 @@ public final class SonarTopComponent extends TopComponent {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 209, Short.MAX_VALUE)
+                .addComponent(issuesCount)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 186, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
@@ -182,8 +192,10 @@ public final class SonarTopComponent extends TopComponent {
     }//GEN-LAST:event_filterTextPropertyChange
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField filterText;
+    private javax.swing.JLabel issuesCount;
     private javax.swing.JTable issuesTable;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
 
@@ -238,6 +250,7 @@ public final class SonarTopComponent extends TopComponent {
                 return false;
             }
         });
+        showIssuesCount();
     }
 
     public void setIssues(Issue... issues) {
@@ -250,6 +263,7 @@ public final class SonarTopComponent extends TopComponent {
             model.addRow(new Object[]{name + " [" + issue.line() + "]", issue.message(), issue.severity(), issue.ruleKey()});
         }
         this.issues = issues;
+        showIssuesCount();
     }
 
     public String toPath(String componentKey) {
@@ -296,6 +310,10 @@ public final class SonarTopComponent extends TopComponent {
         } else {
             return null;
         }
+    }
+
+    private void showIssuesCount() {
+        issuesCount.setText(issuesTable.getRowSorter().getViewRowCount()+" Issues of "+issues.length);
     }
 
     private static class BasicPomInfo {
