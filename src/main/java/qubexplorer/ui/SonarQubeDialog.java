@@ -4,6 +4,7 @@
  */
 package qubexplorer.ui;
 
+import java.awt.Frame;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import javax.swing.SwingWorker;
@@ -13,7 +14,9 @@ import org.netbeans.api.project.Project;
 import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
+import org.sonar.wsclient.base.HttpException;
 import org.sonar.wsclient.issue.Issue;
+import qubexplorer.Authentication;
 import qubexplorer.SonarQube;
 import qubexplorer.ui.options.SonarQubePanel;
 
@@ -104,36 +107,12 @@ public class SonarQubeDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        final SonarTopComponent sonarTopComponent = (SonarTopComponent) WindowManager.getDefault().findTopComponent("SonarTopComponent");
-        final String key = SonarQube.toResource(project);
-        final ProgressHandle handle = ProgressHandleFactory.createHandle("Sonar");
-        handle.switchToIndeterminate();
+        SonarTopComponent sonarTopComponent = (SonarTopComponent) WindowManager.getDefault().findTopComponent("SonarTopComponent");
+        String key = SonarQube.toResource(project);
         setVisible(false);
-        handle.start();
         final String severity=(String) comboSeverity.getSelectedItem();
         final String address=NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000");
-        SwingWorker<List<Issue>, Void> worker=new SwingWorker<List<Issue>, Void>() {
-            
-            @Override
-            protected List<Issue> doInBackground() throws Exception {
-                return new SonarQube(address).getIssues(key, severity);
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    sonarTopComponent.setIssues(get().toArray(new Issue[0]));
-                    sonarTopComponent.open();
-                    sonarTopComponent.requestVisible();
-                    sonarTopComponent.setProject(project);
-                } catch (InterruptedException | ExecutionException ex) {
-                    Exceptions.printStackTrace(ex);
-                }finally{
-                    handle.finish();
-                }
-            }
-            
-        };
+        SwingWorker<List<Issue>, Void> worker=new IssuesWorker(address, key, severity, sonarTopComponent);
         worker.execute();
     }//GEN-LAST:event_jButton2ActionPerformed
 
@@ -188,4 +167,70 @@ public class SonarQubeDialog extends javax.swing.JDialog {
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     // End of variables declaration//GEN-END:variables
+
+    private class IssuesWorker extends SwingWorker<List<Issue>, Void> {
+
+        private final String address;
+        private final String key;
+        private final String severity;
+        private final Authentication auth;
+        private final SonarTopComponent sonarTopComponent;
+        private ProgressHandle handle;
+
+        public IssuesWorker(String address, String key, String severity, SonarTopComponent sonarTopComponent) {
+            this.address = address;
+            this.key = key;
+            this.severity = severity;
+            this.sonarTopComponent = sonarTopComponent;
+            auth=null;
+            init();
+        }
+        
+        public IssuesWorker(Authentication auth, String address, String key, String severity, SonarTopComponent sonarTopComponent) {
+            this.address = address;
+            this.key = key;
+            this.severity = severity;
+            this.sonarTopComponent = sonarTopComponent;
+            this.auth=auth;
+            init();
+        }
+        
+        private void init() {
+            handle = ProgressHandleFactory.createHandle("Sonar");
+            handle.switchToIndeterminate();
+            handle.start();
+        }
+
+        @Override
+        protected List<Issue> doInBackground() throws Exception {
+            return new SonarQube(address).getIssues(auth, key, severity);
+        }
+
+        @Override
+        protected void done() {
+            try {
+                sonarTopComponent.setIssues(get().toArray(new Issue[0]));
+                sonarTopComponent.open();
+                sonarTopComponent.requestVisible();
+                sonarTopComponent.setProject(project);
+            } catch (InterruptedException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch(ExecutionException ex){
+                if(ex.getCause() instanceof HttpException) {
+                    if(((HttpException)ex.getCause()).status() == 401) {
+                        handle.finish();
+                        Authentication authentication = AuthDialog.showAuthDialog((Frame)SonarQubeDialog.this.getOwner());
+                        if(authentication != null) {
+                            IssuesWorker worker = new IssuesWorker(authentication, address, key, severity, sonarTopComponent);
+                            worker.execute();
+                        }
+                    }
+                }else{
+                    Exceptions.printStackTrace(ex);
+                }
+            }finally{
+                handle.finish();
+            }
+        }
+    }
 }

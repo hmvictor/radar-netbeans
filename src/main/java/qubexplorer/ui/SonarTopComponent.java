@@ -111,11 +111,11 @@ public final class SonarTopComponent extends TopComponent {
 
             },
             new String [] {
-                "File", "Description", "Level", "Type"
+                "Mvn Id", "File", "Description", "Level", "Type"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, false, false
+                false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -149,7 +149,7 @@ public final class SonarTopComponent extends TopComponent {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(issuesCount, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 478, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 555, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -162,7 +162,7 @@ public final class SonarTopComponent extends TopComponent {
                 .addContainerGap()
                 .addComponent(issuesCount)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 186, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
@@ -260,7 +260,8 @@ public final class SonarTopComponent extends TopComponent {
         }
         for (Issue issue : issues) {
             String name = toPath(issue.componentKey()) + ".java";
-            model.addRow(new Object[]{name + " [" + issue.line() + "]", issue.message(), issue.severity(), issue.ruleKey()});
+            String mvnId=toMvnId(issue.componentKey());
+            model.addRow(new Object[]{mvnId,  name + " [" + issue.line() + "]", issue.message(), issue.severity(), issue.ruleKey()});
         }
         this.issues = issues;
         showIssuesCount();
@@ -273,6 +274,15 @@ public final class SonarTopComponent extends TopComponent {
             path = path.substring(index + 1);
         }
         return path.replace(".", "/");
+    }
+    
+    public String toMvnId(String componentKey) {
+        String path = componentKey;
+        int index = path.lastIndexOf(':');
+        if (index != -1) {
+            path = path.substring(0, index);
+        }
+        return path;
     }
 
     private static BasicPomInfo getBasicPomInfo(String componentKey) {

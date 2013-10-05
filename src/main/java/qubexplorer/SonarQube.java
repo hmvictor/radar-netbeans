@@ -35,7 +35,16 @@ public class SonarQube {
     }
     
     public List<Issue> getIssues(String resource, String severity) {
-        SonarClient client = SonarClient.create(address);
+        return getIssues(null, resource, severity);
+    }
+    
+    public List<Issue> getIssues(Authentication auth, String resource, String severity) {
+        SonarClient client;
+        if(auth == null) {
+            client = SonarClient.create(address);
+        }else{
+            client=SonarClient.builder().url(address).login(auth.getUsername()).password(new String(auth.getPassword())).build();
+        }
         IssueClient issueClient = client.issueClient();
         List<Issue> issues=new LinkedList<>();
         Issues result;
