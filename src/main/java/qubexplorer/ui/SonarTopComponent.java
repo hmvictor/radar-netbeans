@@ -1,18 +1,13 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package qubexplorer.ui;
 
-import static java.awt.image.ImageObserver.WIDTH;
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 import javax.swing.DefaultRowSorter;
 import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableRowSorter;
 import org.apache.maven.model.Model;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.FileOwnerQuery;
@@ -30,7 +25,6 @@ import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.text.Line;
 import org.openide.util.Exceptions;
-import org.openide.util.Lookup;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 import org.sonar.wsclient.issue.Issue;
@@ -81,6 +75,19 @@ public final class SonarTopComponent extends TopComponent {
             public void changedUpdate(DocumentEvent de) {
                 filterTextChanged();
             }
+        });
+        ((DefaultRowSorter)issuesTable.getRowSorter()).setComparator(1, new Comparator<Location>() {
+
+            @Override
+            public int compare(Location t, Location t1) {
+                int result=t.component.compareTo(t1.component);
+                if(result != 0) {
+                    return result;
+                }else{
+                    return Integer.compare(t.lineNumber, t1.lineNumber);
+                }
+            }
+            
         });
     }
 
@@ -261,7 +268,7 @@ public final class SonarTopComponent extends TopComponent {
         for (Issue issue : issues) {
             String name = toPath(issue.componentKey()) + ".java";
             String mvnId=toMvnId(issue.componentKey());
-            model.addRow(new Object[]{mvnId,  name + " [" + issue.line() + "]", issue.message(), issue.severity(), issue.ruleKey()});
+            model.addRow(new Object[]{mvnId,  new Location(name, issue.line()), issue.message(), issue.severity(), issue.ruleKey()});
         }
         this.issues = issues;
         showIssuesCount();
@@ -343,5 +350,31 @@ public final class SonarTopComponent extends TopComponent {
         public String getArtifactId() {
             return artifactId;
         }
+        
     }
+    
+    public class Location {
+        private String component;
+        private int lineNumber;
+
+        public Location(String component, int lineNumber) {
+            this.component = component;
+            this.lineNumber = lineNumber;
+        }
+
+        public String getComponent() {
+            return component;
+        }
+
+        public int getLineNumber() {
+            return lineNumber;
+        }
+        
+        @Override
+        public String toString() {
+            return component+" ["+lineNumber+"]";
+        }
+        
+    }
+    
 }
