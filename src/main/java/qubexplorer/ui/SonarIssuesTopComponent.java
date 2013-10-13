@@ -2,6 +2,7 @@ package qubexplorer.ui;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.Comparator;
 import javax.swing.DefaultRowSorter;
 import javax.swing.RowFilter;
@@ -27,8 +28,13 @@ import org.openide.text.Line;
 import org.openide.util.Exceptions;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.NbPreferences;
 import org.sonar.wsclient.issue.Issue;
+import org.sonar.wsclient.services.Rule;
 import qubexplorer.MvnModelFactory;
+import qubexplorer.Severity;
+import qubexplorer.SonarQube;
+import qubexplorer.ui.options.SonarQubePanel;
 
 /**
  * Top component which displays something.
@@ -51,12 +57,12 @@ import qubexplorer.MvnModelFactory;
     "CTL_SonarTopComponent=Sonar Window",
     "HINT_SonarTopComponent=This is a Sonar window"
 })
-public final class SonarTopComponent extends TopComponent {
+public final class SonarIssuesTopComponent extends TopComponent {
 
     private Project project;
     private Issue[] issues;
 
-    public SonarTopComponent() {
+    public SonarIssuesTopComponent() {
         initComponents();
         setName(Bundle.CTL_SonarTopComponent());
         setToolTipText(Bundle.HINT_SonarTopComponent());
@@ -108,9 +114,11 @@ public final class SonarTopComponent extends TopComponent {
         issuesTable = new javax.swing.JTable();
         jLabel1 = new javax.swing.JLabel();
         filterText = new javax.swing.JTextField();
-        issuesCount = new javax.swing.JLabel();
+        title = new javax.swing.JLabel();
+        shownCount = new javax.swing.JTextField();
+        jLabel3 = new javax.swing.JLabel();
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(SonarTopComponent.class, "SonarTopComponent.jLabel2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel2.text")); // NOI18N
 
         issuesTable.setAutoCreateRowSorter(true);
         issuesTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -118,7 +126,7 @@ public final class SonarTopComponent extends TopComponent {
 
             },
             new String [] {
-                "Mvn Id", "File", "Description", "Level", "Type"
+                "Mvn Id", "File", "Description", "Level", "Rule"
             }
         ) {
             boolean[] canEdit = new boolean [] {
@@ -136,17 +144,24 @@ public final class SonarTopComponent extends TopComponent {
         });
         jScrollPane1.setViewportView(issuesTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SonarTopComponent.class, "SonarTopComponent.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel1.text")); // NOI18N
 
-        filterText.setText(org.openide.util.NbBundle.getMessage(SonarTopComponent.class, "SonarTopComponent.filterText.text")); // NOI18N
+        filterText.setText(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.filterText.text")); // NOI18N
         filterText.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
                 filterTextPropertyChange(evt);
             }
         });
 
-        issuesCount.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        org.openide.awt.Mnemonics.setLocalizedText(issuesCount, org.openide.util.NbBundle.getMessage(SonarTopComponent.class, "SonarTopComponent.issuesCount.text")); // NOI18N
+        title.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        org.openide.awt.Mnemonics.setLocalizedText(title, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.title.text")); // NOI18N
+
+        shownCount.setEditable(false);
+        shownCount.setColumns(5);
+        shownCount.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        shownCount.setText(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.shownCount.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel3.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -155,25 +170,31 @@ public final class SonarTopComponent extends TopComponent {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(issuesCount, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(title, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 555, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(filterText)))
+                        .addComponent(filterText)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(shownCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(issuesCount)
+                .addComponent(title)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(filterText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(filterText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(shownCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -199,11 +220,13 @@ public final class SonarTopComponent extends TopComponent {
     }//GEN-LAST:event_filterTextPropertyChange
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField filterText;
-    private javax.swing.JLabel issuesCount;
     private javax.swing.JTable issuesTable;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTextField shownCount;
+    private javax.swing.JLabel title;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -260,7 +283,7 @@ public final class SonarTopComponent extends TopComponent {
         showIssuesCount();
     }
 
-    public void setIssues(Issue... issues) {
+    public void setIssues(Object criteria, Issue... issues) {
         DefaultTableModel model = (DefaultTableModel) issuesTable.getModel();
         while (model.getRowCount() > 0) {
             model.removeRow(0);
@@ -268,9 +291,17 @@ public final class SonarTopComponent extends TopComponent {
         for (Issue issue : issues) {
             String name = toPath(issue.componentKey()) + ".java";
             String mvnId=toMvnId(issue.componentKey());
-            model.addRow(new Object[]{mvnId,  new Location(name, issue.line()), issue.message(), issue.severity(), issue.ruleKey()});
+            Rule rule=new SonarQube(NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000")).getRule(issue.ruleKey());
+            model.addRow(new Object[]{mvnId,  new Location(name, issue.line()), issue.message(), issue.severity(), rule.getTitle()});
         }
         this.issues = issues;
+        if(criteria != null) {
+            if(criteria instanceof Severity) {
+                title.setText(criteria.toString()+": "+issues.length);
+            }else if(criteria instanceof Rule){
+                title.setText(((Rule)criteria).getTitle()+": "+issues.length);
+            }
+        }
         showIssuesCount();
     }
 
@@ -330,7 +361,8 @@ public final class SonarTopComponent extends TopComponent {
     }
 
     private void showIssuesCount() {
-        issuesCount.setText(issuesTable.getRowSorter().getViewRowCount()+" Issues of "+issues.length);
+        NumberFormat format=NumberFormat.getIntegerInstance();
+        shownCount.setText(format.format(issuesTable.getRowSorter().getViewRowCount()));
     }
 
     private static class BasicPomInfo {

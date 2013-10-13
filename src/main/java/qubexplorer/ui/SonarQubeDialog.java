@@ -103,7 +103,7 @@ public class SonarQubeDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        SonarTopComponent sonarTopComponent = (SonarTopComponent) WindowManager.getDefault().findTopComponent("SonarTopComponent");
+        SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarTopComponent");
         String key = SonarQube.toResource(project);
         setVisible(false);
         final String severity=(String) comboSeverity.getSelectedItem();
@@ -164,16 +164,17 @@ public class SonarQubeDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel1;
     // End of variables declaration//GEN-END:variables
 
+    
     private class IssuesWorker extends SwingWorker<List<Issue>, Void> {
 
         private final String address;
         private final String key;
         private final String severity;
         private final Authentication auth;
-        private final SonarTopComponent sonarTopComponent;
+        private final SonarIssuesTopComponent sonarTopComponent;
         private ProgressHandle handle;
 
-        public IssuesWorker(String address, String key, String severity, SonarTopComponent sonarTopComponent) {
+        public IssuesWorker(String address, String key, String severity, SonarIssuesTopComponent sonarTopComponent) {
             this.address = address;
             this.key = key;
             this.severity = severity;
@@ -182,7 +183,7 @@ public class SonarQubeDialog extends javax.swing.JDialog {
             init();
         }
         
-        public IssuesWorker(Authentication auth, String address, String key, String severity, SonarTopComponent sonarTopComponent) {
+        public IssuesWorker(Authentication auth, String address, String key, String severity, SonarIssuesTopComponent sonarTopComponent) {
             this.address = address;
             this.key = key;
             this.severity = severity;
@@ -205,7 +206,7 @@ public class SonarQubeDialog extends javax.swing.JDialog {
         @Override
         protected void done() {
             try {
-                sonarTopComponent.setIssues(get().toArray(new Issue[0]));
+                sonarTopComponent.setIssues(null, get().toArray(new Issue[0]));
                 sonarTopComponent.open();
                 sonarTopComponent.requestVisible();
                 sonarTopComponent.setProject(project);
