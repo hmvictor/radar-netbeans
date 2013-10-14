@@ -44,8 +44,7 @@ public class RuleCountPanel extends javax.swing.JPanel {
         initComponents();
         GroupLayout layout = (GroupLayout) getLayout();
         layout.setHonorsVisibility(true);
-        Dimension size = layout.preferredLayoutSize(this);
-        setPreferredSize(size);
+        adjustSize();
     }
 
     public Severity getSeverity() {
@@ -62,7 +61,7 @@ public class RuleCountPanel extends javax.swing.JPanel {
         actionListeners.add(listener);
     }
 
-    public void removeItemListener(ItemListener listener) {
+    public void removeActionListener(ActionListener listener) {
         actionListeners.remove(listener);
     }
 
@@ -149,8 +148,15 @@ public class RuleCountPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(sequentialGroup)
         );
-        Dimension size = layout.preferredLayoutSize(this);
-        setPreferredSize(size);
+        adjustSize();
+    }
+    
+    private void adjustSize(){
+        LayoutManager layout = getLayout();
+        Dimension preferredSize = layout.preferredLayoutSize(this);
+        setPreferredSize(preferredSize);
+        Dimension maximumSize = getMaximumSize();
+        setMaximumSize(new Dimension(maximumSize.width, preferredSize.height));
     }
 
     public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
@@ -286,9 +292,7 @@ public class RuleCountPanel extends javax.swing.JPanel {
             field.setVisible(visible);
         }
         expandButton.setText(visible ? "-" : "+");
-        LayoutManager layout = getLayout();
-        Dimension size = layout.preferredLayoutSize(this);
-        setPreferredSize(size);
+        adjustSize();
     }//GEN-LAST:event_expandButtonActionPerformed
 
     private void severityButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_severityButtonActionPerformed

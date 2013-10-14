@@ -22,6 +22,9 @@ import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.issue.IssueClient;
 import org.sonar.wsclient.issue.IssueQuery;
 import org.sonar.wsclient.issue.Issues;
+import org.sonar.wsclient.services.MetricQuery;
+import org.sonar.wsclient.services.Resource;
+import org.sonar.wsclient.services.ResourceQuery;
 import org.sonar.wsclient.services.Rule;
 import org.sonar.wsclient.services.RuleQuery;
 
@@ -39,6 +42,19 @@ public class SonarQube {
 
     public SonarQube() {
         this("http://localhost:9000");
+    }
+    
+    public double getRulesCompliance(Authentication auth, String resource) {
+        Sonar sonar;
+        if(auth == null) {
+            sonar=Sonar.create(address);
+        }else{
+            sonar=Sonar.create(address, auth.getUsername(), new String(auth.getPassword()));
+        }
+        ResourceQuery query=new ResourceQuery(resource);
+        query.setMetrics("violations_density");
+        Resource r = sonar.find(query);
+        return r.getMeasure("violations_density").getValue();
     }
     
     public List<IssueDecorator> getIssues(String resource, String severity) {
@@ -151,6 +167,7 @@ public class SonarQube {
             }
             counting.setRuleCounts(severity, counts);
         }
+        counting.setRulesCcompliance(getRulesCompliance(auth, resource));
         return counting;
     }
 

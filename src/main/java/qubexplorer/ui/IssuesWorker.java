@@ -71,9 +71,10 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
     protected List<IssueDecorator> doInBackground() throws Exception {
         if(severity != null) {
             return new SonarQube(address).getIssues(auth, SonarQube.toResource(project), severity.toString());
-        }else{
-            assert rule != null;
+        }else if(rule != null){
             return new SonarQube(address).getIssuesByRule(auth, SonarQube.toResource(project), rule.getKey());
+        }else{
+            return new SonarQube(address).getIssues(auth, SonarQube.toResource(project), "any");
         }
     }
 
@@ -97,7 +98,7 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
                     Authentication authentication = AuthenticationRepository.getInstance().getAuthentication();
                     if (authentication != null) {
                         IssuesWorker worker;
-                        if(severity == null){
+                        if(rule != null){
                             worker= new IssuesWorker(authentication, project, rule);
                         }else{
                             worker= new IssuesWorker(authentication, project, severity);
@@ -112,4 +113,5 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
             handle.finish();
         }
     }
+    
 }

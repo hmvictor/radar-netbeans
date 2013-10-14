@@ -10,9 +10,27 @@ import org.sonar.wsclient.services.Rule;
  */
 public class Counting {
     private Map<Severity, Map<Rule, Integer>> severityCounts=new HashMap<>();
+    private double rulesCcompliance;
     
     public int getCount(Severity severity) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        Map<Rule, Integer> map = severityCounts.get(severity);
+        if(map == null) {
+            return 0;
+        }else{
+            int sum=0;
+            for(Integer i:map.values()) {
+                sum+=i;
+            }
+            return sum;
+        }
+    }
+
+    public double getRulesCcompliance() {
+        return rulesCcompliance;
+    }
+
+    public void setRulesCcompliance(double rulesCcompliance) {
+        this.rulesCcompliance = rulesCcompliance;
     }
     
     public Map<Rule, Integer> getRuleCounts(Severity severity) {

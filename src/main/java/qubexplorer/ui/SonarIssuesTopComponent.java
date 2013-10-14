@@ -55,7 +55,7 @@ import qubexplorer.ui.options.SonarQubePanel;
         preferredID = "SonarTopComponent")
 @Messages({
     "CTL_SonarAction=Sonar",
-    "CTL_SonarTopComponent=Sonar Window",
+    "CTL_SonarTopComponent=Sonar Issues",
     "HINT_SonarTopComponent=This is a Sonar window"
 })
 public final class SonarIssuesTopComponent extends TopComponent {
@@ -299,16 +299,16 @@ public final class SonarIssuesTopComponent extends TopComponent {
             model.addRow(new Object[]{mvnId,  new Location(name, issue.line()), issue.message(), issue.severity(), issue.rule().getTitle()});
         }
         this.issues = issues;
-        if(criteria != null) {
-            if(criteria instanceof Severity) {
-                title.setText(criteria.toString()+": "+issues.length);
-                issuesTable.getColumnExt("Severity").setVisible(false);
-                issuesTable.getColumnExt("Rule").setVisible(true);
-            }else if(criteria instanceof Rule){
-                title.setText(((Rule)criteria).getTitle()+": "+issues.length);
-                issuesTable.getColumnExt("Rule").setVisible(false);
-                issuesTable.getColumnExt("Severity").setVisible(true);
-            }
+        if(criteria instanceof Severity) {
+            title.setText(criteria.toString()+": "+issues.length);
+            issuesTable.getColumnExt("Severity").setVisible(false);
+            issuesTable.getColumnExt("Rule").setVisible(true);
+        }else if(criteria instanceof Rule){
+            title.setText(((Rule)criteria).getTitle()+": "+issues.length);
+            issuesTable.getColumnExt("Rule").setVisible(false);
+            issuesTable.getColumnExt("Severity").setVisible(true);
+        }else if(criteria == null) {
+            title.setText("Total: "+issues.length);
         }
         showIssuesCount();
     }
