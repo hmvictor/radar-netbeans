@@ -41,11 +41,11 @@ public class SonarQube {
         this("http://localhost:9000");
     }
     
-    public List<Issue> getIssues(String resource, String severity) {
+    public List<IssueDecorator> getIssues(String resource, String severity) {
         return getIssues(null, resource, severity);
     }
     
-    public List<Issue> getIssues(Authentication auth, String resource, String severity) {
+    public List<IssueDecorator> getIssues(Authentication auth, String resource, String severity) {
         SonarClient client;
         if(auth == null) {
             client = SonarClient.create(address);
@@ -53,7 +53,8 @@ public class SonarQube {
             client=SonarClient.builder().url(address).login(auth.getUsername()).password(new String(auth.getPassword())).build();
         }
         IssueClient issueClient = client.issueClient();
-        List<Issue> issues=new LinkedList<>();
+        List<IssueDecorator> issues=new LinkedList<>();
+        Map<String, Rule> rulesCache=new HashMap<>();
         Issues result;
         int pageIndex=1;
         do{
@@ -62,13 +63,20 @@ public class SonarQube {
                 query.severities(severity.toUpperCase());
             }
             result = issueClient.find(query);
-            issues.addAll(result.list());
+            for(Issue issue:result.list()) {
+                Rule rule = rulesCache.get(issue.ruleKey());
+                if(rule == null) {
+                    rule=getRule(auth, issue.ruleKey());
+                    rulesCache.put(issue.ruleKey(), rule);
+                }
+                issues.add(new IssueDecorator(issue, rule));
+            }
             pageIndex++;
         }while(pageIndex <= result.paging().pages());
         return issues;
     }
     
-    public List<Issue> getIssuesByRule(Authentication auth, String resource, String rule) {
+    public List<IssueDecorator> getIssuesByRule(Authentication auth, String resource, String ruleKey) {
         SonarClient client;
         if(auth == null) {
             client = SonarClient.create(address);
@@ -76,23 +84,37 @@ public class SonarQube {
             client=SonarClient.builder().url(address).login(auth.getUsername()).password(new String(auth.getPassword())).build();
         }
         IssueClient issueClient = client.issueClient();
-        List<Issue> issues=new LinkedList<>();
+        List<IssueDecorator> issues=new LinkedList<>();
+        Map<String, Rule> rulesCache=new HashMap<>();
         Issues result;
         int pageIndex=1;
         do{
-            IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN").pageIndex(pageIndex).rules(rule);
+            IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN").pageIndex(pageIndex).rules(ruleKey);
             result = issueClient.find(query);
-            issues.addAll(result.list());
+            for(Issue issue:result.list()) {
+                Rule rule = rulesCache.get(issue.ruleKey());
+                if(rule == null) {
+                    rule=getRule(auth, issue.ruleKey());
+                    rulesCache.put(issue.ruleKey(), rule);
+                }
+                issues.add(new IssueDecorator(issue, rule));
+            }
             pageIndex++;
         }while(pageIndex <= result.paging().pages());
         return issues;
     }
     
-    public Rule getRule(String ruleKey) {
+    public Rule getRule(Authentication auth, String ruleKey) {
         RuleQuery ruleQuery=new RuleQuery("java");
         String tokens[]=ruleKey.split(":");
         ruleQuery.setSearchText(tokens.length == 2? tokens[1]: ruleKey);
-        List<Rule> rules = new Sonar(new HttpClient3Connector(new Host(address))).findAll(ruleQuery);
+        Sonar sonar;
+        if(auth == null) {
+            sonar=Sonar.create(address);
+        }else {
+            sonar=Sonar.create(address, auth.getUsername(), new String(auth.getPassword()));
+        }
+        List<Rule> rules = sonar.findAll(ruleQuery);
         for(Rule rule:rules) {
             if(rule.getKey().equals(ruleKey)) {
                 return rule;
@@ -102,9 +124,13 @@ public class SonarQube {
     }
     
     public Counting getCounting(String resource) {
+        return getCounting(null, resource);
+    }
+    
+    public Counting getCounting(Authentication auth, String resource) {
         Counting counting=new Counting();
         for(Severity severity: Severity.values()) {
-            List<Issue> issues = getIssues(resource, severity.toString());
+            List<IssueDecorator> issues = getIssues(auth, resource, severity.toString());
             Map<Rule, Integer> counts=new TreeMap<>(new Comparator<Rule>(){
 
                 @Override
@@ -114,7 +140,7 @@ public class SonarQube {
                 
             });
             for(Issue issue: issues){
-                Rule rule = getRule(issue.ruleKey());
+                Rule rule = getRule(auth, issue.ruleKey());
                 Integer counter = counts.get(rule);
                 if(counter == null) {
                     counter=1;

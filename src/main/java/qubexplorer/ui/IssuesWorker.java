@@ -13,6 +13,7 @@ import org.sonar.wsclient.base.HttpException;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.Authentication;
+import qubexplorer.IssueDecorator;
 import qubexplorer.Severity;
 import qubexplorer.SonarQube;
 import qubexplorer.ui.options.SonarQubePanel;
@@ -21,7 +22,7 @@ import qubexplorer.ui.options.SonarQubePanel;
  *
  * @author Victor
  */
-public class IssuesWorker extends SwingWorker<List<Issue>, Void> {
+public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
     private final String address;
     private Project project;
     private Severity severity;
@@ -75,7 +76,7 @@ public class IssuesWorker extends SwingWorker<List<Issue>, Void> {
     }
 
     @Override
-    protected List<Issue> doInBackground() throws Exception {
+    protected List<IssueDecorator> doInBackground() throws Exception {
         if(severity != null) {
             return new SonarQube(address).getIssues(auth, SonarQube.toResource(project), severity.toString());
         }else{
@@ -88,7 +89,7 @@ public class IssuesWorker extends SwingWorker<List<Issue>, Void> {
     protected void done() {
         try {
             SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarTopComponent");
-            sonarTopComponent.setIssues(severity == null ? rule: severity, get().toArray(new Issue[0]));
+            sonarTopComponent.setIssues(severity == null ? rule: severity, get().toArray(new IssueDecorator[0]));
             sonarTopComponent.open();
             sonarTopComponent.requestVisible();
             sonarTopComponent.setProject(project);
@@ -100,7 +101,12 @@ public class IssuesWorker extends SwingWorker<List<Issue>, Void> {
                     handle.finish();
                     Authentication authentication = AuthDialog.showAuthDialog(WindowManager.getDefault().getMainWindow());
                     if (authentication != null) {
-                        IssuesWorker worker = new IssuesWorker(authentication, project, severity);
+                        IssuesWorker worker;
+                        if(severity == null){
+                            worker= new IssuesWorker(authentication, project, rule);
+                        }else{
+                            worker= new IssuesWorker(authentication, project, severity);
+                        }
                         worker.execute();
                     }
                 }

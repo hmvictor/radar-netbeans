@@ -13,6 +13,7 @@ import org.openide.windows.WindowManager;
 import org.sonar.wsclient.base.HttpException;
 import org.sonar.wsclient.issue.Issue;
 import qubexplorer.Authentication;
+import qubexplorer.IssueDecorator;
 import qubexplorer.SonarQube;
 import qubexplorer.ui.options.SonarQubePanel;
 
@@ -108,7 +109,7 @@ public class SonarQubeDialog extends javax.swing.JDialog {
         setVisible(false);
         final String severity=(String) comboSeverity.getSelectedItem();
         final String address=NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000");
-        SwingWorker<List<Issue>, Void> worker=new IssuesWorker(address, key, severity, sonarTopComponent);
+        IssuesWorker worker=new IssuesWorker(address, key, severity, sonarTopComponent);
         worker.execute();
     }//GEN-LAST:event_jButton2ActionPerformed
 
@@ -165,7 +166,7 @@ public class SonarQubeDialog extends javax.swing.JDialog {
     // End of variables declaration//GEN-END:variables
 
     
-    private class IssuesWorker extends SwingWorker<List<Issue>, Void> {
+    private class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
 
         private final String address;
         private final String key;
@@ -199,14 +200,14 @@ public class SonarQubeDialog extends javax.swing.JDialog {
         }
 
         @Override
-        protected List<Issue> doInBackground() throws Exception {
+        protected List<IssueDecorator> doInBackground() throws Exception {
             return new SonarQube(address).getIssues(auth, key, severity);
         }
 
         @Override
         protected void done() {
             try {
-                sonarTopComponent.setIssues(null, get().toArray(new Issue[0]));
+                sonarTopComponent.setIssues(null, get().toArray(new IssueDecorator[0]));
                 sonarTopComponent.open();
                 sonarTopComponent.requestVisible();
                 sonarTopComponent.setProject(project);

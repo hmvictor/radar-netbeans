@@ -31,6 +31,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.NbPreferences;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.services.Rule;
+import qubexplorer.IssueDecorator;
 import qubexplorer.MvnModelFactory;
 import qubexplorer.Severity;
 import qubexplorer.SonarQube;
@@ -287,16 +288,15 @@ public final class SonarIssuesTopComponent extends TopComponent {
         showIssuesCount();
     }
 
-    public void setIssues(Object criteria, Issue... issues) {
+    public void setIssues(Object criteria, IssueDecorator... issues) {
         DefaultTableModel model = (DefaultTableModel) issuesTable.getModel();
         while (model.getRowCount() > 0) {
             model.removeRow(0);
         }
-        for (Issue issue : issues) {
+        for (IssueDecorator issue : issues) {
             String name = toPath(issue.componentKey()) + ".java";
             String mvnId=toMvnId(issue.componentKey());
-            Rule rule=new SonarQube(NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000")).getRule(issue.ruleKey());
-            model.addRow(new Object[]{mvnId,  new Location(name, issue.line()), issue.message(), issue.severity(), rule.getTitle()});
+            model.addRow(new Object[]{mvnId,  new Location(name, issue.line()), issue.message(), issue.severity(), issue.rule().getTitle()});
         }
         this.issues = issues;
         if(criteria != null) {

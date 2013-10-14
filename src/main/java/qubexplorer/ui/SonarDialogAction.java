@@ -22,7 +22,9 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
+import org.sonar.wsclient.base.HttpException;
 import org.sonar.wsclient.services.Rule;
+import qubexplorer.Authentication;
 import qubexplorer.Counting;
 import qubexplorer.Severity;
 import qubexplorer.SonarQube;
@@ -60,23 +62,22 @@ public final class SonarDialogAction implements ActionListener {
     private class CountsWorker extends SwingWorker<Counting, Void>{
         private ProgressHandle handle;
         private Project project;
+        private Authentication auth;
 
         public CountsWorker(Project project) {
             this.project=project;
-            handle = ProgressHandleFactory.createHandle("Sonar");
-            handle.switchToIndeterminate();
-            handle.start();
+            init();
+        }
+        
+        public CountsWorker(Authentication auth, Project project) {
+            this.auth=auth;
+            this.project=project;
+            init();
         }
         
         @Override
         protected Counting doInBackground() throws Exception {
-            Counting counting=new Counting();
-            Map<Rule, Integer> counts=new HashMap<>();
-//            counts.put("X", 10);
-//            counts.put("Y", 10);
-            counting.setRuleCounts(Severity.BLOCKER, counts);
-//            return counting;
-            return new SonarQube(NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000")).getCounting(SonarQube.toResource(project));
+            return new SonarQube(NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000")).getCounting(auth, SonarQube.toResource(project));
         }
 
         @Override
@@ -91,10 +92,27 @@ public final class SonarDialogAction implements ActionListener {
             } catch (InterruptedException ex) {
                 Exceptions.printStackTrace(ex);
             } catch (ExecutionException ex) {
-                Exceptions.printStackTrace(ex);
+                if(ex.getCause() instanceof HttpException) {
+                    if(((HttpException)ex.getCause()).status() == 401) {
+                        handle.finish();
+                        Authentication authentication = AuthDialog.showAuthDialog(WindowManager.getDefault().getMainWindow());
+                        if(authentication != null) {
+                            CountsWorker worker = new CountsWorker(authentication, project);
+                            worker.execute();
+                        }
+                    }
+                }else{
+                    Exceptions.printStackTrace(ex);
+                }
             } finally{
                 handle.finish();
             }
+        }
+
+        private void init() {
+            handle = ProgressHandleFactory.createHandle("Sonar");
+            handle.switchToIndeterminate();
+            handle.start();
         }
         
     }
