@@ -110,39 +110,15 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private void initComponents() {
 
         jLabel2 = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        issuesTable = new javax.swing.JTable();
         jLabel1 = new javax.swing.JLabel();
         filterText = new javax.swing.JTextField();
         title = new javax.swing.JLabel();
         shownCount = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        issuesTable = new org.jdesktop.swingx.JXTable();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel2.text")); // NOI18N
-
-        issuesTable.setAutoCreateRowSorter(true);
-        issuesTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Mvn Id", "File", "Description", "Level", "Rule"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false, false
-            };
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        issuesTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                issuesTableMouseClicked(evt);
-            }
-        });
-        jScrollPane1.setViewportView(issuesTable);
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel1.text")); // NOI18N
 
@@ -163,6 +139,32 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel3.text")); // NOI18N
 
+        issuesTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "MvnId", "Location", "Message", "Severity", "Rule"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        issuesTable.setColumnControlVisible(true);
+        jScrollPane2.setViewportView(issuesTable);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -170,13 +172,13 @@ public final class SonarIssuesTopComponent extends TopComponent {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 638, Short.MAX_VALUE)
                     .addComponent(title, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 555, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(filterText)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(18, 18, 18)
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(shownCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -188,7 +190,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 .addContainerGap()
                 .addComponent(title)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
@@ -199,32 +201,16 @@ public final class SonarIssuesTopComponent extends TopComponent {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void issuesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMouseClicked
-        if (evt.getClickCount() == 2) {
-            int row = issuesTable.rowAtPoint(evt.getPoint());
-            if (row != -1) {
-                row=issuesTable.getRowSorter().convertRowIndexToModel(row);
-                try {
-                    Sources sources = ProjectUtils.getSources(findProject(project, getBasicPomInfo(issues[row].componentKey())));
-                    SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
-                    File file = new File(sourceGroups[0].getRootFolder().getPath(), toPath(issues[row].componentKey()) + ".java");
-                    openFile(file, issues[row].line());
-                } catch (IOException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-            }
-        }
-    }//GEN-LAST:event_issuesTableMouseClicked
-
     private void filterTextPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_filterTextPropertyChange
     }//GEN-LAST:event_filterTextPropertyChange
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField filterText;
-    private javax.swing.JTable issuesTable;
+    private org.jdesktop.swingx.JXTable issuesTable;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTextField shownCount;
     private javax.swing.JLabel title;
     // End of variables declaration//GEN-END:variables
@@ -298,8 +284,12 @@ public final class SonarIssuesTopComponent extends TopComponent {
         if(criteria != null) {
             if(criteria instanceof Severity) {
                 title.setText(criteria.toString()+": "+issues.length);
+                issuesTable.getColumnExt("Severity").setVisible(false);
+                issuesTable.getColumnExt("Rule").setVisible(true);
             }else if(criteria instanceof Rule){
                 title.setText(((Rule)criteria).getTitle()+": "+issues.length);
+                issuesTable.getColumnExt("Rule").setVisible(false);
+                issuesTable.getColumnExt("Severity").setVisible(true);
             }
         }
         showIssuesCount();
