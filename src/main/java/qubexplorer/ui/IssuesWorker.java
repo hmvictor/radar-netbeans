@@ -13,6 +13,7 @@ import org.sonar.wsclient.base.HttpException;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.Authentication;
+import qubexplorer.AuthenticationRepository;
 import qubexplorer.IssueDecorator;
 import qubexplorer.Severity;
 import qubexplorer.SonarQube;
@@ -60,15 +61,6 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
         init();
     }
 
-//    public IssuesWorker(Authentication auth, String address, String key, String severity, SonarTopComponent sonarTopComponent) {
-//        this.address = address;
-//        this.key = key;
-//        this.severity = severity;
-//        this.sonarTopComponent = sonarTopComponent;
-//        this.auth = auth;
-//        init();
-//    }
-
     private void init() {
         handle = ProgressHandleFactory.createHandle("Sonar");
         handle.switchToIndeterminate();
@@ -98,8 +90,11 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
         } catch (ExecutionException ex) {
             if (ex.getCause() instanceof HttpException) {
                 if (((HttpException) ex.getCause()).status() == 401) {
+                    if(auth != null) {
+                        AuthenticationRepository.getInstance().invalidateAuthentication();
+                    }
                     handle.finish();
-                    Authentication authentication = AuthDialog.showAuthDialog(WindowManager.getDefault().getMainWindow());
+                    Authentication authentication = AuthenticationRepository.getInstance().getAuthentication();
                     if (authentication != null) {
                         IssuesWorker worker;
                         if(severity == null){

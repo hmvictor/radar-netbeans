@@ -109,8 +109,8 @@ public class SonarQubeDialog extends javax.swing.JDialog {
         setVisible(false);
         final String severity=(String) comboSeverity.getSelectedItem();
         final String address=NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000");
-        IssuesWorker worker=new IssuesWorker(address, key, severity, sonarTopComponent);
-        worker.execute();
+//        IssuesWorker worker=new IssuesWorker(address, key, severity, sonarTopComponent);
+//        worker.execute();
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
@@ -166,69 +166,70 @@ public class SonarQubeDialog extends javax.swing.JDialog {
     // End of variables declaration//GEN-END:variables
 
     
-    private class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
-
-        private final String address;
-        private final String key;
-        private final String severity;
-        private final Authentication auth;
-        private final SonarIssuesTopComponent sonarTopComponent;
-        private ProgressHandle handle;
-
-        public IssuesWorker(String address, String key, String severity, SonarIssuesTopComponent sonarTopComponent) {
-            this.address = address;
-            this.key = key;
-            this.severity = severity;
-            this.sonarTopComponent = sonarTopComponent;
-            auth=null;
-            init();
-        }
-        
-        public IssuesWorker(Authentication auth, String address, String key, String severity, SonarIssuesTopComponent sonarTopComponent) {
-            this.address = address;
-            this.key = key;
-            this.severity = severity;
-            this.sonarTopComponent = sonarTopComponent;
-            this.auth=auth;
-            init();
-        }
-        
-        private void init() {
-            handle = ProgressHandleFactory.createHandle("Sonar");
-            handle.switchToIndeterminate();
-            handle.start();
-        }
-
-        @Override
-        protected List<IssueDecorator> doInBackground() throws Exception {
-            return new SonarQube(address).getIssues(auth, key, severity);
-        }
-
-        @Override
-        protected void done() {
-            try {
-                sonarTopComponent.setIssues(null, get().toArray(new IssueDecorator[0]));
-                sonarTopComponent.open();
-                sonarTopComponent.requestVisible();
-                sonarTopComponent.setProject(project);
-            } catch (InterruptedException ex) {
-                Exceptions.printStackTrace(ex);
-            } catch(ExecutionException ex){
-                if(ex.getCause() instanceof HttpException) {
-                    if(((HttpException)ex.getCause()).status() == 401) {
-                        handle.finish();
-                        Authentication authentication = AuthDialog.showAuthDialog((Frame)SonarQubeDialog.this.getOwner());
-                        if(authentication != null) {
-                            IssuesWorker worker = new IssuesWorker(authentication, address, key, severity, sonarTopComponent);
-                            worker.execute();
-                        }
-                    }
-                }else{
-                    Exceptions.printStackTrace(ex);
-                }
-            }finally{
-                handle.finish();
-            }
-        }
-    }
+//    private class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
+//
+//        private final String address;
+//        private final String key;
+//        private final String severity;
+//        private final Authentication auth;
+//        private final SonarIssuesTopComponent sonarTopComponent;
+//        private ProgressHandle handle;
+//
+//        public IssuesWorker(String address, String key, String severity, SonarIssuesTopComponent sonarTopComponent) {
+//            this.address = address;
+//            this.key = key;
+//            this.severity = severity;
+//            this.sonarTopComponent = sonarTopComponent;
+//            auth=null;
+//            init();
+//        }
+//        
+//        public IssuesWorker(Authentication auth, String address, String key, String severity, SonarIssuesTopComponent sonarTopComponent) {
+//            this.address = address;
+//            this.key = key;
+//            this.severity = severity;
+//            this.sonarTopComponent = sonarTopComponent;
+//            this.auth=auth;
+//            init();
+//        }
+//        
+//        private void init() {
+//            handle = ProgressHandleFactory.createHandle("Sonar");
+//            handle.switchToIndeterminate();
+//            handle.start();
+//        }
+//
+//        @Override
+//        protected List<IssueDecorator> doInBackground() throws Exception {
+//            return new SonarQube(address).getIssues(auth, key, severity);
+//        }
+//
+//        @Override
+//        protected void done() {
+//            try {
+//                sonarTopComponent.setIssues(null, get().toArray(new IssueDecorator[0]));
+//                sonarTopComponent.open();
+//                sonarTopComponent.requestVisible();
+//                sonarTopComponent.setProject(project);
+//            } catch (InterruptedException ex) {
+//                Exceptions.printStackTrace(ex);
+//            } catch(ExecutionException ex){
+//                if(ex.getCause() instanceof HttpException) {
+//                    if(((HttpException)ex.getCause()).status() == 401) {
+//                        handle.finish();
+//                        Authentication authentication = AuthDialog.showAuthDialog((Frame)SonarQubeDialog.this.getOwner());
+//                        if(authentication != null) {
+//                            IssuesWorker worker = new IssuesWorker(authentication, address, key, severity, sonarTopComponent);
+//                            worker.execute();
+//                        }
+//                    }
+//                }else{
+//                    Exceptions.printStackTrace(ex);
+//                }
+//            }finally{
+//                handle.finish();
+//            }
+//        }
+//    }
+    
 }

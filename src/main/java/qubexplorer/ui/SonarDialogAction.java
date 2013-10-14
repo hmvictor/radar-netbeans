@@ -52,69 +52,6 @@ public final class SonarDialogAction implements ActionListener {
     public void actionPerformed(ActionEvent ev) {
         CountsWorker worker=new CountsWorker(context);
         worker.execute();
-        
-//        Frame frame = WindowManager.getDefault().getMainWindow();
-//        SonarQubeDialog dialog = new SonarQubeDialog(frame, true, context);
-//        dialog.setLocationRelativeTo(frame);
-//        dialog.setVisible(true);
-    }
-    
-    private class CountsWorker extends SwingWorker<Counting, Void>{
-        private ProgressHandle handle;
-        private Project project;
-        private Authentication auth;
-
-        public CountsWorker(Project project) {
-            this.project=project;
-            init();
-        }
-        
-        public CountsWorker(Authentication auth, Project project) {
-            this.auth=auth;
-            this.project=project;
-            init();
-        }
-        
-        @Override
-        protected Counting doInBackground() throws Exception {
-            return new SonarQube(NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000")).getCounting(auth, SonarQube.toResource(project));
-        }
-
-        @Override
-        protected void done() {
-            try {
-                Counting counting = get();
-                SonarMainTopComponent infoTopComponent = (SonarMainTopComponent) WindowManager.getDefault().findTopComponent("InfoTopComponent");
-                infoTopComponent.setProject(project);
-                infoTopComponent.setCounting(counting);
-                infoTopComponent.open();
-                infoTopComponent.requestVisible();
-            } catch (InterruptedException ex) {
-                Exceptions.printStackTrace(ex);
-            } catch (ExecutionException ex) {
-                if(ex.getCause() instanceof HttpException) {
-                    if(((HttpException)ex.getCause()).status() == 401) {
-                        handle.finish();
-                        Authentication authentication = AuthDialog.showAuthDialog(WindowManager.getDefault().getMainWindow());
-                        if(authentication != null) {
-                            CountsWorker worker = new CountsWorker(authentication, project);
-                            worker.execute();
-                        }
-                    }
-                }else{
-                    Exceptions.printStackTrace(ex);
-                }
-            } finally{
-                handle.finish();
-            }
-        }
-
-        private void init() {
-            handle = ProgressHandleFactory.createHandle("Sonar");
-            handle.switchToIndeterminate();
-            handle.start();
-        }
-        
     }
     
 }
