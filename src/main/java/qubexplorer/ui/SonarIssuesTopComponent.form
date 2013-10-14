@@ -77,9 +77,6 @@
           <ResourceString bundle="qubexplorer/ui/Bundle.properties" key="SonarIssuesTopComponent.filterText.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
-      <Events>
-        <EventHandler event="propertyChange" listener="java.beans.PropertyChangeListener" parameters="java.beans.PropertyChangeEvent" handler="filterTextPropertyChange"/>
-      </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="title">
       <Properties>
@@ -126,6 +123,9 @@
             </Property>
             <Property name="columnControlVisible" type="boolean" value="true"/>
           </Properties>
+          <Events>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="issuesTableMouseClicked"/>
+          </Events>
         </Component>
       </SubComponents>
     </Container>

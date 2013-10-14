@@ -123,11 +123,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel1.text")); // NOI18N
 
         filterText.setText(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.filterText.text")); // NOI18N
-        filterText.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-            public void propertyChange(java.beans.PropertyChangeEvent evt) {
-                filterTextPropertyChange(evt);
-            }
-        });
 
         title.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         org.openide.awt.Mnemonics.setLocalizedText(title, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.title.text")); // NOI18N
@@ -163,6 +158,11 @@ public final class SonarIssuesTopComponent extends TopComponent {
             }
         });
         issuesTable.setColumnControlVisible(true);
+        issuesTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                issuesTableMouseClicked(evt);
+            }
+        });
         jScrollPane2.setViewportView(issuesTable);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -201,8 +201,26 @@ public final class SonarIssuesTopComponent extends TopComponent {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void filterTextPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_filterTextPropertyChange
-    }//GEN-LAST:event_filterTextPropertyChange
+    private void issuesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMouseClicked
+        if (evt.getClickCount() == 2) {
+            int row = issuesTable.rowAtPoint(evt.getPoint());
+            if (row != -1) {
+                row=issuesTable.getRowSorter().convertRowIndexToModel(row);
+                try {
+                    Sources sources = ProjectUtils.getSources(findProject(project, getBasicPomInfo(issues[row].componentKey())));
+                    SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
+                    File file = new File(sourceGroups[0].getRootFolder().getPath(), toPath(issues[row].componentKey()) + ".java");
+                    if(issues[row].line() == null) {
+                        openFile(file, 1);
+                    }else{
+                        openFile(file, issues[row].line());
+                    }
+                } catch (IOException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }
+        }
+    }//GEN-LAST:event_issuesTableMouseClicked
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField filterText;
@@ -377,9 +395,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
     
     public class Location {
         private String component;
-        private int lineNumber;
+        private Integer lineNumber;
 
-        public Location(String component, int lineNumber) {
+        public Location(String component, Integer lineNumber) {
             this.component = component;
             this.lineNumber = lineNumber;
         }
@@ -388,7 +406,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
             return component;
         }
 
-        public int getLineNumber() {
+        public Integer getLineNumber() {
             return lineNumber;
         }
         
