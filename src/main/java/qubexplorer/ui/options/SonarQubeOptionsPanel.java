@@ -1,16 +1,12 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package qubexplorer.ui.options;
 
 import org.openide.util.NbPreferences;
 
-public final class SonarQubePanel extends javax.swing.JPanel {
+public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
 
     private final SonarQubeOptionsPanelController controller;
 
-    SonarQubePanel(SonarQubeOptionsPanelController controller) {
+    SonarQubeOptionsPanel(SonarQubeOptionsPanelController controller) {
         this.controller = controller;
         initComponents();
         // TODO listen to changes in form fields and call controller.changed()
@@ -27,9 +23,9 @@ public final class SonarQubePanel extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
         serverAddress = new javax.swing.JTextField();
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SonarQubePanel.class, "SonarQubePanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SonarQubeOptionsPanel.class, "SonarQubeOptionsPanel.jLabel1.text")); // NOI18N
 
-        serverAddress.setText(org.openide.util.NbBundle.getMessage(SonarQubePanel.class, "SonarQubePanel.serverAddress.text")); // NOI18N
+        serverAddress.setText(org.openide.util.NbBundle.getMessage(SonarQubeOptionsPanel.class, "SonarQubeOptionsPanel.serverAddress.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -54,11 +50,11 @@ public final class SonarQubePanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     void load() {
-         serverAddress.setText(NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000"));
+         serverAddress.setText(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"));
     }
 
     void store() {
-         NbPreferences.forModule(SonarQubePanel.class).put("address", serverAddress.getText());
+         NbPreferences.forModule(SonarQubeOptionsPanel.class).put("address", serverAddress.getText());
     }
 
     boolean valid() {

@@ -10,14 +10,12 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
 import org.sonar.wsclient.base.HttpException;
-import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.Authentication;
-import qubexplorer.AuthenticationRepository;
 import qubexplorer.IssueDecorator;
 import qubexplorer.Severity;
 import qubexplorer.SonarQube;
-import qubexplorer.ui.options.SonarQubePanel;
+import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
  *
@@ -34,14 +32,14 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
     public IssuesWorker(Project project, Severity severity) {
         this.project=project;
         this.severity=severity;
-        this.address = NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000");
+        this.address = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
         init();
     }
     
     public IssuesWorker(Project project, Rule rule) {
         this.project=project;
         this.rule=rule;
-        this.address = NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000");
+        this.address = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
         init();
     }
     
@@ -49,7 +47,7 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
         this.project=project;
         this.severity=severity;
         this.auth=auth;
-        this.address = NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000");
+        this.address = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
         init();
     }
     
@@ -57,7 +55,7 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
         this.auth=auth;
         this.project=project;
         this.rule=rule;
-        this.address = NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000");
+        this.address = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
         init();
     }
 

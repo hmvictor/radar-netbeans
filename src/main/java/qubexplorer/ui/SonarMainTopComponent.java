@@ -1,4 +1,4 @@
-package qubexplorer.info;
+package qubexplorer.ui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,7 +16,6 @@ import org.openide.util.NbBundle.Messages;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.Counting;
 import qubexplorer.Severity;
-import qubexplorer.ui.IssuesWorker;
 
 /**
  * Top component which displays something.
@@ -102,11 +101,11 @@ public final class SonarMainTopComponent extends TopComponent {
         jPanel5 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jPanel4 = new javax.swing.JPanel();
-        severityPanelBlocker = new qubexplorer.info.RuleCountPanel();
-        severityPanelCritical = new qubexplorer.info.RuleCountPanel();
-        severityPanelMajor = new qubexplorer.info.RuleCountPanel();
-        severityPanelMinor = new qubexplorer.info.RuleCountPanel();
-        severityPanelInfo = new qubexplorer.info.RuleCountPanel();
+        severityPanelBlocker = new qubexplorer.ui.RuleCountPanel();
+        severityPanelCritical = new qubexplorer.ui.RuleCountPanel();
+        severityPanelMajor = new qubexplorer.ui.RuleCountPanel();
+        severityPanelMinor = new qubexplorer.ui.RuleCountPanel();
+        severityPanelInfo = new qubexplorer.ui.RuleCountPanel();
         jPanel6 = new javax.swing.JPanel();
         totalCount = new javax.swing.JTextField();
         jButton6 = new javax.swing.JButton();
@@ -473,11 +472,11 @@ public final class SonarMainTopComponent extends TopComponent {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel rulesCompliance;
-    private qubexplorer.info.RuleCountPanel severityPanelBlocker;
-    private qubexplorer.info.RuleCountPanel severityPanelCritical;
-    private qubexplorer.info.RuleCountPanel severityPanelInfo;
-    private qubexplorer.info.RuleCountPanel severityPanelMajor;
-    private qubexplorer.info.RuleCountPanel severityPanelMinor;
+    private qubexplorer.ui.RuleCountPanel severityPanelBlocker;
+    private qubexplorer.ui.RuleCountPanel severityPanelCritical;
+    private qubexplorer.ui.RuleCountPanel severityPanelInfo;
+    private qubexplorer.ui.RuleCountPanel severityPanelMajor;
+    private qubexplorer.ui.RuleCountPanel severityPanelMinor;
     private javax.swing.JLabel title;
     private javax.swing.JTextField totalCount;
     // End of variables declaration//GEN-END:variables
@@ -513,6 +512,7 @@ public final class SonarMainTopComponent extends TopComponent {
         format.setMinimumFractionDigits(1);
         format.setMaximumFractionDigits(1);
         rulesCompliance.setText(format.format(counting.getRulesCcompliance())+" %");
+        revalidate();
     }
 
     void writeProperties(java.util.Properties p) {

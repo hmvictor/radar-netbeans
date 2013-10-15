@@ -19,15 +19,17 @@ import org.openide.util.Lookup;
 @org.openide.util.NbBundle.Messages({"AdvancedOption_DisplayName_SonarQube=SonarQube", "AdvancedOption_Keywords_SonarQube=sonar"})
 public final class SonarQubeOptionsPanelController extends OptionsPanelController {
 
-    private SonarQubePanel panel;
+    private SonarQubeOptionsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
 
+    @Override
     public void update() {
         getPanel().load();
         changed = false;
     }
 
+    @Override
     public void applyChanges() {
         getPanel().store();
         changed = false;
@@ -61,9 +63,9 @@ public final class SonarQubeOptionsPanelController extends OptionsPanelControlle
         pcs.removePropertyChangeListener(l);
     }
 
-    private SonarQubePanel getPanel() {
+    private SonarQubeOptionsPanel getPanel() {
         if (panel == null) {
-            panel = new SonarQubePanel(this);
+            panel = new SonarQubeOptionsPanel(this);
         }
         return panel;
     }
@@ -75,4 +77,5 @@ public final class SonarQubeOptionsPanelController extends OptionsPanelControlle
         }
         pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }
+    
 }

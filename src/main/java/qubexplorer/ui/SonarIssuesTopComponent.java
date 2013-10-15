@@ -28,14 +28,11 @@ import org.openide.text.Line;
 import org.openide.util.Exceptions;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.NbPreferences;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.IssueDecorator;
 import qubexplorer.MvnModelFactory;
 import qubexplorer.Severity;
-import qubexplorer.SonarQube;
-import qubexplorer.ui.options.SonarQubePanel;
 
 /**
  * Top component which displays something.
@@ -412,7 +409,11 @@ public final class SonarIssuesTopComponent extends TopComponent {
         
         @Override
         public String toString() {
-            return component+" ["+lineNumber+"]";
+            if(lineNumber == null) {
+                return component;
+            }else{
+                return component+" ["+lineNumber+"]";
+            }
         }
         
     }

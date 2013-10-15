@@ -1,7 +1,7 @@
-package qubexplorer;
+package qubexplorer.ui;
 
 import org.openide.windows.WindowManager;
-import qubexplorer.ui.AuthDialog;
+import qubexplorer.Authentication;
 
 /**
  *

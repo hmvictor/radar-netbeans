@@ -10,11 +10,9 @@ import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
 import org.sonar.wsclient.base.HttpException;
 import qubexplorer.Authentication;
-import qubexplorer.AuthenticationRepository;
 import qubexplorer.Counting;
 import qubexplorer.SonarQube;
-import qubexplorer.info.SonarMainTopComponent;
-import qubexplorer.ui.options.SonarQubePanel;
+import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
  *
@@ -38,7 +36,7 @@ class CountsWorker extends SwingWorker<Counting, Void> {
 
     @Override
     protected Counting doInBackground() throws Exception {
-        return new SonarQube(NbPreferences.forModule(SonarQubePanel.class).get("address", "http://localhost:9000")).getCounting(auth, SonarQube.toResource(project));
+        return new SonarQube(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000")).getCounting(auth, SonarQube.toResource(project));
     }
 
     @Override

@@ -1,11 +1,11 @@
 package qubexplorer;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.project.Project;
 import org.openide.filesystems.FileObject;
 
@@ -20,13 +20,13 @@ public class MvnModelFactory {
     }
     
     public Model createModel(FileObject pomFile) throws IOException{
-        Model model = null;
+        Model model;
         MavenXpp3Reader mavenreader = new MavenXpp3Reader();
         try {
             model = mavenreader.read(new InputStreamReader(pomFile.getInputStream()));
             model.setPomFile(new File(pomFile.getPath()));
             return model;
-        } catch (Exception ex) {
+        } catch (IOException | XmlPullParserException ex) {
             throw new RuntimeException(ex);
         }
     }

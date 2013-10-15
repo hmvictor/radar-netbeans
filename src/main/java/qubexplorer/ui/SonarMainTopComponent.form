@@ -405,7 +405,7 @@
               <Group type="102" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="jScrollPane1" pref="804" max="32767" attributes="0"/>
+                      <Component id="jScrollPane1" pref="0" max="32767" attributes="0"/>
                       <Group type="102" attributes="0">
                           <Component id="title" max="32767" attributes="0"/>
                           <EmptySpace type="separate" max="-2" attributes="0"/>
@@ -452,7 +452,7 @@
                 <Property name="axis" type="int" value="3"/>
               </Layout>
               <SubComponents>
-                <Component class="qubexplorer.info.RuleCountPanel" name="severityPanelBlocker">
+                <Component class="qubexplorer.ui.RuleCountPanel" name="severityPanelBlocker">
                   <Properties>
                     <Property name="alignmentY" type="float" value="0.0"/>
                     <Property name="severity" type="qubexplorer.Severity" editor="org.netbeans.modules.form.editors.EnumEditor">
@@ -460,7 +460,7 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="qubexplorer.info.RuleCountPanel" name="severityPanelCritical">
+                <Component class="qubexplorer.ui.RuleCountPanel" name="severityPanelCritical">
                   <Properties>
                     <Property name="alignmentY" type="float" value="0.0"/>
                     <Property name="severity" type="qubexplorer.Severity" editor="org.netbeans.modules.form.editors.EnumEditor">
@@ -468,7 +468,7 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="qubexplorer.info.RuleCountPanel" name="severityPanelMajor">
+                <Component class="qubexplorer.ui.RuleCountPanel" name="severityPanelMajor">
                   <Properties>
                     <Property name="alignmentY" type="float" value="0.0"/>
                     <Property name="severity" type="qubexplorer.Severity" editor="org.netbeans.modules.form.editors.EnumEditor">
@@ -476,7 +476,7 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="qubexplorer.info.RuleCountPanel" name="severityPanelMinor">
+                <Component class="qubexplorer.ui.RuleCountPanel" name="severityPanelMinor">
                   <Properties>
                     <Property name="alignmentY" type="float" value="0.0"/>
                     <Property name="severity" type="qubexplorer.Severity" editor="org.netbeans.modules.form.editors.EnumEditor">
@@ -484,7 +484,7 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="qubexplorer.info.RuleCountPanel" name="severityPanelInfo">
+                <Component class="qubexplorer.ui.RuleCountPanel" name="severityPanelInfo">
                   <Properties>
                     <Property name="alignmentY" type="float" value="0.0"/>
                     <Property name="severity" type="qubexplorer.Severity" editor="org.netbeans.modules.form.editors.EnumEditor">
@@ -514,7 +514,7 @@
                           <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="jSeparator1" pref="859" max="32767" attributes="0"/>
+                                  <Component id="jSeparator1" pref="1111" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
                           </Group>

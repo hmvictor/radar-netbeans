@@ -1,11 +1,10 @@
-package qubexplorer.info;
+package qubexplorer.ui;
 
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemListener;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,6 +72,7 @@ public class RuleCountPanel extends javax.swing.JPanel {
         buttons = new JButton[rulesCount.size()];
         fields = new JTextField[rulesCount.size()];
         int counter = 0;
+        expandButton.setText("+");
         boolean visible = expandButton.getText().equals("-");
         int sum = 0;
         List<Rule> keys = new ArrayList<>(rulesCount.keySet());
@@ -149,6 +149,7 @@ public class RuleCountPanel extends javax.swing.JPanel {
             .addGroup(sequentialGroup)
         );
         adjustSize();
+        revalidate();
     }
     
     private void adjustSize(){
