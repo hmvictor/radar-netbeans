@@ -41,6 +41,10 @@ public class SonarQube {
         this("http://localhost:9000");
     }
     
+    public double getRulesCompliance(String resource) {
+        return getRulesCompliance(null, resource);
+    }
+    
     public double getRulesCompliance(Authentication auth, String resource) {
         Sonar sonar;
         if(auth == null) {
@@ -64,6 +68,10 @@ public class SonarQube {
             query.severities(severity.toUpperCase());
         }
         return getIssues(auth, query);
+    }
+    
+    public List<IssueDecorator> getIssuesByRule(String resource, String ruleKey) {
+        return getIssuesByRule(null, resource, ruleKey);
     }
     
     public List<IssueDecorator> getIssuesByRule(Authentication auth, String resource, String ruleKey) {
@@ -97,6 +105,10 @@ public class SonarQube {
             pageIndex++;
         }while(pageIndex <= result.paging().pages());
         return issues;
+    }
+    
+    public Rule getRule(String ruleKey) {
+        return getRule(null, ruleKey);
     }
     
     public Rule getRule(Authentication auth, String ruleKey) {
