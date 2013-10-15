@@ -10,7 +10,7 @@ public class Authentication {
 
     public Authentication(String username, char[] password) {
         this.username = username;
-        this.password = password;
+        this.password = password.clone();
     }
 
     public String getUsername() {
@@ -18,7 +18,7 @@ public class Authentication {
     }
 
     public char[] getPassword() {
-        return password;
+        return password.clone();
     }
     
 }

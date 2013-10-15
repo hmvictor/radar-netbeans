@@ -15,20 +15,16 @@ import org.openide.filesystems.FileObject;
  */
 public class MvnModelFactory {
     
-    public Model createModel(Project project) throws IOException{
+    public Model createModel(Project project) throws IOException, XmlPullParserException {
         return createModel(project.getProjectDirectory().getFileObject("pom.xml"));
     }
     
-    public Model createModel(FileObject pomFile) throws IOException{
+    public Model createModel(FileObject pomFile) throws IOException, XmlPullParserException {
         Model model;
         MavenXpp3Reader mavenreader = new MavenXpp3Reader();
-        try {
-            model = mavenreader.read(new InputStreamReader(pomFile.getInputStream()));
-            model.setPomFile(new File(pomFile.getPath()));
-            return model;
-        } catch (IOException | XmlPullParserException ex) {
-            throw new RuntimeException(ex);
-        }
+        model = mavenreader.read(new InputStreamReader(pomFile.getInputStream()));
+        model.setPomFile(new File(pomFile.getPath()));
+        return model;
     }
     
 }

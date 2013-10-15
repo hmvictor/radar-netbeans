@@ -7,7 +7,6 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
 import org.openide.util.Exceptions;
-import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
 import org.sonar.wsclient.base.HttpException;
 import org.sonar.wsclient.services.Rule;
@@ -15,14 +14,12 @@ import qubexplorer.Authentication;
 import qubexplorer.IssueDecorator;
 import qubexplorer.Severity;
 import qubexplorer.SonarQube;
-import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
  *
  * @author Victor
  */
 public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
-    private final String address;
     private Project project;
     private Severity severity;
     private Rule rule;
@@ -32,14 +29,12 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
     public IssuesWorker(Project project, Severity severity) {
         this.project=project;
         this.severity=severity;
-        this.address = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
         init();
     }
     
     public IssuesWorker(Project project, Rule rule) {
         this.project=project;
         this.rule=rule;
-        this.address = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
         init();
     }
     
@@ -47,7 +42,6 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
         this.project=project;
         this.severity=severity;
         this.auth=auth;
-        this.address = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
         init();
     }
     
@@ -55,7 +49,6 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
         this.auth=auth;
         this.project=project;
         this.rule=rule;
-        this.address = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
         init();
     }
 
@@ -68,11 +61,11 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
     @Override
     protected List<IssueDecorator> doInBackground() throws Exception {
         if(severity != null) {
-            return new SonarQube(address).getIssues(auth, SonarQube.toResource(project), severity.toString());
+            return SonarQubeFactory.createSonarQubeInstance().getIssuesBySeverity(auth, SonarQube.toResource(project), severity.toString());
         }else if(rule != null){
-            return new SonarQube(address).getIssuesByRule(auth, SonarQube.toResource(project), rule.getKey());
+            return SonarQubeFactory.createSonarQubeInstance().getIssuesByRule(auth, SonarQube.toResource(project), rule.getKey());
         }else{
-            return new SonarQube(address).getIssues(auth, SonarQube.toResource(project), "any");
+            return SonarQubeFactory.createSonarQubeInstance().getIssuesBySeverity(auth, SonarQube.toResource(project), "any");
         }
     }
 

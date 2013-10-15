@@ -6,13 +6,11 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
 import org.openide.util.Exceptions;
-import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
 import org.sonar.wsclient.base.HttpException;
 import qubexplorer.Authentication;
 import qubexplorer.Counting;
 import qubexplorer.SonarQube;
-import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
  *
@@ -36,7 +34,7 @@ class CountsWorker extends SwingWorker<Counting, Void> {
 
     @Override
     protected Counting doInBackground() throws Exception {
-        return new SonarQube(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000")).getCounting(auth, SonarQube.toResource(project));
+        return SonarQubeFactory.createSonarQubeInstance().getCounting(auth, SonarQube.toResource(project));
     }
 
     @Override

@@ -523,7 +523,7 @@ public final class SonarMainTopComponent extends TopComponent {
     }
 
     void readProperties(java.util.Properties p) {
-        String version = p.getProperty("version");
+        //String version = p.getProperty("version");
         // TODO read your settings according to their version
     }
     

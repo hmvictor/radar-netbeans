@@ -10,6 +10,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import org.apache.maven.model.Model;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
@@ -213,7 +214,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                     }else{
                         openFile(file, issues[row].line());
                     }
-                } catch (IOException ex) {
+                } catch (IOException | XmlPullParserException ex) {
                     Exceptions.printStackTrace(ex);
                 }
             }
@@ -334,7 +335,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         return new BasicPomInfo(tokens[0], tokens[1]);
     }
 
-    private static FileObject findMvnDir(Model model, BasicPomInfo basicPomInfo, String groupId) throws IOException {
+    private static FileObject findMvnDir(Model model, BasicPomInfo basicPomInfo, String groupId) throws IOException, XmlPullParserException {
         MvnModelFactory factory = new MvnModelFactory();
         for (String module : model.getModules()) {
             FileObject moduleFile = FileUtil.toFileObject(new File(model.getProjectDirectory(), module));
@@ -352,7 +353,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         return null;
     }
 
-    private static Project findProject(Project project, BasicPomInfo basicPomInfo) throws IOException {
+    private static Project findProject(Project project, BasicPomInfo basicPomInfo) throws IOException, XmlPullParserException {
         Model model = new MvnModelFactory().createModel(project);
         if (model.getGroupId().equals(basicPomInfo.getGroupId()) && model.getArtifactId().equals(basicPomInfo.getArtifactId())) {
             return project;

@@ -54,42 +54,24 @@ public class SonarQube {
         return r.getMeasure("violations_density").getValue();
     }
     
-    public List<IssueDecorator> getIssues(String resource, String severity) {
-        return getIssues(null, resource, severity);
+    public List<IssueDecorator> getIssuesBySeverity(String resource, String severity) {
+        return getIssuesBySeverity(null, resource, severity);
     }
     
-    public List<IssueDecorator> getIssues(Authentication auth, String resource, String severity) {
-        SonarClient client;
-        if(auth == null) {
-            client = SonarClient.create(address);
-        }else{
-            client=SonarClient.builder().url(address).login(auth.getUsername()).password(new String(auth.getPassword())).build();
+    public List<IssueDecorator> getIssuesBySeverity(Authentication auth, String resource, String severity) {
+        IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN");
+        if(!severity.equalsIgnoreCase("any")) {
+            query.severities(severity.toUpperCase());
         }
-        IssueClient issueClient = client.issueClient();
-        List<IssueDecorator> issues=new LinkedList<>();
-        Map<String, Rule> rulesCache=new HashMap<>();
-        Issues result;
-        int pageIndex=1;
-        do{
-            IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN").pageIndex(pageIndex);
-            if(!severity.equalsIgnoreCase("any")) {
-                query.severities(severity.toUpperCase());
-            }
-            result = issueClient.find(query);
-            for(Issue issue:result.list()) {
-                Rule rule = rulesCache.get(issue.ruleKey());
-                if(rule == null) {
-                    rule=getRule(auth, issue.ruleKey());
-                    rulesCache.put(issue.ruleKey(), rule);
-                }
-                issues.add(new IssueDecorator(issue, rule));
-            }
-            pageIndex++;
-        }while(pageIndex <= result.paging().pages());
-        return issues;
+        return getIssues(auth, query);
     }
     
     public List<IssueDecorator> getIssuesByRule(Authentication auth, String resource, String ruleKey) {
+        IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN").rules(ruleKey);
+        return getIssues(auth, query);
+    }
+    
+    private List<IssueDecorator> getIssues(Authentication auth, IssueQuery query) {
         SonarClient client;
         if(auth == null) {
             client = SonarClient.create(address);
@@ -102,7 +84,7 @@ public class SonarQube {
         Issues result;
         int pageIndex=1;
         do{
-            IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN").pageIndex(pageIndex).rules(ruleKey);
+            query.pageIndex(pageIndex);
             result = issueClient.find(query);
             for(Issue issue:result.list()) {
                 Rule rule = rulesCache.get(issue.ruleKey());
@@ -143,7 +125,7 @@ public class SonarQube {
     public Counting getCounting(Authentication auth, String resource) {
         Counting counting=new Counting();
         for(Severity severity: Severity.values()) {
-            List<IssueDecorator> issues = getIssues(auth, resource, severity.toString());
+            List<IssueDecorator> issues = getIssuesBySeverity(auth, resource, severity.toString());
             Map<Rule, Integer> counts=new TreeMap<>(new Comparator<Rule>(){
 
                 @Override
@@ -168,16 +150,11 @@ public class SonarQube {
         return counting;
     }
 
-    public static String toResource(Project project) {
+    public static String toResource(Project project) throws IOException, XmlPullParserException {
         FileObject pomFile = project.getProjectDirectory().getFileObject("pom.xml");
-        Model model = null;
         MavenXpp3Reader mavenreader = new MavenXpp3Reader();
-        try {
-            model = mavenreader.read(new InputStreamReader(pomFile.getInputStream()));
-            model.setPomFile(new File(pomFile.getPath()));
-        } catch (IOException | XmlPullParserException ex) {
-            throw new RuntimeException(ex);
-        }
+        Model model = mavenreader.read(new InputStreamReader(pomFile.getInputStream()));
+        model.setPomFile(new File(pomFile.getPath()));
         return model.getGroupId()+":"+model.getArtifactId();
     }
     
