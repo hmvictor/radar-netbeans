@@ -1,16 +1,20 @@
 package qubexplorer.ui;
 
+import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.Comparator;
 import javax.swing.DefaultRowSorter;
+import javax.swing.JTable;
 import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import org.apache.maven.model.Model;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.jdesktop.swingx.JXHyperlink;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
@@ -81,18 +85,16 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 filterTextChanged();
             }
         });
-        ((DefaultRowSorter)issuesTable.getRowSorter()).setComparator(1, new Comparator<Location>() {
-
+        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(1, new Comparator<Location>() {
             @Override
             public int compare(Location t, Location t1) {
-                int result=t.component.compareTo(t1.component);
-                if(result != 0) {
+                int result = t.component.compareTo(t1.component);
+                if (result != 0) {
                     return result;
-                }else{
+                } else {
                     return Integer.compare(t.lineNumber, t1.lineNumber);
                 }
             }
-            
         });
     }
 
@@ -138,11 +140,11 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
             },
             new String [] {
-                "MvnId", "Location", "Message", "Severity", "Rule"
+                "Message", "Severity", "Location", "MvnId", "Rule"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+                java.lang.String.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.String.class
             };
             boolean[] canEdit = new boolean [] {
                 false, false, false, false, false
@@ -204,14 +206,14 @@ public final class SonarIssuesTopComponent extends TopComponent {
         if (evt.getClickCount() == 2) {
             int row = issuesTable.rowAtPoint(evt.getPoint());
             if (row != -1) {
-                row=issuesTable.getRowSorter().convertRowIndexToModel(row);
+                row = issuesTable.getRowSorter().convertRowIndexToModel(row);
                 try {
                     Sources sources = ProjectUtils.getSources(findProject(project, getBasicPomInfo(issues[row].componentKey())));
                     SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
                     File file = new File(sourceGroups[0].getRootFolder().getPath(), toPath(issues[row].componentKey()) + ".java");
-                    if(issues[row].line() == null) {
+                    if (issues[row].line() == null) {
                         openFile(file, 1);
-                    }else{
+                    } else {
                         openFile(file, issues[row].line());
                     }
                 } catch (IOException | XmlPullParserException ex) {
@@ -220,7 +222,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
             }
         }
     }//GEN-LAST:event_issuesTableMouseClicked
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField filterText;
     private org.jdesktop.swingx.JXTable issuesTable;
@@ -293,20 +294,20 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
         for (IssueDecorator issue : issues) {
             String name = toPath(issue.componentKey()) + ".java";
-            String mvnId=toMvnId(issue.componentKey());
-            model.addRow(new Object[]{mvnId,  new Location(name, issue.line()), issue.message(), issue.severity(), issue.rule().getTitle()});
+            String mvnId = toMvnId(issue.componentKey());
+            model.addRow(new Object[]{issue.message(), issue.severity(), new Location(name, issue.line()), mvnId,  issue.rule().getTitle()});
         }
         this.issues = issues;
-        if(criteria instanceof Severity) {
-            title.setText(criteria.toString()+": "+issues.length);
+        if (criteria instanceof Severity) {
+            title.setText(criteria.toString() + ": " + issues.length);
             issuesTable.getColumnExt("Severity").setVisible(false);
             issuesTable.getColumnExt("Rule").setVisible(true);
-        }else if(criteria instanceof Rule){
-            title.setText(((Rule)criteria).getTitle()+": "+issues.length);
+        } else if (criteria instanceof Rule) {
+            title.setText(((Rule) criteria).getTitle() + ": " + issues.length);
             issuesTable.getColumnExt("Rule").setVisible(false);
             issuesTable.getColumnExt("Severity").setVisible(true);
-        }else if(criteria == null) {
-            title.setText("Total: "+issues.length);
+        } else if (criteria == null) {
+            title.setText("Total: " + issues.length);
         }
         showIssuesCount();
     }
@@ -319,7 +320,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
         return path.replace(".", "/");
     }
-    
+
     public String toMvnId(String componentKey) {
         String path = componentKey;
         int index = path.lastIndexOf(':');
@@ -340,7 +341,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         for (String module : model.getModules()) {
             FileObject moduleFile = FileUtil.toFileObject(new File(model.getProjectDirectory(), module));
             Model m = factory.createModel(moduleFile.getFileObject("pom.xml"));
-            String tmpGroupId=m.getGroupId() == null ? groupId: m.getGroupId();
+            String tmpGroupId = m.getGroupId() == null ? groupId : m.getGroupId();
             if (tmpGroupId.equals(basicPomInfo.getGroupId()) && m.getArtifactId().equals(basicPomInfo.getArtifactId())) {
                 return moduleFile;
             } else {
@@ -367,7 +368,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }
 
     private void showIssuesCount() {
-        NumberFormat format=NumberFormat.getIntegerInstance();
+        NumberFormat format = NumberFormat.getIntegerInstance();
         shownCount.setText(format.format(issuesTable.getRowSorter().getViewRowCount()));
     }
 
@@ -388,10 +389,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
         public String getArtifactId() {
             return artifactId;
         }
-        
     }
-    
+
     public class Location {
+
         private String component;
         private Integer lineNumber;
 
@@ -407,16 +408,15 @@ public final class SonarIssuesTopComponent extends TopComponent {
         public Integer getLineNumber() {
             return lineNumber;
         }
-        
+
         @Override
         public String toString() {
-            if(lineNumber == null) {
+            if (lineNumber == null) {
                 return component;
-            }else{
-                return component+" ["+lineNumber+"]";
+            } else {
+                return component + " [" + lineNumber + "]";
             }
         }
-        
     }
-    
+
 }

@@ -130,7 +130,9 @@ public class AuthDialog extends javax.swing.JDialog {
         AuthDialog authDialog = new AuthDialog(frame, true);
         authDialog.setLocationRelativeTo(frame);
         authDialog.setVisible(true);
-        return authDialog.getAuthentication();
+        Authentication auth = authDialog.getAuthentication();
+        authDialog.dispose();
+        return auth;
     } 
     
     

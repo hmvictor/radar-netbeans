@@ -7,4 +7,14 @@
                 <goal>sonar:sonar</goal>
             </goals>
         </action>
+        <action>
+            <actionName>CUSTOM-Clean &amp; Run</actionName>
+            <displayName>Clean &amp; Run</displayName>
+            <goals>
+                <goal>clean</goal>
+                <goal>install</goal>
+                <goal>nbm:cluster</goal>
+                <goal>nbm:run-ide</goal>
+            </goals>
+        </action>
     </actions>
