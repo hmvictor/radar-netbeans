@@ -107,11 +107,11 @@ public final class SonarMainTopComponent extends TopComponent {
         severityPanelMinor = new qubexplorer.ui.RuleCountPanel();
         severityPanelInfo = new qubexplorer.ui.RuleCountPanel();
         jPanel6 = new javax.swing.JPanel();
-        totalCount = new javax.swing.JTextField();
-        jSeparator1 = new javax.swing.JSeparator();
-        jButton7 = new javax.swing.JButton();
-        listAllIssues = new javax.swing.JButton();
         jLabel7 = new javax.swing.JLabel();
+        jPanel7 = new javax.swing.JPanel();
+        totalCount = new javax.swing.JTextField();
+        listAllIssues = new javax.swing.JButton();
+        jSeparator2 = new javax.swing.JSeparator();
         title = new javax.swing.JLabel();
         rulesCompliance = new javax.swing.JLabel();
 
@@ -337,6 +337,15 @@ public final class SonarMainTopComponent extends TopComponent {
         jPanel4.add(severityPanelInfo);
 
         jPanel6.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel6.setLayout(new java.awt.BorderLayout());
+
+        jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getSize()+8f));
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel7, org.openide.util.NbBundle.getMessage(SonarMainTopComponent.class, "SonarMainTopComponent.jLabel7.text")); // NOI18N
+        jLabel7.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        jLabel7.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 20, 1, 1));
+        jPanel6.add(jLabel7, java.awt.BorderLayout.CENTER);
+
+        jPanel7.setOpaque(false);
 
         totalCount.setEditable(false);
         totalCount.setColumns(10);
@@ -345,10 +354,7 @@ public final class SonarMainTopComponent extends TopComponent {
         totalCount.setText(org.openide.util.NbBundle.getMessage(SonarMainTopComponent.class, "SonarMainTopComponent.totalCount.text")); // NOI18N
         totalCount.setBorder(null);
         totalCount.setOpaque(false);
-
-        jButton7.setFont(new java.awt.Font("Consolas", 0, 13)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jButton7, org.openide.util.NbBundle.getMessage(SonarMainTopComponent.class, "SonarMainTopComponent.jButton7.text")); // NOI18N
-        jButton7.setContentAreaFilled(false);
+        jPanel7.add(totalCount);
 
         org.openide.awt.Mnemonics.setLocalizedText(listAllIssues, org.openide.util.NbBundle.getMessage(SonarMainTopComponent.class, "SonarMainTopComponent.listAllIssues.text")); // NOI18N
         listAllIssues.addActionListener(new java.awt.event.ActionListener() {
@@ -356,45 +362,10 @@ public final class SonarMainTopComponent extends TopComponent {
                 listAllIssuesActionPerformed(evt);
             }
         });
+        jPanel7.add(listAllIssues);
 
-        jLabel7.setFont(jLabel7.getFont().deriveFont(jLabel7.getFont().getSize()+8f));
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel7, org.openide.util.NbBundle.getMessage(SonarMainTopComponent.class, "SonarMainTopComponent.jLabel7.text")); // NOI18N
-
-        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
-        jPanel6.setLayout(jPanel6Layout);
-        jPanel6Layout.setHorizontalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jButton7)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, 542, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(totalCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(listAllIssues)
-                .addContainerGap())
-            .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel6Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jSeparator1, javax.swing.GroupLayout.DEFAULT_SIZE, 1111, Short.MAX_VALUE)
-                    .addContainerGap()))
-        );
-        jPanel6Layout.setVerticalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel6Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(totalCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton7)
-                    .addComponent(listAllIssues)
-                    .addComponent(jLabel7))
-                .addContainerGap(168, Short.MAX_VALUE))
-            .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel6Layout.createSequentialGroup()
-                    .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(0, 210, Short.MAX_VALUE)))
-        );
+        jPanel6.add(jPanel7, java.awt.BorderLayout.LINE_END);
+        jPanel6.add(jSeparator2, java.awt.BorderLayout.PAGE_START);
 
         jPanel4.add(jPanel6);
 
@@ -454,7 +425,6 @@ public final class SonarMainTopComponent extends TopComponent {
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
-    private javax.swing.JButton jButton7;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
@@ -472,8 +442,9 @@ public final class SonarMainTopComponent extends TopComponent {
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
+    private javax.swing.JPanel jPanel7;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JButton listAllIssues;
     private javax.swing.JLabel rulesCompliance;
     private qubexplorer.ui.RuleCountPanel severityPanelBlocker;
