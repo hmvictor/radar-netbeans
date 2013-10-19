@@ -10,7 +10,7 @@ import org.sonar.wsclient.services.Rule;
  */
 public class Counting {
     private Map<Severity, Map<Rule, Integer>> severityCounts=new HashMap<>();
-    private double rulesCcompliance;
+    private double rulesCompliance;
     
     public int getCount(Severity severity) {
         Map<Rule, Integer> map = severityCounts.get(severity);
@@ -25,12 +25,12 @@ public class Counting {
         }
     }
 
-    public double getRulesCcompliance() {
-        return rulesCcompliance;
+    public double getRulesCompliance() {
+        return rulesCompliance;
     }
 
-    public void setRulesCcompliance(double rulesCcompliance) {
-        this.rulesCcompliance = rulesCcompliance;
+    public void setRulesCompliance(double rulesCompliance) {
+        this.rulesCompliance = rulesCompliance;
     }
     
     public Map<Rule, Integer> getRuleCounts(Severity severity) {

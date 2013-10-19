@@ -51,6 +51,10 @@ public class IssueDecorator implements Issue{
     public String severity() {
         return issue.severity();
     }
+    
+    public Severity severityObject(){
+        return Severity.valueOf(severity());
+    }
 
     @Override
     public String message() {

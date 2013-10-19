@@ -1,20 +1,21 @@
 package qubexplorer.ui;
 
-import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.text.NumberFormat;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
 import javax.swing.DefaultRowSorter;
-import javax.swing.JTable;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
 import org.apache.maven.model.Model;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.jdesktop.swingx.JXHyperlink;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
@@ -61,12 +62,22 @@ import qubexplorer.Severity;
     "HINT_SonarTopComponent=This is a Sonar window"
 })
 public final class SonarIssuesTopComponent extends TopComponent {
+    
+    private EnumMap<Severity, Icon> icons=new EnumMap<>(Severity.class);
 
     private Project project;
     private Issue[] issues;
 
     public SonarIssuesTopComponent() {
         initComponents();
+        icons.put(Severity.BLOCKER, new SeverityIcon(Severity.BLOCKER, getClass().getResource("/qubexplorer/ui/images/blocker.png")));
+        icons.put(Severity.CRITICAL, new SeverityIcon(Severity.CRITICAL, getClass().getResource("/qubexplorer/ui/images/critical.png")));
+        icons.put(Severity.MAJOR, new SeverityIcon(Severity.MAJOR, getClass().getResource("/qubexplorer/ui/images/major.png")));
+        icons.put(Severity.MINOR, new SeverityIcon(Severity.MINOR, getClass().getResource("/qubexplorer/ui/images/minor.png")));
+        icons.put(Severity.INFO, new SeverityIcon(Severity.INFO, getClass().getResource("/qubexplorer/ui/images/info.png")));
+        issuesTable.getColumn("").setResizable(false);
+        issuesTable.getColumnModel().getColumn(0).setPreferredWidth(16);
+        issuesTable.getColumnModel().getColumn(0).setMaxWidth(16);
         setName(Bundle.CTL_SonarTopComponent());
         setToolTipText(Bundle.HINT_SonarTopComponent());
         filterText.getDocument().addDocumentListener(new DocumentListener() {
@@ -85,7 +96,23 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 filterTextChanged();
             }
         });
-        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(1, new Comparator<Location>() {
+        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(0, Collections.reverseOrder(new Comparator<SeverityIcon>() {
+            
+            @Override
+            public int compare(SeverityIcon t, SeverityIcon t1) {
+                return t.severity.compareTo(t1.severity);
+            }
+            
+        }));
+        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(2, Collections.reverseOrder(new Comparator<Severity>() {
+            
+            @Override
+            public int compare(Severity t, Severity t1) {
+                return t.compareTo(t1);
+            }
+            
+        }));
+        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(3, new Comparator<Location>() {
             @Override
             public int compare(Location t, Location t1) {
                 int result = t.component.compareTo(t1.component);
@@ -135,72 +162,85 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel3.text")); // NOI18N
 
-        issuesTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
+        issuesTable.setModel(
 
-            },
-            new String [] {
-                "Message", "Severity", "Location", "MvnId", "Rule"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.String.class
-            };
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false, false
-            };
+            new javax.swing.table.DefaultTableModel(
+                new Object [][] {
 
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
+                },
+                new String [] {
+                    "", "Message", "Severity", "Location", "MvnId", "Rule"
+                }
+            ) {
+                Class[] types = new Class [] {
+                    SeverityIcon.class
 
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        issuesTable.setColumnControlVisible(true);
-        issuesTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                issuesTableMouseClicked(evt);
-            }
-        });
-        jScrollPane2.setViewportView(issuesTable);
+                    , java.lang.String.class
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 638, Short.MAX_VALUE)
-                    .addComponent(title, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                    , Severity.class
+
+                    , java.lang.Object.class
+
+                    , java.lang.String.class
+
+                    , java.lang.String.class
+                };
+                boolean[] canEdit = new boolean[]{
+                    false, false, false, false, false, false
+                };
+
+                public Class getColumnClass(int columnIndex) {
+                    return types[columnIndex];
+                }
+
+                public boolean isCellEditable(int rowIndex, int columnIndex) {
+                    return canEdit[columnIndex];
+                }
+
+            });
+            issuesTable.setColumnControlVisible(true);
+            issuesTable.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseClicked(java.awt.event.MouseEvent evt) {
+                    issuesTableMouseClicked(evt);
+                }
+            });
+            jScrollPane2.setViewportView(issuesTable);
+
+            javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+            this.setLayout(layout);
+            layout.setHorizontalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 638, Short.MAX_VALUE)
+                        .addComponent(title, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                            .addComponent(jLabel1)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(filterText)
+                            .addGap(18, 18, 18)
+                            .addComponent(jLabel3)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(shownCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addContainerGap())
+            );
+            layout.setVerticalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(title)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(filterText)
-                        .addGap(18, 18, 18)
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(shownCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(title)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(filterText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(shownCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3))
-                .addContainerGap())
-        );
-    }// </editor-fold>//GEN-END:initComponents
+                        .addComponent(filterText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(shownCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel3))
+                    .addContainerGap())
+            );
+        }// </editor-fold>//GEN-END:initComponents
 
     private void issuesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMouseClicked
         if (evt.getClickCount() == 2) {
@@ -295,7 +335,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         for (IssueDecorator issue : issues) {
             String name = toPath(issue.componentKey()) + ".java";
             String mvnId = toMvnId(issue.componentKey());
-            model.addRow(new Object[]{issue.message(), issue.severity(), new Location(name, issue.line()), mvnId,  issue.rule().getTitle()});
+            model.addRow(new Object[]{icons.get(Severity.valueOf(issue.severity().toUpperCase())), issue.message(), issue.severityObject(), new Location(name, issue.line()), mvnId,  issue.rule().getTitle()});
         }
         this.issues = issues;
         if (criteria instanceof Severity) {
@@ -310,6 +350,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
             title.setText("Total: " + issues.length);
         }
         showIssuesCount();
+//        issuesTable.getColumn("").setPreferredWidth(18);
+//        issuesTable.getColumn("").setWidth(18);
     }
 
     public String toPath(String componentKey) {
@@ -417,6 +459,20 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 return component + " [" + lineNumber + "]";
             }
         }
+    }
+    
+    public class SeverityIcon extends ImageIcon{
+        private Severity severity;
+        
+        public SeverityIcon(Severity severity, URL url) {
+            super(url);
+            this.severity=severity;
+        }
+
+        public Severity getSeverity() {
+            return severity;
+        }
+        
     }
 
 }

@@ -516,7 +516,7 @@ public final class SonarMainTopComponent extends TopComponent {
         NumberFormat format=NumberFormat.getNumberInstance();
         format.setMinimumFractionDigits(1);
         format.setMaximumFractionDigits(1);
-        rulesCompliance.setText(format.format(counting.getRulesCcompliance())+" %");
+        rulesCompliance.setText(format.format(counting.getRulesCompliance())+" %");
         revalidate();
     }
 

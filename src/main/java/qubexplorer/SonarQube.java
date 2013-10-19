@@ -146,19 +146,18 @@ public class SonarQube {
                 }
                 
             });
-            for(Issue issue: issues){
-                Rule rule = getRule(auth, issue.ruleKey());
-                Integer counter = counts.get(rule);
+            for(IssueDecorator issue: issues){
+                Integer counter = counts.get(issue.rule());
                 if(counter == null) {
                     counter=1;
                 }else{
                     counter=counter+1;
                 }
-                counts.put(rule, counter);
+                counts.put(issue.rule(), counter);
             }
             counting.setRuleCounts(severity, counts);
         }
-        counting.setRulesCcompliance(getRulesCompliance(auth, resource));
+        counting.setRulesCompliance(getRulesCompliance(auth, resource));
         return counting;
     }
 
