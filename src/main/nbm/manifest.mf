@@ -1,4 +1,5 @@
 Manifest-Version: 1.0
 OpenIDE-Module-Localizing-Bundle: qubexplorer/sonarqubeexplorer/Bundle.properties
 OpenIDE-Module-Requires: org.openide.windows.WindowManager
-OpenIDE-Module-Short-Description: Sonar Plugin for Netbeans
+OpenIDE-Module-Short-Description: Sonar Plugin
+OpenIDE-Module-Long-Description: Sonar Plugin for Maven based projects.
