@@ -3,7 +3,6 @@ package qubexplorer.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.swing.BorderFactory;
-import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -110,7 +108,6 @@ public class RuleCountPanel extends javax.swing.JPanel {
         for (final Rule rule : keys) {
             links[counter] = new JXHyperlink();
             links[counter].setText(rule.getTitle());
-//            links[counter].setVisible(visible);
             links[counter].setRolloverEnabled(true);
             links[counter].setForeground(Color.BLACK);
             links[counter].setUnclickedColor(Color.BLACK);
@@ -134,7 +131,6 @@ public class RuleCountPanel extends javax.swing.JPanel {
             fields[counter].setEditable(false);
             fields[counter].setHorizontalAlignment(JLabel.RIGHT);
             fields[counter].setBorder(null);
-//            fields[counter].setVisible(visible);
             listButtons[counter] = new JButton("List Issues");
             listButtons[counter].putClientProperty("rule", rule);
             listButtons[counter].addActionListener(new ActionListener() {
@@ -143,7 +139,6 @@ public class RuleCountPanel extends javax.swing.JPanel {
                     fireActionPerformed(ae);
                 }
             });
-//            listButtons[counter].setVisible(visible);
             JPanel controls=new JPanel();
             controls.setOpaque(false);
             controls.add(fields[counter]);

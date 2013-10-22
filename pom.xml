@@ -132,6 +132,12 @@
                 <artifactId>nbm-maven-plugin</artifactId>
                 <version>3.8</version>
                 <extensions>true</extensions>
+                <configuration>
+                    <author>Victor Hugo Herrera Maldonado</author>
+                    <licenseName>Apache License, Version 2.0</licenseName>
+                    <licenseFile>license.txt</licenseFile>
+                    <homePageUrl>http://code.google.com/p/radar-netbeans/</homePageUrl>
+                </configuration>
             </plugin>
 
             <plugin>

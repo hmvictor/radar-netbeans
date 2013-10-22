@@ -1,5 +1,7 @@
 package qubexplorer.ui;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -62,11 +64,33 @@ import qubexplorer.Severity;
     "HINT_SonarTopComponent=This is a Sonar window"
 })
 public final class SonarIssuesTopComponent extends TopComponent {
-    
-    private EnumMap<Severity, Icon> icons=new EnumMap<>(Severity.class);
 
+    private EnumMap<Severity, Icon> icons = new EnumMap<>(Severity.class);
     private Project project;
     private Issue[] issues;
+    private final Comparator<SeverityIcon> severityIconComparator = Collections.reverseOrder(new Comparator<SeverityIcon>() {
+        @Override
+        public int compare(SeverityIcon t, SeverityIcon t1) {
+            return t.severity.compareTo(t1.severity);
+        }
+    });
+    private final Comparator<Severity> severityComparator = Collections.reverseOrder(new Comparator<Severity>() {
+        @Override
+        public int compare(Severity t, Severity t1) {
+            return t.compareTo(t1);
+        }
+    });
+    private final Comparator<Location> locationComparator = new Comparator<Location>() {
+        @Override
+        public int compare(Location t, Location t1) {
+            int result = t.component.compareTo(t1.component);
+            if (result != 0) {
+                return result;
+            } else {
+                return Integer.compare(t.lineNumber, t1.lineNumber);
+            }
+        }
+    };
 
     public SonarIssuesTopComponent() {
         initComponents();
@@ -96,30 +120,15 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 filterTextChanged();
             }
         });
-        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(0, Collections.reverseOrder(new Comparator<SeverityIcon>() {
-            
+        issuesTable.getColumnExt("").setHideable(false);
+        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(0, severityIconComparator);
+        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(2, severityComparator);
+        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(3, locationComparator);
+        issuesTable.getColumnExt("Severity").addPropertyChangeListener(new PropertyChangeListener() {
             @Override
-            public int compare(SeverityIcon t, SeverityIcon t1) {
-                return t.severity.compareTo(t1.severity);
-            }
-            
-        }));
-        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(2, Collections.reverseOrder(new Comparator<Severity>() {
-            
-            @Override
-            public int compare(Severity t, Severity t1) {
-                return t.compareTo(t1);
-            }
-            
-        }));
-        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(3, new Comparator<Location>() {
-            @Override
-            public int compare(Location t, Location t1) {
-                int result = t.component.compareTo(t1.component);
-                if (result != 0) {
-                    return result;
-                } else {
-                    return Integer.compare(t.lineNumber, t1.lineNumber);
+            public void propertyChange(PropertyChangeEvent pce) {
+                if (pce.getPropertyName().equals("visible") && pce.getNewValue().equals(Boolean.TRUE)) {
+                    ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(2, severityComparator);
                 }
             }
         });
@@ -335,7 +344,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         for (IssueDecorator issue : issues) {
             String name = toPath(issue.componentKey()) + ".java";
             String mvnId = toMvnId(issue.componentKey());
-            model.addRow(new Object[]{icons.get(Severity.valueOf(issue.severity().toUpperCase())), issue.message(), issue.severityObject(), new Location(name, issue.line()), mvnId,  issue.rule().getTitle()});
+            model.addRow(new Object[]{icons.get(Severity.valueOf(issue.severity().toUpperCase())), issue.message(), issue.severityObject(), new Location(name, issue.line()), mvnId, issue.rule().getTitle()});
         }
         this.issues = issues;
         if (criteria instanceof Severity) {
@@ -348,10 +357,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
             issuesTable.getColumnExt("Severity").setVisible(true);
         } else if (criteria == null) {
             title.setText("Total: " + issues.length);
+            issuesTable.getColumnExt("Severity").setVisible(true);
+            issuesTable.getColumnExt("Rule").setVisible(true);
         }
         showIssuesCount();
-//        issuesTable.getColumn("").setPreferredWidth(18);
-//        issuesTable.getColumn("").setWidth(18);
     }
 
     public String toPath(String componentKey) {
@@ -460,19 +469,18 @@ public final class SonarIssuesTopComponent extends TopComponent {
             }
         }
     }
-    
-    public class SeverityIcon extends ImageIcon{
+
+    public class SeverityIcon extends ImageIcon {
+
         private Severity severity;
-        
+
         public SeverityIcon(Severity severity, URL url) {
             super(url);
-            this.severity=severity;
+            this.severity = severity;
         }
 
         public Severity getSeverity() {
             return severity;
         }
-        
     }
-
 }
