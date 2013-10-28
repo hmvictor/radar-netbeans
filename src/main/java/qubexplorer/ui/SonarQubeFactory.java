@@ -14,8 +14,8 @@ public final class SonarQubeFactory {
         
     }
     
-    public static SonarQube createSonarQubeInstance() {
-        return new SonarQube(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"));
-    }
+//    public static SonarQube createSonarQubeInstance() {
+//        return new SonarQube(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"));
+//    }
     
 }

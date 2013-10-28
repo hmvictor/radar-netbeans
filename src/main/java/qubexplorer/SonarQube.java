@@ -3,6 +3,7 @@ package qubexplorer;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -46,6 +47,9 @@ public class SonarQube {
     }
     
     public double getRulesCompliance(Authentication auth, String resource) {
+        if(!existsProject(auth, resource)) {
+            throw new NoSuchProjectException(resource);
+        }
         Sonar sonar;
         if(auth == null) {
             sonar=Sonar.create(address);
@@ -63,6 +67,9 @@ public class SonarQube {
     }
     
     public List<IssueDecorator> getIssuesBySeverity(Authentication auth, String resource, String severity) {
+        if(!existsProject(auth, resource)) {
+            throw new NoSuchProjectException(resource);
+        }
         IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN");
         if(!severity.equalsIgnoreCase("any")) {
             query.severities(severity.toUpperCase());
@@ -75,6 +82,9 @@ public class SonarQube {
     }
     
     public List<IssueDecorator> getIssuesByRule(Authentication auth, String resource, String ruleKey) {
+        if(!existsProject(auth, resource)) {
+            throw new NoSuchProjectException(resource);
+        }
         IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN").rules(ruleKey);
         return getIssues(auth, query);
     }
@@ -135,6 +145,9 @@ public class SonarQube {
     }
     
     public Counting getCounting(Authentication auth, String resource) {
+        if(!existsProject(auth, resource)) {
+            throw new NoSuchProjectException(resource);
+        }
         Counting counting=new Counting();
         for(Severity severity: Severity.values()) {
             List<IssueDecorator> issues = getIssuesBySeverity(auth, resource, severity.toString());
@@ -159,6 +172,31 @@ public class SonarQube {
         }
         counting.setRulesCompliance(getRulesCompliance(auth, resource));
         return counting;
+    }
+    
+    public List<String> getProjects(Authentication auth) {
+        Sonar sonar;
+        if(auth == null) {
+            sonar=Sonar.create(address);
+        }else {
+            sonar=Sonar.create(address, auth.getUsername(), new String(auth.getPassword()));
+        }
+        ResourceQuery projectKeysQuery=ResourceQuery.create("");
+        List<Resource> resources = sonar.findAll(new ResourceQuery());
+        List<String> keys=new ArrayList<>(resources.size());
+        for(Resource r:resources) {
+            keys.add(r.getKey());
+        }
+        return keys;
+    }
+    
+    public boolean existsProject(Authentication auth, String projectKey){
+        for(String tmp: getProjects(auth) ){
+            if(tmp.equals(projectKey)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static String toResource(Project project) throws IOException, XmlPullParserException {

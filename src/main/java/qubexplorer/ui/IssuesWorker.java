@@ -25,33 +25,24 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
     private Rule rule;
     private Authentication auth;
     private ProgressHandle handle;
+    private String url;
 
-    public IssuesWorker(Project project, Severity severity) {
+    public IssuesWorker(Project project, Severity severity, String url) {
         this.project=project;
         this.severity=severity;
         init();
     }
     
-    public IssuesWorker(Project project, Rule rule) {
+    public IssuesWorker(Project project, Rule rule, String url) {
         this.project=project;
         this.rule=rule;
         init();
     }
     
-    public IssuesWorker(Authentication auth, Project project, Severity severity) {
-        this.project=project;
-        this.severity=severity;
-        this.auth=auth;
-        init();
+    public void setAuth(Authentication auth) {
+        this.auth = auth;
     }
     
-    public IssuesWorker(Authentication auth, Project project, Rule rule) {
-        this.auth=auth;
-        this.project=project;
-        this.rule=rule;
-        init();
-    }
-
     private void init() {
         handle = ProgressHandleFactory.createHandle("Sonar");
         handle.switchToIndeterminate();
@@ -60,12 +51,13 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
 
     @Override
     protected List<IssueDecorator> doInBackground() throws Exception {
+        SonarQube sonarQube = new SonarQube(url);
         if(severity != null) {
-            return SonarQubeFactory.createSonarQubeInstance().getIssuesBySeverity(auth, SonarQube.toResource(project), severity.toString());
+            return sonarQube.getIssuesBySeverity(auth, SonarQube.toResource(project), severity.toString());
         }else if(rule != null){
-            return SonarQubeFactory.createSonarQubeInstance().getIssuesByRule(auth, SonarQube.toResource(project), rule.getKey());
+            return sonarQube.getIssuesByRule(auth, SonarQube.toResource(project), rule.getKey());
         }else{
-            return SonarQubeFactory.createSonarQubeInstance().getIssuesBySeverity(auth, SonarQube.toResource(project), "any");
+            return sonarQube.getIssuesBySeverity(auth, SonarQube.toResource(project), "any");
         }
     }
 
@@ -90,10 +82,11 @@ public class IssuesWorker extends SwingWorker<List<IssueDecorator>, Void> {
                     if (authentication != null) {
                         IssuesWorker worker;
                         if(rule != null){
-                            worker= new IssuesWorker(authentication, project, rule);
+                            worker= new IssuesWorker(project, rule, url);
                         }else{
-                            worker= new IssuesWorker(authentication, project, severity);
+                            worker= new IssuesWorker(project, severity, url);
                         }
+                        worker.setAuth(auth);
                         worker.execute();
                     }
                 }

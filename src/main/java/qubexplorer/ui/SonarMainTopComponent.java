@@ -40,6 +40,7 @@ import qubexplorer.Severity;
 })
 public final class SonarMainTopComponent extends TopComponent {
     private Project project;
+    private String sonarQubeUrl;
 
     public SonarMainTopComponent() {
         initComponents();
@@ -51,9 +52,9 @@ public final class SonarMainTopComponent extends TopComponent {
              public void actionPerformed(ActionEvent ae) {
                  JComponent component = (JComponent)ae.getSource();
                  if(component.getClientProperty("severity") != null) {
-                     new IssuesWorker(project, (Severity)component.getClientProperty("severity")).execute();
+                     new IssuesWorker(project, (Severity)component.getClientProperty("severity"), sonarQubeUrl).execute();
                  }else{
-                    new IssuesWorker(project, (Rule)component.getClientProperty("rule")).execute();
+                    new IssuesWorker(project, (Rule)component.getClientProperty("rule"), sonarQubeUrl).execute();
                  }
              }
 
@@ -64,7 +65,7 @@ public final class SonarMainTopComponent extends TopComponent {
         severityPanelMinor.addActionListener(actionListener);
         severityPanelInfo.addActionListener(actionListener);
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -409,7 +410,7 @@ public final class SonarMainTopComponent extends TopComponent {
     }// </editor-fold>//GEN-END:initComponents
 
     private void listAllIssuesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listAllIssuesActionPerformed
-        new IssuesWorker(project, (Severity)null).execute();
+        new IssuesWorker(project, (Severity)null, sonarQubeUrl).execute();
     }//GEN-LAST:event_listAllIssuesActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -466,6 +467,10 @@ public final class SonarMainTopComponent extends TopComponent {
         // TODO add custom code on component closing
     }
 
+    public void setSonarQubeUrl(String sonarQubeUrl) {
+        this.sonarQubeUrl = sonarQubeUrl;
+    }
+    
     public void setProject(Project project) {
         this.project = project;
         title.setText(ProjectUtils.getInformation(project).getDisplayName());

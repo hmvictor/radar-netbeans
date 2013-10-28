@@ -2,40 +2,37 @@ package qubexplorer.ui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.project.Project;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
 
 @ActionID(
         category = "Build",
-        id = "qubexplorer.ui.SonarDialogAction")
+        id = "qubexplorer.ui.SonarDialogAction2")
 @ActionRegistration(
-        displayName = "#CTL_SonarDialogAction")
-@Messages("CTL_SonarDialogAction=See Sonar Issues")
+        displayName = "#CTL_SonarDialogAction2")
+@Messages("CTL_SonarDialogAction2=Custom Sonar Connection ...")
 @ActionReferences(value={
 @ActionReference(path="Projects/Actions"),
 @ActionReference(path = "Menu/Source", position = 8962, separatorBefore = 8956, separatorAfter = 8968)})
-public final class SonarQubeAction implements ActionListener {
+public final class SonarQubeAction2 implements ActionListener {
 
     private final Project context;
 
-    public SonarQubeAction(Project context) {
+    public SonarQubeAction2(Project context) {
         this.context = context;
     }
 
     @Override
     public void actionPerformed(ActionEvent ev) {
-        try {
-            CountsWorker worker = new CountsWorker(context);
+        ProjectChooser chooser=new ProjectChooser(WindowManager.getDefault().getMainWindow(), true);
+        if(chooser.showDialog() == ProjectChooser.Option.ACCEPT) {
+            CountsWorker worker=new CountsWorker(context, chooser.getSelectedUrl(), chooser.getSelectedProjectKey());
             worker.execute();
-        } catch (IOException | XmlPullParserException ex) {
-            Exceptions.printStackTrace(ex);
         }
     }
     
