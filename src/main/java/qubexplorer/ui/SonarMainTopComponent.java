@@ -41,6 +41,7 @@ import qubexplorer.Severity;
 public final class SonarMainTopComponent extends TopComponent {
     private Project project;
     private String sonarQubeUrl;
+    private String resourceKey;
 
     public SonarMainTopComponent() {
         initComponents();
@@ -52,9 +53,9 @@ public final class SonarMainTopComponent extends TopComponent {
              public void actionPerformed(ActionEvent ae) {
                  JComponent component = (JComponent)ae.getSource();
                  if(component.getClientProperty("severity") != null) {
-                     new IssuesWorker(project, (Severity)component.getClientProperty("severity"), sonarQubeUrl).execute();
+                     new IssuesWorker2(project, (Severity)component.getClientProperty("severity"), sonarQubeUrl, resourceKey).execute();
                  }else{
-                    new IssuesWorker(project, (Rule)component.getClientProperty("rule"), sonarQubeUrl).execute();
+                     new IssuesWorker2(project, (Rule)component.getClientProperty("rule"), sonarQubeUrl, resourceKey).execute();
                  }
              }
 
@@ -410,7 +411,7 @@ public final class SonarMainTopComponent extends TopComponent {
     }// </editor-fold>//GEN-END:initComponents
 
     private void listAllIssuesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listAllIssuesActionPerformed
-        new IssuesWorker(project, (Severity)null, sonarQubeUrl).execute();
+        new IssuesWorker2(project, (Severity)null, sonarQubeUrl, resourceKey).execute();
     }//GEN-LAST:event_listAllIssuesActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -469,6 +470,10 @@ public final class SonarMainTopComponent extends TopComponent {
 
     public void setSonarQubeUrl(String sonarQubeUrl) {
         this.sonarQubeUrl = sonarQubeUrl;
+    }
+
+    public void setResourceKey(String resourceKey) {
+        this.resourceKey = resourceKey;
     }
     
     public void setProject(Project project) {

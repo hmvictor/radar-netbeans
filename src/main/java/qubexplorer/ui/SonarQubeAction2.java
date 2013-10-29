@@ -31,7 +31,7 @@ public final class SonarQubeAction2 implements ActionListener {
     public void actionPerformed(ActionEvent ev) {
         ProjectChooser chooser=new ProjectChooser(WindowManager.getDefault().getMainWindow(), true);
         if(chooser.showDialog() == ProjectChooser.Option.ACCEPT) {
-            CountsWorker worker=new CountsWorker(context, chooser.getSelectedUrl(), chooser.getSelectedProjectKey());
+            CountsWorker2 worker=new CountsWorker2(context, chooser.getSelectedUrl(), chooser.getSelectedProjectKey());
             worker.execute();
         }
     }

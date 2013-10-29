@@ -9,7 +9,9 @@ import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.util.Exceptions;
+import org.openide.util.NbPreferences;
 import qubexplorer.SonarQube;
+import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
  *
@@ -50,12 +52,20 @@ public class ProjectChooser extends javax.swing.JDialog {
             
         });
     }
+    
+    public void setServerUrlEnabled(boolean b) {
+        url.setEnabled(b);
+    }
 
     public Option showDialog() {
         validateDialog();
         setLocationRelativeTo(getParent());
         setVisible(true);
         return option;
+    }
+    
+    public void setSelectedUrl(String selectedUrl) {
+        url.setText(selectedUrl);
     }
 
     public String getSelectedUrl() {
@@ -69,6 +79,11 @@ public class ProjectChooser extends javax.swing.JDialog {
     public void validateDialog(){
         boolean valid=resourceCombox.getSelectedItem() != null && url.getText() != null;
         okButton.setEnabled(valid);
+    }
+    
+    public void loadProjectKeys() {
+        SwingWorker<List<String>, Void> worker = new ProjectKeysLoader2();
+        worker.execute();
     }
 
     /**
@@ -144,7 +159,7 @@ public class ProjectChooser extends javax.swing.JDialog {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(resourceCombox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(url, javax.swing.GroupLayout.DEFAULT_SIZE, 115, Short.MAX_VALUE)
+                                .addComponent(url, javax.swing.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(loadButton))))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -191,8 +206,7 @@ public class ProjectChooser extends javax.swing.JDialog {
     }//GEN-LAST:event_formWindowClosing
 
     private void loadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadButtonActionPerformed
-        SwingWorker<List<String>, Void> worker = new ProjectKeysLoader();
-        worker.execute();
+        loadProjectKeys();
     }//GEN-LAST:event_loadButtonActionPerformed
 
     private void resourceComboxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_resourceComboxItemStateChanged
@@ -278,4 +292,38 @@ public class ProjectChooser extends javax.swing.JDialog {
             }
         }
     }
+    
+    private class ProjectKeysLoader2 extends SonarQubeWorker<List<String>, Void> {
+
+        public ProjectKeysLoader2() {
+            super(url.getText(), null);
+            loadButton.setEnabled(false);
+        }
+
+        @Override
+        protected List<String> doInBackground() throws Exception {
+            return new SonarQube(getServerUrl()).getProjects(getAuthentication());
+        }
+
+        @Override
+        protected void success(List<String> projectKeys) {
+            resourceCombox.removeAllItems();
+            DefaultComboBoxModel model = (DefaultComboBoxModel) resourceCombox.getModel();
+            for (String key : projectKeys) {
+                model.addElement(key);
+            }
+        }
+
+        @Override
+        protected void finished() {
+            loadButton.setEnabled(true);
+        }
+
+        @Override
+        protected SonarQubeWorker createCopy() {
+            return new ProjectKeysLoader2();
+        }
+        
+    }
+    
 }

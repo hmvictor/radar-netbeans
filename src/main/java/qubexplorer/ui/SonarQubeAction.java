@@ -11,6 +11,9 @@ import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.NbPreferences;
+import qubexplorer.SonarQube;
+import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 @ActionID(
         category = "Build",
@@ -32,7 +35,7 @@ public final class SonarQubeAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent ev) {
         try {
-            CountsWorker worker = new CountsWorker(context);
+            CountsWorker2 worker = new CountsWorker2(context, NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"), SonarQube.toResource(context));
             worker.execute();
         } catch (IOException | XmlPullParserException ex) {
             Exceptions.printStackTrace(ex);
