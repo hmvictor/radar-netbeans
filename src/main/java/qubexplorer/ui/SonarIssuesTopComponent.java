@@ -62,7 +62,7 @@ import qubexplorer.Severity;
         preferredID = "SonarTopComponent")
 @Messages({
     "CTL_SonarAction=Sonar",
-    "CTL_SonarTopComponent=Sonar Issues",
+    "CTL_SonarTopComponent=Sonar - Issues",
     "HINT_SonarTopComponent=This is a Sonar window"
 })
 public final class SonarIssuesTopComponent extends TopComponent {
