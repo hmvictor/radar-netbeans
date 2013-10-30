@@ -14,11 +14,11 @@ import qubexplorer.ui.options.SonarQubeOptionsPanel;
  *
  * @author Victor
  */
-class CountsWorker2 extends SonarQubeWorker<Counting, Void> {
+class CountsWorker extends SonarQubeWorker<Counting, Void> {
     private ProgressHandle handle;
     private Project project;
 
-    public CountsWorker2(Project project, String url, String resource) {
+    public CountsWorker(Project project, String url, String resource) {
         super(url, resource);
         this.project = project;
         init();
@@ -53,7 +53,7 @@ class CountsWorker2 extends SonarQubeWorker<Counting, Void> {
 
     @Override
     protected SonarQubeWorker createCopy() {
-        return new CountsWorker2(project, getServerUrl(), getResourceKey());
+        return new CountsWorker(project, getServerUrl(), getResourceKey());
     }
 
     @Override
@@ -67,7 +67,7 @@ class CountsWorker2 extends SonarQubeWorker<Counting, Void> {
             chooser.setServerUrlEnabled(false);
             chooser.loadProjectKeys();
             if(chooser.showDialog() == ProjectChooser.Option.ACCEPT) {
-                scheduleWorker(new CountsWorker2(project, getServerUrl(), chooser.getSelectedProjectKey()));
+                scheduleWorker(new CountsWorker(project, getServerUrl(), chooser.getSelectedProjectKey()));
             }
         }else{
             super.error(cause);

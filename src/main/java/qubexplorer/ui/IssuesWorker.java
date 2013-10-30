@@ -15,20 +15,20 @@ import qubexplorer.SonarQube;
  *
  * @author Victor
  */
-public class IssuesWorker2 extends SonarQubeWorker<List<IssueDecorator>, Void> {
+public class IssuesWorker extends SonarQubeWorker<List<IssueDecorator>, Void> {
     private Project project;
     private Severity severity;
     private Rule rule;
     private ProgressHandle handle;
 
-    public IssuesWorker2(Project project, Severity severity, String url, String resourceKey) {
+    public IssuesWorker(Project project, Severity severity, String url, String resourceKey) {
         super(url, resourceKey);
         this.project=project;
         this.severity=severity;
         init();
     }
     
-    public IssuesWorker2(Project project, Rule rule, String url, String resourceKey) {
+    public IssuesWorker(Project project, Rule rule, String url, String resourceKey) {
         super(url, resourceKey);
         this.project=project;
         this.rule=rule;
@@ -64,11 +64,11 @@ public class IssuesWorker2 extends SonarQubeWorker<List<IssueDecorator>, Void> {
 
     @Override
     protected SonarQubeWorker createCopy() {
-        IssuesWorker2 worker;
+        IssuesWorker worker;
         if(rule != null){
-            worker= new IssuesWorker2(project, rule, getServerUrl(), getResourceKey());
+            worker= new IssuesWorker(project, rule, getServerUrl(), getResourceKey());
         }else{
-            worker= new IssuesWorker2(project, severity, getServerUrl(), getResourceKey());
+            worker= new IssuesWorker(project, severity, getServerUrl(), getResourceKey());
         }
         return worker;
     }

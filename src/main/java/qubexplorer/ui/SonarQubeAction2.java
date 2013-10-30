@@ -34,7 +34,7 @@ public final class SonarQubeAction2 implements ActionListener {
         ProjectChooser chooser=new ProjectChooser(WindowManager.getDefault().getMainWindow(), true);
         chooser.setSelectedUrl(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"));
         if(chooser.showDialog() == ProjectChooser.Option.ACCEPT) {
-            CountsWorker2 worker=new CountsWorker2(context, chooser.getSelectedUrl(), chooser.getSelectedProjectKey());
+            CountsWorker worker=new CountsWorker(context, chooser.getSelectedUrl(), chooser.getSelectedProjectKey());
             worker.execute();
         }
     }

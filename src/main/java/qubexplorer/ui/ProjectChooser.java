@@ -82,7 +82,7 @@ public class ProjectChooser extends javax.swing.JDialog {
     }
     
     public void loadProjectKeys() {
-        SwingWorker<List<String>, Void> worker = new ProjectKeysLoader2();
+        SwingWorker<List<String>, Void> worker = new ProjectKeysLoader();
         worker.execute();
     }
 
@@ -265,9 +265,9 @@ public class ProjectChooser extends javax.swing.JDialog {
     private javax.swing.JTextField url;
     // End of variables declaration//GEN-END:variables
 
-    private class ProjectKeysLoader2 extends SonarQubeWorker<List<String>, Void> {
+    private class ProjectKeysLoader extends SonarQubeWorker<List<String>, Void> {
 
-        public ProjectKeysLoader2() {
+        public ProjectKeysLoader() {
             super(url.getText(), null);
             loadButton.setEnabled(false);
         }
@@ -293,7 +293,7 @@ public class ProjectChooser extends javax.swing.JDialog {
 
         @Override
         protected SonarQubeWorker createCopy() {
-            return new ProjectKeysLoader2();
+            return new ProjectKeysLoader();
         }
         
     }
