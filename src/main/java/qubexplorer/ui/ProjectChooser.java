@@ -265,34 +265,6 @@ public class ProjectChooser extends javax.swing.JDialog {
     private javax.swing.JTextField url;
     // End of variables declaration//GEN-END:variables
 
-    private class ProjectKeysLoader extends SwingWorker<List<String>, Void> {
-
-        public ProjectKeysLoader() {
-            loadButton.setEnabled(false);
-        }
-
-        @Override
-        protected List<String> doInBackground() throws Exception {
-            return new SonarQube(url.getText()).getProjects(null);
-        }
-
-        @Override
-        protected void done() {
-            try {
-                List<String> projectKeys = get();
-                resourceCombox.removeAllItems();
-                DefaultComboBoxModel model = (DefaultComboBoxModel) resourceCombox.getModel();
-                for (String key : projectKeys) {
-                    model.addElement(key);
-                }
-            } catch (ExecutionException | InterruptedException ex) {
-                Exceptions.printStackTrace(ex);
-            }finally{
-                loadButton.setEnabled(true);
-            }
-        }
-    }
-    
     private class ProjectKeysLoader2 extends SonarQubeWorker<List<String>, Void> {
 
         public ProjectKeysLoader2() {
