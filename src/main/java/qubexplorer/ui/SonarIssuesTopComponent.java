@@ -25,6 +25,8 @@ import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.cookies.LineCookie;
@@ -257,13 +259,20 @@ public final class SonarIssuesTopComponent extends TopComponent {
             if (row != -1) {
                 row = issuesTable.getRowSorter().convertRowIndexToModel(row);
                 try {
-                    Sources sources = ProjectUtils.getSources(findProject(project, getBasicPomInfo(issues[row].componentKey())));
-                    SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
-                    File file = new File(sourceGroups[0].getRootFolder().getPath(), toPath(issues[row].componentKey()) + ".java");
-                    if (issues[row].line() == null) {
-                        openFile(file, 1);
-                    } else {
-                        openFile(file, issues[row].line());
+                    String shortKey = removeBranchPart(issues[row].componentKey());
+                    Project p = findProject(project, getBasicPomInfo(shortKey));
+                    if(p != null) {
+                        Sources sources = ProjectUtils.getSources(p);
+                        SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
+                        File file = new File(sourceGroups[0].getRootFolder().getPath(), toPath(issues[row].componentKey()) + ".java");
+                        if (issues[row].line() == null) {
+                            openFile(file, 1);
+                        } else {
+                            openFile(file, issues[row].line());
+                        }
+                    }else{
+                        String message=org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", shortKey);
+                        DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
                     }
                 } catch (IOException | XmlPullParserException ex) {
                     Exceptions.printStackTrace(ex);
@@ -383,7 +392,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private static BasicPomInfo getBasicPomInfo(String componentKey) {
         String[] tokens = componentKey.split(":");
-        assert tokens.length == 3;
+        assert tokens.length >= 2;
         return new BasicPomInfo(tokens[0], tokens[1]);
     }
 
@@ -421,6 +430,12 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private void showIssuesCount() {
         NumberFormat format = NumberFormat.getIntegerInstance();
         shownCount.setText(format.format(issuesTable.getRowSorter().getViewRowCount()));
+    }
+
+    private String removeBranchPart(String componentKey) {
+        String[] tokens = componentKey.split(":");
+        assert tokens.length >= 2;
+        return tokens[0]+":"+tokens[1];
     }
 
     private static class BasicPomInfo {

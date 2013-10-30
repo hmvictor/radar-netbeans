@@ -31,8 +31,8 @@ class CountsWorker2 extends SonarQubeWorker<Counting, Void> {
 
     private void init() {
         handle = ProgressHandleFactory.createHandle("Sonar");
-        handle.switchToIndeterminate();
         handle.start();
+        handle.switchToIndeterminate();
     }
 
     @Override
@@ -63,7 +63,7 @@ class CountsWorker2 extends SonarQubeWorker<Counting, Void> {
                 AuthenticationRepository.getInstance().saveAuthentication(getServerUrl(), null, getAuthentication());
             }
             ProjectChooser chooser=new ProjectChooser(WindowManager.getDefault().getMainWindow(), true);
-            chooser.setSelectedUrl(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"));
+            chooser.setSelectedUrl(getServerUrl());
             chooser.setServerUrlEnabled(false);
             chooser.loadProjectKeys();
             if(chooser.showDialog() == ProjectChooser.Option.ACCEPT) {

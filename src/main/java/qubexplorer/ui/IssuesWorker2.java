@@ -19,7 +19,6 @@ public class IssuesWorker2 extends SonarQubeWorker<List<IssueDecorator>, Void> {
     private Project project;
     private Severity severity;
     private Rule rule;
-    private Authentication auth;
     private ProgressHandle handle;
 
     public IssuesWorker2(Project project, Severity severity, String url, String resourceKey) {
@@ -36,25 +35,21 @@ public class IssuesWorker2 extends SonarQubeWorker<List<IssueDecorator>, Void> {
         init();
     }
     
-    public void setAuth(Authentication auth) {
-        this.auth = auth;
-    }
-    
     private void init() {
         handle = ProgressHandleFactory.createHandle("Sonar");
-        handle.switchToIndeterminate();
         handle.start();
+        handle.switchToIndeterminate();
     }
 
     @Override
     protected List<IssueDecorator> doInBackground() throws Exception {
         SonarQube sonarQube = new SonarQube(getServerUrl());
         if(severity != null) {
-            return sonarQube.getIssuesBySeverity(auth, getResourceKey(), severity.toString());
+            return sonarQube.getIssuesBySeverity(getAuthentication(), getResourceKey(), severity.toString());
         }else if(rule != null){
-            return sonarQube.getIssuesByRule(auth, getResourceKey(), rule.getKey());
+            return sonarQube.getIssuesByRule(getAuthentication(), getResourceKey(), rule.getKey());
         }else{
-            return sonarQube.getIssuesBySeverity(auth, getResourceKey(), "any");
+            return sonarQube.getIssuesBySeverity(getAuthentication(), getResourceKey(), "any");
         }
     }
 

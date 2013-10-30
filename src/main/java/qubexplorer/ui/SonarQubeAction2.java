@@ -8,7 +8,9 @@ import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
+import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 @ActionID(
         category = "Build",
@@ -30,6 +32,7 @@ public final class SonarQubeAction2 implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent ev) {
         ProjectChooser chooser=new ProjectChooser(WindowManager.getDefault().getMainWindow(), true);
+        chooser.setSelectedUrl(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"));
         if(chooser.showDialog() == ProjectChooser.Option.ACCEPT) {
             CountsWorker2 worker=new CountsWorker2(context, chooser.getSelectedUrl(), chooser.getSelectedProjectKey());
             worker.execute();
