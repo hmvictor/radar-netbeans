@@ -21,11 +21,11 @@ import qubexplorer.ui.options.SonarQubeOptionsPanel;
 @ActionReferences(value={
 @ActionReference(path="Projects/Actions"),
 @ActionReference(path = "Menu/Source", position = 8962, separatorBefore = 8956, separatorAfter = 8968)})
-public final class SonarQubeAction2 implements ActionListener {
+public final class CustomConnectionAction implements ActionListener {
 
     private final Project context;
 
-    public SonarQubeAction2(Project context) {
+    public CustomConnectionAction(Project context) {
         this.context = context;
     }
 

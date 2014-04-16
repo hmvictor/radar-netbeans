@@ -19,6 +19,8 @@ import org.sonar.wsclient.Sonar;
 import org.sonar.wsclient.SonarClient;
 import org.sonar.wsclient.base.HttpException;
 import org.sonar.wsclient.connectors.ConnectionException;
+import org.sonar.wsclient.issue.ActionPlan;
+import org.sonar.wsclient.issue.ActionPlanQuery;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.issue.IssueClient;
 import org.sonar.wsclient.issue.IssueQuery;
@@ -38,6 +40,11 @@ public class SonarQube {
 
     public SonarQube(String address) {
         this.address=address;
+        //remove ending '/' if needed because of a problem with the underlying http client.
+        assert this.address.length() > 1;
+        if(this.address.endsWith("/")) {
+            this.address=this.address.substring(0, this.address.length()-1);
+        }
     }
 
     public SonarQube() {
@@ -72,32 +79,44 @@ public class SonarQube {
         }
     }
     
-    public List<IssueDecorator> getIssuesBySeverity(String resource, String severity) {
+    public List<IssueDecorator> getIssuesBySeverity(String resource, Severity severity) {
         return getIssuesBySeverity(null, resource, severity);
     }
     
-    public List<IssueDecorator> getIssuesBySeverity(Authentication auth, String resource, String severity) {
+    public List<IssueDecorator> getIssues(Authentication auth, String resource, IssueFilter... filters) {
         if(!existsProject(auth, resource)) {
             throw new NoSuchProjectException(resource);
         }
         IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN");
-        if(!severity.equalsIgnoreCase("any")) {
-            query.severities(severity.toUpperCase());
+        for(IssueFilter filter:filters) {
+            filter.apply(query);
         }
         return getIssues(auth, query);
     }
     
-    public List<IssueDecorator> getIssuesByRule(String resource, String ruleKey) {
-        return getIssuesByRule(null, resource, ruleKey);
-    }
-    
-    public List<IssueDecorator> getIssuesByRule(Authentication auth, String resource, String ruleKey) {
+    public List<IssueDecorator> getIssuesBySeverity(Authentication auth, String resource, Severity severity) {
         if(!existsProject(auth, resource)) {
             throw new NoSuchProjectException(resource);
         }
-        IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN").rules(ruleKey);
+        IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN");
+        if(severity != null) {
+            query.severities(severity.toString().toUpperCase());
+        }
         return getIssues(auth, query);
     }
+    
+//    public List<IssueDecorator> getIssuesByRule(String resource, String ruleKey) {
+//        return getIssuesByRule(null, resource, ruleKey);
+//    }
+    
+//    public List<IssueDecorator> getIssuesByRule(Authentication auth, String resource, String ruleKey) {
+//        return getIssues(auth, resource, new RuleFilter(ruleKey));
+//        if(!existsProject(auth, resource)) {
+//            throw new NoSuchProjectException(resource);
+//        }
+//        IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN").rules(ruleKey);
+//        return getIssues(auth, query);
+//    }
     
     private List<IssueDecorator> getIssues(Authentication auth, IssueQuery query) {
         try{
@@ -135,6 +154,16 @@ public class SonarQube {
         }
     }
     
+    public List<ActionPlan> getActionPlans(Authentication auth, String resource){ 
+        SonarClient client;
+        if(auth == null) {
+            client = SonarClient.create(address);
+        }else{
+            client=SonarClient.builder().url(address).login(auth.getUsername()).password(new String(auth.getPassword())).build();
+        }
+        return client.actionPlanClient().find(resource);
+    }
+    
     public Rule getRule(String ruleKey) {
         return getRule(null, ruleKey);
     }
@@ -170,13 +199,16 @@ public class SonarQube {
         return getCounting(null, resource);
     }
     
-    public Counting getCounting(Authentication auth, String resource) {
+    public Counting getCounting(Authentication auth, String resource, IssueFilter... filters) {
         if(!existsProject(auth, resource)) {
             throw new NoSuchProjectException(resource);
         }
         Counting counting=new Counting();
         for(Severity severity: Severity.values()) {
-            List<IssueDecorator> issues = getIssuesBySeverity(auth, resource, severity.toString());
+            IssueFilter[] tempFilters=new IssueFilter[filters.length+1];
+            tempFilters[0]=new SeverityFilter(severity);
+            System.arraycopy(filters, 0, tempFilters, 1, filters.length);
+            List<IssueDecorator> issues = getIssues(auth, resource, tempFilters);
             Map<Rule, Integer> counts=new TreeMap<>(new Comparator<Rule>(){
 
                 @Override
@@ -200,6 +232,10 @@ public class SonarQube {
         return counting;
     }
     
+    public long getIssuesCount(Authentication auth, String resource, Severity severity) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+    
     public List<String> getProjects(Authentication auth) {
         try{
             Sonar sonar;
@@ -208,7 +244,6 @@ public class SonarQube {
             }else {
                 sonar=Sonar.create(address, auth.getUsername(), new String(auth.getPassword()));
             }
-            ResourceQuery projectKeysQuery=ResourceQuery.create("");
             List<Resource> resources = sonar.findAll(new ResourceQuery());
             List<String> keys=new ArrayList<>(resources.size());
             for(Resource r:resources) {

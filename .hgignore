@@ -3,3 +3,4 @@
 \.chg\..*$
 \.rej$
 \.conflict\~$
+^hs_err_pid6512\.log$

@@ -21,14 +21,14 @@ import qubexplorer.ui.options.SonarQubeOptionsPanel;
 @ActionRegistration(
         displayName = "#CTL_SonarDialogAction")
 @Messages("CTL_SonarDialogAction=See Sonar Issues")
-@ActionReferences(value={
-@ActionReference(path="Projects/Actions"),
-@ActionReference(path = "Menu/Source", position = 8962, separatorBefore = 8956, separatorAfter = 8968)})
-public final class SonarQubeAction implements ActionListener {
+@ActionReferences(value = {
+    @ActionReference(path = "Projects/Actions"),
+    @ActionReference(path = "Menu/Source", position = 8962, separatorBefore = 8956, separatorAfter = 8968)})
+public final class GetCountsAction implements ActionListener {
 
     private final Project context;
 
-    public SonarQubeAction(Project context) {
+    public GetCountsAction(Project context) {
         this.context = context;
     }
 
@@ -36,10 +36,11 @@ public final class SonarQubeAction implements ActionListener {
     public void actionPerformed(ActionEvent ev) {
         try {
             CountsWorker worker = new CountsWorker(context, NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"), SonarQube.toResource(context));
+            worker.setTriggerActionPlans(true);
             worker.execute();
         } catch (IOException | XmlPullParserException ex) {
             Exceptions.printStackTrace(ex);
         }
     }
-    
+
 }

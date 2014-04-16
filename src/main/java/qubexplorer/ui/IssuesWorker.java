@@ -6,8 +6,8 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
 import org.openide.windows.WindowManager;
 import org.sonar.wsclient.services.Rule;
-import qubexplorer.Authentication;
 import qubexplorer.IssueDecorator;
+import qubexplorer.IssueFilter;
 import qubexplorer.Severity;
 import qubexplorer.SonarQube;
 
@@ -17,24 +17,16 @@ import qubexplorer.SonarQube;
  */
 public class IssuesWorker extends SonarQubeWorker<List<IssueDecorator>, Void> {
     private Project project;
-    private Severity severity;
-    private Rule rule;
     private ProgressHandle handle;
+    private IssueFilter[] filters;
+    
+    public IssuesWorker(Project project, String url, String resourceKey, IssueFilter... filters) {
+        super(url, resourceKey);
+        this.project=project;
+        this.filters=filters;
+        init();
+    }
 
-    public IssuesWorker(Project project, Severity severity, String url, String resourceKey) {
-        super(url, resourceKey);
-        this.project=project;
-        this.severity=severity;
-        init();
-    }
-    
-    public IssuesWorker(Project project, Rule rule, String url, String resourceKey) {
-        super(url, resourceKey);
-        this.project=project;
-        this.rule=rule;
-        init();
-    }
-    
     private void init() {
         handle = ProgressHandleFactory.createHandle("Sonar");
         handle.start();
@@ -44,19 +36,13 @@ public class IssuesWorker extends SonarQubeWorker<List<IssueDecorator>, Void> {
     @Override
     protected List<IssueDecorator> doInBackground() throws Exception {
         SonarQube sonarQube = new SonarQube(getServerUrl());
-        if(severity != null) {
-            return sonarQube.getIssuesBySeverity(getAuthentication(), getResourceKey(), severity.toString());
-        }else if(rule != null){
-            return sonarQube.getIssuesByRule(getAuthentication(), getResourceKey(), rule.getKey());
-        }else{
-            return sonarQube.getIssuesBySeverity(getAuthentication(), getResourceKey(), "any");
-        }
+        return sonarQube.getIssues(getAuthentication(), getResourceKey(), filters);
     }
 
     @Override
     protected void success(List<IssueDecorator> result) {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarTopComponent");
-        sonarTopComponent.setIssues(severity == null ? rule: severity, result.toArray(new IssueDecorator[0]));
+        sonarTopComponent.setIssues(filters, result.toArray(new IssueDecorator[0]));
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
         sonarTopComponent.setProject(project);
@@ -64,13 +50,7 @@ public class IssuesWorker extends SonarQubeWorker<List<IssueDecorator>, Void> {
 
     @Override
     protected SonarQubeWorker createCopy() {
-        IssuesWorker worker;
-        if(rule != null){
-            worker= new IssuesWorker(project, rule, getServerUrl(), getResourceKey());
-        }else{
-            worker= new IssuesWorker(project, severity, getServerUrl(), getResourceKey());
-        }
-        return worker;
+        return new IssuesWorker(project, getServerUrl(), getResourceKey(), filters);
     }
 
     @Override

@@ -201,6 +201,16 @@ public class RuleCountPanel extends javax.swing.JPanel {
             }
         });
     }
+    
+    public void setExpanded(boolean expanded) {
+        panelRules.setVisible(expanded);
+        expandButton.setText(expanded ? "-" : "+");
+        adjustSize();
+    }
+    
+    public boolean isExpanded(){
+        return panelRules.isVisible();
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -276,10 +286,7 @@ public class RuleCountPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void expandButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_expandButtonActionPerformed
-        boolean visible = evt.getActionCommand().equals("+");
-        panelRules.setVisible(visible);
-        expandButton.setText(visible ? "-" : "+");
-        adjustSize();
+        setExpanded(evt.getActionCommand().equals("+"));
     }//GEN-LAST:event_expandButtonActionPerformed
 
     private void listAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listAllActionPerformed

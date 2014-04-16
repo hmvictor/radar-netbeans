@@ -41,6 +41,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.IssueDecorator;
+import qubexplorer.IssueFilter;
 import qubexplorer.MvnModelFactory;
 import qubexplorer.Severity;
 
@@ -345,7 +346,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         showIssuesCount();
     }
 
-    public void setIssues(Object criteria, IssueDecorator... issues) {
+    public void setIssues(IssueFilter[] filters, IssueDecorator... issues) {
         DefaultTableModel model = (DefaultTableModel) issuesTable.getModel();
         while (model.getRowCount() > 0) {
             model.removeRow(0);
@@ -356,19 +357,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
             model.addRow(new Object[]{icons.get(Severity.valueOf(issue.severity().toUpperCase())), issue.message(), issue.severityObject(), new Location(name, issue.line()), mvnId, issue.rule().getTitle()});
         }
         this.issues = issues;
-        if (criteria instanceof Severity) {
-            title.setText(criteria.toString() + ": " + issues.length);
-            issuesTable.getColumnExt("Severity").setVisible(false);
-            issuesTable.getColumnExt("Rule").setVisible(true);
-        } else if (criteria instanceof Rule) {
-            title.setText(((Rule) criteria).getTitle() + ": " + issues.length);
-            issuesTable.getColumnExt("Rule").setVisible(false);
-            issuesTable.getColumnExt("Severity").setVisible(true);
-        } else if (criteria == null) {
-            title.setText("Total: " + issues.length);
-            issuesTable.getColumnExt("Severity").setVisible(true);
-            issuesTable.getColumnExt("Rule").setVisible(true);
-        }
+        title.setText("Number of issues: " + issues.length);
+        issuesTable.getColumnExt("Severity").setVisible(true);
+        issuesTable.getColumnExt("Rule").setVisible(true);
         showIssuesCount();
     }
 

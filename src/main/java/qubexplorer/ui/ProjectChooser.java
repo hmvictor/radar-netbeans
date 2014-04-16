@@ -1,17 +1,11 @@
 package qubexplorer.ui;
 
-import java.net.URL;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import org.openide.util.Exceptions;
-import org.openide.util.NbPreferences;
 import qubexplorer.SonarQube;
-import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
  *
