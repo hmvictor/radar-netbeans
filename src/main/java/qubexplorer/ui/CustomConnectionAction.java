@@ -35,6 +35,7 @@ public final class CustomConnectionAction implements ActionListener {
         chooser.setSelectedUrl(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"));
         if(chooser.showDialog() == ProjectChooser.Option.ACCEPT) {
             CountsWorker worker=new CountsWorker(context, chooser.getSelectedUrl(), chooser.getSelectedProjectKey());
+            worker.setTriggerActionPlans(true);
             worker.execute();
         }
     }
