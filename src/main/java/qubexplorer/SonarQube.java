@@ -53,10 +53,6 @@ public class SonarQube {
         this("http://localhost:9000");
     }
     
-    public double getRulesCompliance(String resource) {
-        return getRulesCompliance(null, resource);
-    }
-    
     public double getRulesCompliance(Authentication auth, String resource) {
         try{
             if(!existsProject(auth, resource)) {
@@ -81,10 +77,6 @@ public class SonarQube {
         }
     }
     
-    public List<IssueDecorator> getIssuesBySeverity(String resource, Severity severity) {
-        return getIssuesBySeverity(null, resource, severity);
-    }
-    
     public List<IssueDecorator> getIssues(Authentication auth, String resource, IssueFilter... filters) {
         if(!existsProject(auth, resource)) {
             throw new NoSuchProjectException(resource);
@@ -95,30 +87,6 @@ public class SonarQube {
         }
         return getIssues(auth, query);
     }
-    
-    public List<IssueDecorator> getIssuesBySeverity(Authentication auth, String resource, Severity severity) {
-        if(!existsProject(auth, resource)) {
-            throw new NoSuchProjectException(resource);
-        }
-        IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN");
-        if(severity != null) {
-            query.severities(severity.toString().toUpperCase());
-        }
-        return getIssues(auth, query);
-    }
-    
-//    public List<IssueDecorator> getIssuesByRule(String resource, String ruleKey) {
-//        return getIssuesByRule(null, resource, ruleKey);
-//    }
-    
-//    public List<IssueDecorator> getIssuesByRule(Authentication auth, String resource, String ruleKey) {
-//        return getIssues(auth, resource, new RuleFilter(ruleKey));
-//        if(!existsProject(auth, resource)) {
-//            throw new NoSuchProjectException(resource);
-//        }
-//        IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN").rules(ruleKey);
-//        return getIssues(auth, query);
-//    }
     
     private List<IssueDecorator> getIssues(Authentication auth, IssueQuery query) {
         try{
@@ -166,10 +134,6 @@ public class SonarQube {
         return client.actionPlanClient().find(resource);
     }
     
-    public Rule getRule(String ruleKey) {
-        return getRule(null, ruleKey);
-    }
-    
     public Rule getRule(Authentication auth, String ruleKey) {
         try{
             RuleQuery ruleQuery=new RuleQuery("java");
@@ -195,10 +159,6 @@ public class SonarQube {
                 throw ex;
             }
         }
-    }
-    
-    public Counting getCounting(String resource) {
-        return getCounting(null, resource);
     }
     
     public Counting getCounting(Authentication auth, String resource, IssueFilter... filters) {
@@ -232,10 +192,6 @@ public class SonarQube {
         }
         counting.setRulesCompliance(getRulesCompliance(auth, resource));
         return counting;
-    }
-    
-    public long getIssuesCount(Authentication auth, String resource, Severity severity) {
-        throw new UnsupportedOperationException("Not yet implemented");
     }
     
     public List<String> getProjects(Authentication auth) {
