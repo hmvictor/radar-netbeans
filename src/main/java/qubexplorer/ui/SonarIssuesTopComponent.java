@@ -41,7 +41,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.IssueDecorator;
-import qubexplorer.IssueFilter;
+import qubexplorer.filter.IssueFilter;
 import qubexplorer.MvnModelFactory;
 import qubexplorer.Severity;
 
@@ -357,7 +357,19 @@ public final class SonarIssuesTopComponent extends TopComponent {
             model.addRow(new Object[]{icons.get(Severity.valueOf(issue.severity().toUpperCase())), issue.message(), issue.severityObject(), new Location(name, issue.line()), mvnId, issue.rule().getTitle()});
         }
         this.issues = issues;
-        title.setText("Number of issues: " + issues.length);
+        StringBuilder builder=new StringBuilder();
+        for (IssueFilter filter : filters) {
+            if(builder.length() > 0) {
+                builder.append(", ");
+            }
+            builder.append(filter.getDescription());
+        }
+        if(builder.length() > 0) {
+            builder.append(". ");
+        }
+        builder.append("Number of issues:");
+        builder.append(issues.length);
+        title.setText(builder.toString());
         issuesTable.getColumnExt("Severity").setVisible(true);
         issuesTable.getColumnExt("Rule").setVisible(true);
         showIssuesCount();

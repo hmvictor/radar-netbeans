@@ -1,4 +1,4 @@
-package qubexplorer;
+package qubexplorer.filter;
 
 import org.sonar.wsclient.issue.IssueQuery;
 
@@ -9,5 +9,7 @@ import org.sonar.wsclient.issue.IssueQuery;
 public interface IssueFilter {
     
     void apply(IssueQuery query);
+
+    String getDescription();
     
 }

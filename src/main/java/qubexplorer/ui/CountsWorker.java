@@ -9,7 +9,7 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
 import qubexplorer.Counting;
-import qubexplorer.IssueFilter;
+import qubexplorer.filter.IssueFilter;
 import qubexplorer.NoSuchProjectException;
 import qubexplorer.SonarQube;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;

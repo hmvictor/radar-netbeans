@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.util.LinkedList;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
@@ -22,12 +23,12 @@ import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 import org.sonar.wsclient.issue.ActionPlan;
 import org.sonar.wsclient.services.Rule;
-import qubexplorer.ActionPlanFilter;
+import qubexplorer.filter.ActionPlanFilter;
 import qubexplorer.Counting;
-import qubexplorer.IssueFilter;
-import qubexplorer.RuleFilter;
+import qubexplorer.filter.IssueFilter;
+import qubexplorer.filter.RuleFilter;
 import qubexplorer.Severity;
-import qubexplorer.SeverityFilter;
+import qubexplorer.filter.SeverityFilter;
 
 /**
  * Top component which displays something.
@@ -51,6 +52,7 @@ import qubexplorer.SeverityFilter;
     "HINT_InfoTopComponent=This is a Info window"
 })
 public final class SonarMainTopComponent extends TopComponent {
+
     private Project project;
     private String sonarQubeUrl;
     private String resourceKey;
@@ -61,46 +63,44 @@ public final class SonarMainTopComponent extends TopComponent {
         setToolTipText(Bundle.HINT_InfoTopComponent());
         ActionListener actionListener = new ActionListener() {
 
-             @Override
-             public void actionPerformed(ActionEvent ae) {
-                 JComponent component = (JComponent)ae.getSource();
-                 IssueFilter[] filters;
-                 if(actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
-                     filters=new IssueFilter[2];
-                     filters[1]=new ActionPlanFilter((ActionPlan)actionPlansCombo.getSelectedItem());
-                 }else{
-                     filters=new IssueFilter[1];
-                 }
-                 if(component.getClientProperty("severity") != null) {
-                     filters[0]=new SeverityFilter((Severity)component.getClientProperty("severity"));
-                 }else{
-                     filters[0]=new RuleFilter((Rule)component.getClientProperty("rule"));
-                 }
-                 new IssuesWorker(project, sonarQubeUrl, resourceKey, filters).execute();
-             }
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                JComponent component = (JComponent) ae.getSource();
+                List<IssueFilter> filters = new LinkedList<>();
+                if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
+                    filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
+                }
+                if (component.getClientProperty("severity") != null) {
+                    filters.add(new SeverityFilter((Severity) component.getClientProperty("severity")));
+                }
+                if (component.getClientProperty("rule") != null) {
+                    filters.add(new RuleFilter((Rule) component.getClientProperty("rule")));
+                }
+                new IssuesWorker(project, sonarQubeUrl, resourceKey, filters.toArray(new IssueFilter[0])).execute();
+            }
 
-         };
+        };
         severityPanelBlocker.addActionListener(actionListener);
         severityPanelCritical.addActionListener(actionListener);
         severityPanelMajor.addActionListener(actionListener);
         severityPanelMinor.addActionListener(actionListener);
         severityPanelInfo.addActionListener(actionListener);
-        actionPlansCombo.setRenderer(new DefaultListCellRenderer(){
+        actionPlansCombo.setRenderer(new DefaultListCellRenderer() {
 
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean hasFocus) {
                 JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, hasFocus);
-                if(value instanceof ActionPlan) {
-                    ActionPlan actionPlan = (ActionPlan)value;
+                if (value instanceof ActionPlan) {
+                    ActionPlan actionPlan = (ActionPlan) value;
                     DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM);
-                    label.setText(actionPlan.name()+" - "+dateFormat.format((actionPlan).deadLine()));
+                    label.setText(actionPlan.name() + " - " + dateFormat.format((actionPlan).deadLine()));
                 }
                 return label;
             }
-            
+
         });
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -464,23 +464,19 @@ public final class SonarMainTopComponent extends TopComponent {
     }// </editor-fold>//GEN-END:initComponents
 
     private void listAllIssuesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listAllIssuesActionPerformed
-        IssueFilter[] filters;
-        if(actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
-            filters=new IssueFilter[] {new ActionPlanFilter((ActionPlan)actionPlansCombo.getSelectedItem())};
-        }else{
-            filters=new IssueFilter[0];
+        List<IssueFilter> filters = new LinkedList<>();
+        if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
+            filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
         }
-        new IssuesWorker(project, sonarQubeUrl, resourceKey, filters).execute();
+        new IssuesWorker(project, sonarQubeUrl, resourceKey, filters.toArray(new IssueFilter[0])).execute();
     }//GEN-LAST:event_listAllIssuesActionPerformed
 
     private void actionPlansComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_actionPlansComboActionPerformed
-        IssueFilter[] filters;
-        if(actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
-            filters=new IssueFilter[] { new ActionPlanFilter((ActionPlan)actionPlansCombo.getSelectedItem()) };
-        }else{
-            filters=new IssueFilter[0];
+        List<IssueFilter> filters = new LinkedList<>();
+        if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
+            filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
         }
-        new CountsWorker(project, sonarQubeUrl, resourceKey, filters).execute();
+        new CountsWorker(project, sonarQubeUrl, resourceKey, filters.toArray(new IssueFilter[0])).execute();
     }//GEN-LAST:event_actionPlansComboActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -528,7 +524,7 @@ public final class SonarMainTopComponent extends TopComponent {
     private javax.swing.JLabel title;
     private javax.swing.JTextField totalCount;
     // End of variables declaration//GEN-END:variables
-    
+
     @Override
     public void componentOpened() {
         // TODO add custom code on component opening
@@ -546,21 +542,21 @@ public final class SonarMainTopComponent extends TopComponent {
     public void setResourceKey(String resourceKey) {
         this.resourceKey = resourceKey;
     }
-    
+
     public void setProject(Project project) {
         this.project = project;
         title.setText(ProjectUtils.getInformation(project).getDisplayName());
     }
-    
+
     public void setActionPlans(List<ActionPlan> plans) {
-        DefaultComboBoxModel model=new DefaultComboBoxModel();
+        DefaultComboBoxModel model = new DefaultComboBoxModel();
         model.addElement(org.openide.util.NbBundle.getMessage(Bundle.class, "SonarMainTopComponent.actionPlansCombo.none"));
-        for(ActionPlan plan: plans) {
+        for (ActionPlan plan : plans) {
             model.addElement(plan);
         }
         actionPlansCombo.setModel(model);
     }
-    
+
     public void setCounting(Counting counting) {
         severityPanelBlocker.setExpanded(false);
         severityPanelCritical.setExpanded(false);
@@ -572,17 +568,17 @@ public final class SonarMainTopComponent extends TopComponent {
         severityPanelMajor.setRuleCounts(counting.getRuleCounts(Severity.MAJOR));
         severityPanelMinor.setRuleCounts(counting.getRuleCounts(Severity.MINOR));
         severityPanelInfo.setRuleCounts(counting.getRuleCounts(Severity.INFO));
-        int sum=0;
-        for(Severity severity: Severity.values()) {
-            sum+=counting.getCount(severity);
+        int sum = 0;
+        for (Severity severity : Severity.values()) {
+            sum += counting.getCount(severity);
         }
-        NumberFormat numberFormat=NumberFormat.getIntegerInstance();
+        NumberFormat numberFormat = NumberFormat.getIntegerInstance();
         totalCount.setText(numberFormat.format(sum));
         listAllIssues.setEnabled(sum > 0);
-        NumberFormat format=NumberFormat.getNumberInstance();
+        NumberFormat format = NumberFormat.getNumberInstance();
         format.setMinimumFractionDigits(1);
         format.setMaximumFractionDigits(1);
-        rulesCompliance.setText(format.format(counting.getRulesCompliance())+" %");
+        rulesCompliance.setText(format.format(counting.getRulesCompliance()) + " %");
         revalidate();
     }
 
@@ -597,9 +593,9 @@ public final class SonarMainTopComponent extends TopComponent {
         //String version = p.getProperty("version");
         // TODO read your settings according to their version
     }
-    
+
     public static void main(String[] args) {
-        final JFrame frame=new JFrame();
+        final JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(new SonarMainTopComponent());
         SwingUtilities.invokeLater(new Runnable() {

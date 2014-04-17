@@ -1,5 +1,7 @@
 package qubexplorer;
 
+import qubexplorer.filter.SeverityFilter;
+import qubexplorer.filter.IssueFilter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;

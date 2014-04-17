@@ -1,5 +1,6 @@
-package qubexplorer;
+package qubexplorer.filter;
 
+import java.util.Objects;
 import org.sonar.wsclient.issue.IssueQuery;
 import org.sonar.wsclient.services.Rule;
 
@@ -11,14 +12,18 @@ public class RuleFilter implements IssueFilter{
     private Rule rule;
 
     public RuleFilter(Rule rule) {
+        Objects.requireNonNull(rule, "rule is null");
         this.rule=rule;
     }
     
     @Override
     public void apply(IssueQuery query) {
-        if(rule != null) {
-            query.rules(rule.getKey());
-        }
+        query.rules(rule.getKey());
+    }
+
+    @Override
+    public String getDescription() {
+        return "Rule: "+rule.getTitle();
     }
     
 }
