@@ -5,6 +5,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.Comparator;
@@ -12,6 +13,7 @@ import java.util.EnumMap;
 import javax.swing.DefaultRowSorter;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -38,8 +40,8 @@ import org.openide.text.Line;
 import org.openide.util.Exceptions;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
 import org.sonar.wsclient.issue.Issue;
-import org.sonar.wsclient.services.Rule;
 import qubexplorer.IssueDecorator;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.MvnModelFactory;
@@ -314,6 +316,12 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private void openFile(File file, int line) {
         FileObject fobj = FileUtil.toFileObject(file);
+        if(fobj == null) {
+            String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
+            String message = MessageFormat.format(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.text"), file.getPath());
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), message, messageTitle, JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         DataObject dobj = null;
         try {
             dobj = DataObject.find(fobj);
@@ -323,7 +331,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
         if (dobj != null) {
             LineCookie lc = (LineCookie) dobj.getCookie(LineCookie.class);
             if (lc == null) {
-                /* cannot do it */ return;
+                /* cannot do it */ 
+                return;
             }
             Line l = lc.getLineSet().getOriginal(line - 1);
             l.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);

@@ -46,8 +46,6 @@ public class RuleCountPanel extends javax.swing.JPanel {
      */
     public RuleCountPanel() {
         initComponents();
-//        GroupLayout layout = (GroupLayout) getLayout();
-//        layout.setHonorsVisibility(true);
         adjustSize();
     }
 

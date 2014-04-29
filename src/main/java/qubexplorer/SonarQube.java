@@ -22,7 +22,6 @@ import org.sonar.wsclient.SonarClient;
 import org.sonar.wsclient.base.HttpException;
 import org.sonar.wsclient.connectors.ConnectionException;
 import org.sonar.wsclient.issue.ActionPlan;
-import org.sonar.wsclient.issue.ActionPlanQuery;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.issue.IssueClient;
 import org.sonar.wsclient.issue.IssueQuery;
@@ -37,6 +36,7 @@ import org.sonar.wsclient.services.RuleQuery;
  * @author Victor
  */
 public class SonarQube {
+    private static final int UNAUTHORIZED_RESPONSE_STATUS = 401;
     private static final int PAGE_SIZE = 500;
     private String address;
 
@@ -70,7 +70,7 @@ public class SonarQube {
             return r.getMeasure("violations_density").getValue();
         }catch(ConnectionException ex) {
             if(ex.getMessage().contains("HTTP error: 401")){
-                throw new AuthorizationException();
+                throw new AuthorizationException(ex);
             }else{
                 throw ex;
             }
@@ -116,8 +116,8 @@ public class SonarQube {
             }while(pageIndex <= result.paging().pages());
             return issues;
         }catch(HttpException ex) {
-            if(ex.status() == 401){
-                throw new AuthorizationException();
+            if(ex.status() == UNAUTHORIZED_RESPONSE_STATUS){
+                throw new AuthorizationException(ex);
             }else{
                 throw ex;
             }
@@ -154,7 +154,7 @@ public class SonarQube {
             return null;
         }catch(ConnectionException ex) {
             if(ex.getMessage().contains("HTTP error: 401")){
-                throw new AuthorizationException();
+                throw new AuthorizationException(ex);
             }else{
                 throw ex;
             }
@@ -210,7 +210,7 @@ public class SonarQube {
             return keys;
         }catch(ConnectionException ex) {
             if(ex.getMessage().contains("HTTP error: 401")){
-                throw new AuthorizationException();
+                throw new AuthorizationException(ex);
             }else{
                 throw ex;
             }
