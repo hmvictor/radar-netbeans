@@ -68,7 +68,7 @@ public class SonarQube {
             query.setMetrics("violations_density");
             Resource r = sonar.find(query);
             return r.getMeasure("violations_density").getValue();
-        }catch(ConnectionException ex) {
+        } catch(ConnectionException ex) {
             if(ex.getMessage().contains("HTTP error: 401")){
                 throw new AuthorizationException(ex);
             }else{
@@ -125,13 +125,21 @@ public class SonarQube {
     }
     
     public List<ActionPlan> getActionPlans(Authentication auth, String resource){ 
-        SonarClient client;
-        if(auth == null) {
-            client = SonarClient.create(address);
-        }else{
-            client=SonarClient.builder().url(address).login(auth.getUsername()).password(new String(auth.getPassword())).build();
+        try{
+            SonarClient client;
+            if(auth == null) {
+                client = SonarClient.create(address);
+            }else{
+                client=SonarClient.builder().url(address).login(auth.getUsername()).password(new String(auth.getPassword())).build();
+            }
+            return client.actionPlanClient().find(resource);
+        }catch(HttpException ex) {
+            if(ex.status() == UNAUTHORIZED_RESPONSE_STATUS){
+                throw new AuthorizationException(ex);
+            }else{
+                throw ex;
+            }
         }
-        return client.actionPlanClient().find(resource);
     }
     
     public Rule getRule(Authentication auth, String ruleKey) {

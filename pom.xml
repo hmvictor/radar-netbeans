@@ -11,8 +11,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <netbeans.run.params.ide/>
-        <netbeans.run.params>${netbeans.run.params.ide}</netbeans.run.params>
     </properties>
 
     <repositories>
@@ -141,7 +139,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>nbm-maven-plugin</artifactId>
-                <version>3.8</version>
+                <version>3.13</version>
                 <extensions>true</extensions>
                 <configuration>
                     <author>Victor Hugo Herrera Maldonado</author>

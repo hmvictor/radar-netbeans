@@ -55,12 +55,7 @@ class CountsWorker extends SonarQubeWorker<Counting, Void> {
         infoTopComponent.setResourceKey(getResourceKey());
         infoTopComponent.open();
         infoTopComponent.requestVisible();
-    }
-
-    @Override
-    protected void finished() {
         try {
-            handle.finish();
             if(triggerActionPlans) {
                 ActionPlansWorker workerPlans = new ActionPlansWorker(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"), SonarQube.toResource(project));
                 workerPlans.execute();
@@ -71,8 +66,15 @@ class CountsWorker extends SonarQubeWorker<Counting, Void> {
     }
 
     @Override
+    protected void finished() {
+        handle.finish();
+    }
+    
+    @Override
     protected SonarQubeWorker createCopy() {
-        return new CountsWorker(project, getServerUrl(), getResourceKey());
+        CountsWorker copy = new CountsWorker(project, getServerUrl(), getResourceKey());
+        copy.setTriggerActionPlans(triggerActionPlans);
+        return copy;
     }
 
     @Override
