@@ -265,9 +265,15 @@ public final class SonarIssuesTopComponent extends TopComponent {
                     String shortKey = removeBranchPart(issues[row].componentKey());
                     Project p = findProject(project, getBasicPomInfo(shortKey));
                     if(p != null) {
-                        Sources sources = ProjectUtils.getSources(p);
-                        SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
-                        File file = new File(sourceGroups[0].getRootFolder().getPath(), toPath(issues[row].componentKey()) + ".java");
+                        String componentKey = issues[row].componentKey();
+                        File file;
+                        if(componentKey.contains("/")) {
+                            file = new File(p.getProjectDirectory().getPath(), toPath(componentKey, ".java"));
+                        }else{
+                            Sources sources = ProjectUtils.getSources(p);
+                            SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
+                            file = new File(sourceGroups[0].getRootFolder().getPath(), toPath(componentKey, ".java"));
+                        }
                         if (issues[row].line() == null) {
                             openFile(file, 1);
                         } else {
@@ -361,7 +367,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
             model.removeRow(0);
         }
         for (IssueDecorator issue : issues) {
-            String name = toPath(issue.componentKey()) + ".java";
+            String name = toPath(issue.componentKey(), ".java");
             String mvnId = toMvnId(issue.componentKey());
             model.addRow(new Object[]{icons.get(Severity.valueOf(issue.severity().toUpperCase())), issue.message(), issue.severityObject(), new Location(name, issue.line()), mvnId, issue.rule().getTitle()});
         }
@@ -384,15 +390,18 @@ public final class SonarIssuesTopComponent extends TopComponent {
         showIssuesCount();
     }
 
-    public String toPath(String componentKey) {
+    public static String toPath(String componentKey, String extension) {
         String path = componentKey;
         int index = path.lastIndexOf(':');
         if (index != -1) {
             path = path.substring(index + 1);
         }
-        return path.replace(".", "/");
+        if(!path.contains("/")) {
+            path=path.replace(".", "/")+extension;
+        }
+        return path;
     }
-
+    
     public String toMvnId(String componentKey) {
         String path = componentKey;
         int index = path.lastIndexOf(':');
