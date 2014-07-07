@@ -132,6 +132,22 @@
             <artifactId>org-openide-dialogs</artifactId>
             <version>RELEASE731</version>
         </dependency>
+        <dependency>
+            <groupId>org.codehaus.sonar.runner</groupId>
+            <artifactId>sonar-runner-api</artifactId>
+            <version>2.3</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-netbeans-modules-queries</artifactId>
+            <version>RELEASE80</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.2.4</version>
+        </dependency>
     </dependencies>
 
     <build>

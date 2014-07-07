@@ -1,6 +1,7 @@
 package qubexplorer.filter;
 
 import java.util.Objects;
+import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.issue.IssueQuery;
 import qubexplorer.Severity;
 
@@ -21,6 +22,11 @@ public class SeverityFilter implements IssueFilter{
         query.severities(severity.toString().toUpperCase());
     }
 
+    @Override
+    public boolean isValid(Issue issue) {
+        return issue.severity().equals(severity.toString().toLowerCase());
+    }
+    
     @Override
     public String getDescription() {
         return "Severity: "+severity.toString();

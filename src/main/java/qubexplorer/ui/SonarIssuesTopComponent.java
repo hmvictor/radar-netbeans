@@ -421,7 +421,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         MvnModelFactory factory = new MvnModelFactory();
         for (String module : model.getModules()) {
             FileObject moduleFile = FileUtil.toFileObject(new File(model.getProjectDirectory(), module));
-            Model m = factory.createModel(moduleFile.getFileObject("pom.xml"));
+            Model m = factory.createModel(moduleFile);
             String tmpGroupId = m.getGroupId() == null ? groupId : m.getGroupId();
             if (tmpGroupId.equals(basicPomInfo.getGroupId()) && m.getArtifactId().equals(basicPomInfo.getArtifactId())) {
                 return moduleFile;

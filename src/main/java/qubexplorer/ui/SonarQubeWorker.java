@@ -11,7 +11,7 @@ import qubexplorer.AuthorizationException;
  *
  * @author Victor
  */
-public abstract class SonarQubeWorker<R,P> extends SwingWorker<R, P>{
+public abstract class SonarQubeWorker<R,P> extends UITask<R, P>{
     private String serverUrl;
     private String resourceKey;
     private Authentication authentication;
@@ -41,48 +41,39 @@ public abstract class SonarQubeWorker<R,P> extends SwingWorker<R, P>{
     
     @Override
     protected final void done() {
-        try{
+        try {
             R result = get();
             success(result);
-            if(authentication != null) {
+            if (authentication != null) {
                 AuthenticationRepository.getInstance().saveAuthentication(serverUrl, resourceKey, authentication);
             }
-        }catch(ExecutionException ex) {
+        } catch (ExecutionException ex) {
             Throwable cause = ex.getCause();
-            if(cause instanceof AuthorizationException) {
-                AuthenticationRepository repo=AuthenticationRepository.getInstance();
-                Authentication auth=repo.getAuthentication(serverUrl, resourceKey);
-                if(auth == null) {
-                    auth=AuthDialog.showAuthDialog(WindowManager.getDefault().getMainWindow());
+            if (cause instanceof AuthorizationException) {
+                AuthenticationRepository repo = AuthenticationRepository.getInstance();
+                Authentication auth = repo.getAuthentication(serverUrl, resourceKey);
+                if (auth == null) {
+                    auth = AuthDialog.showAuthDialog(WindowManager.getDefault().getMainWindow());
                 }
-                if(auth != null) {
-                    SonarQubeWorker copy=createCopy();
+                if (auth != null) {
+                    SonarQubeWorker copy = createCopy();
                     copy.setAuthentication(auth);
                     scheduleWorker(copy);
                 }
-            }else{
+            } else {
                 error(cause);
             }
         } catch (InterruptedException ex) {
             Exceptions.printStackTrace(ex);
-        } finally{
+        } finally {
             finished();
-            if(scheduledWorker != null) {
+            if (scheduledWorker != null) {
                 scheduledWorker.execute();
             }
         }
     }
     
-    protected void success(R result) {
-    }
-
-    protected void error(Throwable cause) {
-        Exceptions.printStackTrace(cause);
-    }
-
-    protected void finished() {
-    }
-
+    
     protected abstract SonarQubeWorker createCopy();
 
     protected void scheduleWorker(SonarQubeWorker copy) {
