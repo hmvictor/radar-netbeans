@@ -2,7 +2,10 @@ package qubexplorer.ui;
 
 import java.util.List;
 import org.netbeans.api.project.Project;
+import org.openide.windows.WindowManager;
 import org.sonar.wsclient.issue.Issue;
+import qubexplorer.IssueDecorator;
+import qubexplorer.filter.IssueFilter;
 import qubexplorer.runner.SonarRunnerProccess;
 import qubexplorer.runner.SonarRunnerResult;
 
@@ -31,6 +34,21 @@ public class SonarRunnerWorker extends UITask<SonarRunnerResult, Void>{
         for(Issue issue:issues) {
             System.out.println(issue.message());
         }
+        SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarTopComponent");
+        sonarTopComponent.setIssues(new IssueFilter[0]);
+        sonarTopComponent.setProject(project);
+        try{
+            sonarTopComponent.setSummary(result.getSummary());
+        }catch(Exception ex) {
+            ex.printStackTrace();
+        }
+        sonarTopComponent.open();
+        sonarTopComponent.requestVisible();
+    }
+
+    @Override
+    protected void error(Throwable cause) {
+        cause.printStackTrace();
     }
     
 }
