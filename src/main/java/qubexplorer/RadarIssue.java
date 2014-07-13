@@ -12,11 +12,11 @@ import org.sonar.wsclient.services.Rule;
  *
  * @author Victor
  */
-public class IssueDecorator implements Issue{
+public class RadarIssue implements Issue{
     private Issue issue;
     private Rule rule;
 
-    public IssueDecorator(Issue issue, Rule rule) {
+    public RadarIssue(Issue issue, Rule rule) {
         Objects.requireNonNull(issue, "issue is null");
         Objects.requireNonNull(rule, "rule is null");
         this.issue = issue;

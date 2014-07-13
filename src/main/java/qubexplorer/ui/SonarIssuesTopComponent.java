@@ -1,5 +1,7 @@
 package qubexplorer.ui;
 
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -38,15 +40,19 @@ import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.text.Line;
 import org.openide.util.Exceptions;
-import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.NbPreferences;
+import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sonar.wsclient.issue.Issue;
-import qubexplorer.IssueDecorator;
-import qubexplorer.filter.IssueFilter;
+import org.sonar.wsclient.services.Rule;
+import qubexplorer.RadarIssue;
+import qubexplorer.IssuesContainer;
 import qubexplorer.MvnModelFactory;
 import qubexplorer.Severity;
+import qubexplorer.filter.IssueFilter;
 import qubexplorer.runner.Summary;
+import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
  * Top component which displays something.
@@ -70,22 +76,26 @@ import qubexplorer.runner.Summary;
     "HINT_SonarTopComponent=This is a Sonar window"
 })
 public final class SonarIssuesTopComponent extends TopComponent {
+    private IssuesContainer issuesContainer;
 
     private EnumMap<Severity, Icon> icons = new EnumMap<>(Severity.class);
     private Project project;
     private Issue[] issues;
+    
     private final Comparator<SeverityIcon> severityIconComparator = Collections.reverseOrder(new Comparator<SeverityIcon>() {
         @Override
         public int compare(SeverityIcon t, SeverityIcon t1) {
             return t.severity.compareTo(t1.severity);
         }
     });
+    
     private final Comparator<Severity> severityComparator = Collections.reverseOrder(new Comparator<Severity>() {
         @Override
         public int compare(Severity t, Severity t1) {
             return t.compareTo(t1);
         }
     });
+    
     private final Comparator<Location> locationComparator = new Comparator<Location>() {
         @Override
         public int compare(Location t, Location t1) {
@@ -143,11 +153,23 @@ public final class SonarIssuesTopComponent extends TopComponent {
     public void setProject(Project project) {
         this.project = project;
     }
-    
+
     public void setSummary(Summary summary) {
         tableSummary.setTreeTableModel(new SummaryModel(summary));
+        tableSummary.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+
+            }
+
+        });
     }
 
+    public void setIssuesContainer(IssuesContainer issuesContainer) {
+        this.issuesContainer = issuesContainer;
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -157,10 +179,11 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private void initComponents() {
 
         jLabel2 = new javax.swing.JLabel();
-        jTabbedPane1 = new javax.swing.JTabbedPane();
+        tabbedPane = new javax.swing.JTabbedPane();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tableSummary = new org.jdesktop.swingx.JXTreeTable();
+        tableSummary.getTableHeader().setReorderingAllowed(false);
         jPanel1 = new javax.swing.JPanel();
         title = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -172,6 +195,12 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel2.text")); // NOI18N
 
+        tableSummary.setRootVisible(true);
+        tableSummary.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tableSummaryMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(tableSummary);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
@@ -191,7 +220,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jPanel2.TabConstraints.tabTitle"), jPanel2); // NOI18N
+        tabbedPane.addTab(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jPanel2.TabConstraints.tabTitle"), jPanel2); // NOI18N
 
         title.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         org.openide.awt.Mnemonics.setLocalizedText(title, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.title.text")); // NOI18N
@@ -286,7 +315,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                     .addContainerGap())
             );
 
-            jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jPanel1.TabConstraints.tabTitle"), jPanel1); // NOI18N
+            tabbedPane.addTab(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jPanel1.TabConstraints.tabTitle"), jPanel1); // NOI18N
 
             javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
             this.setLayout(layout);
@@ -294,14 +323,14 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
-                    .addComponent(jTabbedPane1)
+                    .addComponent(tabbedPane)
                     .addContainerGap())
             );
             layout.setVerticalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
-                    .addComponent(jTabbedPane1)
+                    .addComponent(tabbedPane)
                     .addContainerGap())
             );
         }// </editor-fold>//GEN-END:initComponents
@@ -314,12 +343,12 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 try {
                     String shortKey = removeBranchPart(issues[row].componentKey());
                     Project p = findProject(project, getBasicPomInfo(shortKey));
-                    if(p != null) {
+                    if (p != null) {
                         String componentKey = issues[row].componentKey();
                         File file;
-                        if(componentKey.contains("/")) {
+                        if (componentKey.contains("/")) {
                             file = new File(p.getProjectDirectory().getPath(), toPath(componentKey, ".java"));
-                        }else{
+                        } else {
                             Sources sources = ProjectUtils.getSources(p);
                             SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
                             file = new File(sourceGroups[0].getRootFolder().getPath(), toPath(componentKey, ".java"));
@@ -329,8 +358,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
                         } else {
                             openFile(file, issues[row].line());
                         }
-                    }else{
-                        String message=org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", shortKey);
+                    } else {
+                        String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", shortKey);
                         DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
                     }
                 } catch (IOException | XmlPullParserException ex) {
@@ -339,6 +368,25 @@ public final class SonarIssuesTopComponent extends TopComponent {
             }
         }
     }//GEN-LAST:event_issuesTableMouseClicked
+
+    private void tableSummaryMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableSummaryMouseClicked
+        if (evt.getClickCount() != 2) {
+            return;
+        }
+        int rowIndex = tableSummary.rowAtPoint(evt.getPoint());
+        if (rowIndex < 0) {
+            return;
+        }
+        Object selectedNode = tableSummary.getPathForRow(rowIndex).getLastPathComponent();
+        int column = tableSummary.columnAtPoint(evt.getPoint());
+        String serverUrl = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
+        if (column == 1) {
+            new IssuesWorker(issuesContainer, project, serverUrl, "", new IssueFilter[0]).execute();
+        } else if(selectedNode instanceof Rule){
+            RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), (Rule)selectedNode);
+        }
+    }//GEN-LAST:event_tableSummaryMouseClicked
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField filterText;
     private org.jdesktop.swingx.JXTable issuesTable;
@@ -349,8 +397,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTextField shownCount;
+    private javax.swing.JTabbedPane tabbedPane;
     private org.jdesktop.swingx.JXTreeTable tableSummary;
     private javax.swing.JLabel title;
     // End of variables declaration//GEN-END:variables
@@ -377,7 +425,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private void openFile(File file, int line) {
         FileObject fobj = FileUtil.toFileObject(file);
-        if(fobj == null) {
+        if (fobj == null) {
             String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
             String message = MessageFormat.format(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.text"), file.getPath());
             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), message, messageTitle, JOptionPane.WARNING_MESSAGE);
@@ -392,7 +440,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         if (dobj != null) {
             LineCookie lc = (LineCookie) dobj.getCookie(LineCookie.class);
             if (lc == null) {
-                /* cannot do it */ 
+                /* cannot do it */
                 return;
             }
             Line l = lc.getLineSet().getOriginal(line - 1);
@@ -416,25 +464,25 @@ public final class SonarIssuesTopComponent extends TopComponent {
         showIssuesCount();
     }
 
-    public void setIssues(IssueFilter[] filters, IssueDecorator... issues) {
+    public void setIssues(IssueFilter[] filters, RadarIssue... issues) {
         DefaultTableModel model = (DefaultTableModel) issuesTable.getModel();
         while (model.getRowCount() > 0) {
             model.removeRow(0);
         }
-        for (IssueDecorator issue : issues) {
+        for (RadarIssue issue : issues) {
             String name = toPath(issue.componentKey(), ".java");
             String mvnId = toMvnId(issue.componentKey());
             model.addRow(new Object[]{icons.get(Severity.valueOf(issue.severity().toUpperCase())), issue.message(), issue.severityObject(), new Location(name, issue.line()), mvnId, issue.rule().getTitle()});
         }
         this.issues = issues;
-        StringBuilder builder=new StringBuilder();
+        StringBuilder builder = new StringBuilder();
         for (IssueFilter filter : filters) {
-            if(builder.length() > 0) {
+            if (builder.length() > 0) {
                 builder.append(", ");
             }
             builder.append(filter.getDescription());
         }
-        if(builder.length() > 0) {
+        if (builder.length() > 0) {
             builder.append(". ");
         }
         builder.append("Number of issues:");
@@ -451,12 +499,12 @@ public final class SonarIssuesTopComponent extends TopComponent {
         if (index != -1) {
             path = path.substring(index + 1);
         }
-        if(!path.contains("/")) {
-            path=path.replace(".", "/")+extension;
+        if (!path.contains("/")) {
+            path = path.replace(".", "/") + extension;
         }
         return path;
     }
-    
+
     public String toMvnId(String componentKey) {
         String path = componentKey;
         int index = path.lastIndexOf(':');
@@ -511,7 +559,15 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private String removeBranchPart(String componentKey) {
         String[] tokens = componentKey.split(":");
         assert tokens.length >= 2;
-        return tokens[0]+":"+tokens[1];
+        return tokens[0] + ":" + tokens[1];
+    }
+
+    public void showIssuesList() {
+        tabbedPane.setSelectedIndex(1);
+    }
+
+    public void showSummary() {
+        tabbedPane.setSelectedIndex(0);
     }
 
     private static class BasicPomInfo {
@@ -574,4 +630,5 @@ public final class SonarIssuesTopComponent extends TopComponent {
             return severity;
         }
     }
+    
 }

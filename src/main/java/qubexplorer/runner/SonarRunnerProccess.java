@@ -60,7 +60,7 @@ public class SonarRunnerProccess {
         EmbeddedRunner runner=EmbeddedRunner.create();
         projectHome=project.getProjectDirectory().getPath();
         Model model = mvnModelFactory.createModel(project);
-        properties.put("sonar.projectKey", model.getArtifactId()+":"+model.getGroupId());
+        properties.put("sonar.projectKey", model.getGroupId()+":"+model.getArtifactId());
         properties.put("sonar.projectName", model.getName());
         properties.put("sonar.projectVersion", model.getVersion());
         properties.put("sonar.sourceEncoding", FileEncodingQuery.getEncoding(project.getProjectDirectory()).displayName());

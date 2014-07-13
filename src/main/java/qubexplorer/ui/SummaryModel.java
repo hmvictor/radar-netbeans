@@ -14,7 +14,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import org.jdesktop.swingx.JXTreeTable;
 import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 import org.openide.util.Exceptions;
-import org.sonar.wsclient.rule.Rule;
+import org.sonar.wsclient.services.Rule;
 import qubexplorer.Severity;
 import qubexplorer.runner.Summary;
 
@@ -36,7 +36,13 @@ public class SummaryModel extends AbstractTreeTableModel {
     @Override
     public Object getValueAt(Object node, int i) {
         System.out.println(node.getClass());
-        if (node instanceof Severity) {
+        if(node instanceof Summary){
+            if(i == 0){
+                return "Issues";
+            }else{
+                return getSummary().getCount();
+            }
+        }else if (node instanceof Severity) {
             if (i == 0) {
                 return ((Severity) node).name();
             } else {
@@ -44,7 +50,7 @@ public class SummaryModel extends AbstractTreeTableModel {
             }
         } else if (node instanceof Rule) {
            if(i == 0) {
-               return ((Rule)node).name();
+               return ((Rule)node).getTitle();
            }else{
                return (getSummary()).getCount((Rule) node);
            }
@@ -123,9 +129,8 @@ public class SummaryModel extends AbstractTreeTableModel {
 
             @Override
             public Set<Rule> getRules(Severity severity) {
-                Map<String, String> map=new HashMap<>();
-                map.put("name", "A rule to rule them all");
-                Rule rule=new Rule(map);
+                Rule rule=new Rule();
+                rule.setTitle("A rule to rule them all");
                 return new HashSet<>(Arrays.asList(rule));
             }
 

@@ -1,14 +1,10 @@
 package qubexplorer.runner;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.sonar.wsclient.rule.Rule;
+import org.sonar.wsclient.services.Rule;
 import qubexplorer.Severity;
 import qubexplorer.runner.SonarRunnerResult.IntWrapper;
 
@@ -37,7 +33,7 @@ public class Summary {
     }
     
     public int getCount(Rule rule) {
-        IntWrapper count = countsByRule.get(rule.key());
+        IntWrapper count = countsByRule.get(rule.getKey());
         return count != null? count.getInt(): 0;
     }
     

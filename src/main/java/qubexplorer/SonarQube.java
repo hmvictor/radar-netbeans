@@ -35,7 +35,7 @@ import org.sonar.wsclient.services.RuleQuery;
  *
  * @author Victor
  */
-public class SonarQube {
+public class SonarQube implements IssuesContainer{
     private static final int UNAUTHORIZED_RESPONSE_STATUS = 401;
     private static final int PAGE_SIZE = 500;
     private String address;
@@ -77,7 +77,7 @@ public class SonarQube {
         }
     }
     
-    public List<IssueDecorator> getIssues(Authentication auth, String resource, IssueFilter... filters) {
+    public List<RadarIssue> getIssues(Authentication auth, String resource, IssueFilter... filters) {
         if(!existsProject(auth, resource)) {
             throw new NoSuchProjectException(resource);
         }
@@ -88,7 +88,7 @@ public class SonarQube {
         return getIssues(auth, query);
     }
     
-    private List<IssueDecorator> getIssues(Authentication auth, IssueQuery query) {
+    private List<RadarIssue> getIssues(Authentication auth, IssueQuery query) {
         try{
             SonarClient client;
             if(auth == null) {
@@ -97,7 +97,7 @@ public class SonarQube {
                 client=SonarClient.builder().url(address).login(auth.getUsername()).password(new String(auth.getPassword())).build();
             }
             IssueClient issueClient = client.issueClient();
-            List<IssueDecorator> issues=new LinkedList<>();
+            List<RadarIssue> issues=new LinkedList<>();
             Map<String, Rule> rulesCache=new HashMap<>();
             Issues result;
             int pageIndex=1;
@@ -110,7 +110,7 @@ public class SonarQube {
                         rule=getRule(auth, issue.ruleKey());
                         rulesCache.put(issue.ruleKey(), rule);
                     }
-                    issues.add(new IssueDecorator(issue, rule));
+                    issues.add(new RadarIssue(issue, rule));
                 }
                 pageIndex++;
             }while(pageIndex <= result.paging().pages());
@@ -178,7 +178,7 @@ public class SonarQube {
             IssueFilter[] tempFilters=new IssueFilter[filters.length+1];
             tempFilters[0]=new SeverityFilter(severity);
             System.arraycopy(filters, 0, tempFilters, 1, filters.length);
-            List<IssueDecorator> issues = getIssues(auth, resource, tempFilters);
+            List<RadarIssue> issues = getIssues(auth, resource, tempFilters);
             Map<Rule, Integer> counts=new TreeMap<>(new Comparator<Rule>(){
 
                 @Override
@@ -187,7 +187,7 @@ public class SonarQube {
                 }
                 
             });
-            for(IssueDecorator issue: issues){
+            for(RadarIssue issue: issues){
                 Integer counter = counts.get(issue.rule());
                 if(counter == null) {
                     counter=1;

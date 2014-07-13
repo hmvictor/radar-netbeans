@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -14,9 +15,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.sonar.wsclient.issue.Issue;
-import org.sonar.wsclient.rule.Rule;
+import org.sonar.wsclient.services.Rule;
 import qubexplorer.Authentication;
 import qubexplorer.IssuesContainer;
+import qubexplorer.RadarIssue;
 import qubexplorer.Severity;
 import qubexplorer.filter.IssueFilter;
 
@@ -27,21 +29,42 @@ import qubexplorer.filter.IssueFilter;
 public class SonarRunnerResult implements IssuesContainer {
 
     private final File file;
+    private List<Rule> rules;
+    private Map<String, Rule> rulesByKey;
 
     public SonarRunnerResult(File file) {
         this.file = file;
+        loadRules();
     }
-
-    public Summary getSummary() {
+    
+    private void loadRules() {
         try (JsonReader reader = new JsonReader(new FileReader(file))) {
-            List<Rule> rules = null;
-            List<Issue> issues = null;
             reader.beginObject();
             while (reader.hasNext()) {
                 String name = reader.nextName();
                 if (name.equals("rules")) {
                     rules = readRules(reader);
-                }else if (name.equals("issues")) {
+                }else{
+                    reader.skipValue();
+                }
+            }
+            reader.endObject();
+            rulesByKey=new HashMap<>();
+            for (Rule rule : rules) {
+                rulesByKey.put(rule.getKey(), rule);
+            }
+        } catch (IOException | ParseException ex) {
+            throw new SonarRunnerException(ex);
+        }
+    }
+
+    public Summary getSummary() {
+        try (JsonReader reader = new JsonReader(new FileReader(file))) {
+            List<Issue> issues = null;
+            reader.beginObject();
+            while (reader.hasNext()) {
+                String name = reader.nextName();
+                if (name.equals("issues")) {
                     issues = readIssues(reader, new IssueFilter[0]);
                 }else{
                     reader.skipValue();
@@ -50,10 +73,7 @@ public class SonarRunnerResult implements IssuesContainer {
             reader.endObject();
             Map<String, IntWrapper> countsByRule=new HashMap<>();
             Map<String, IntWrapper> countsBySeverity=new HashMap<>();
-            Map<String, Rule> mapRules=new HashMap<>();
-            for (Rule rule : rules) {
-                mapRules.put(rule.key(), rule);
-            }
+
             Map<Severity, Set<Rule>> rulesBySeverity=new HashMap<>();
             for (Issue issue : issues) {
                 if(countsByRule.containsKey(issue.key())) {
@@ -74,13 +94,13 @@ public class SonarRunnerResult implements IssuesContainer {
                 }
                 boolean exists=false;
                 for (Rule rule : set) {
-                    if(rule.key().equals(issue.ruleKey())){
+                    if(rule.getKey().equals(issue.ruleKey())){
                         exists=true;
                         break;
                     }
                 }
                 if(!exists){
-                    set.add(mapRules.get(issue.ruleKey()));
+                    set.add(rulesByKey.get(issue.ruleKey()));
                 }
             }
             return new Summary(countsBySeverity, countsByRule, rulesBySeverity);
@@ -90,7 +110,7 @@ public class SonarRunnerResult implements IssuesContainer {
     }
 
     @Override
-    public List<Issue> getIssues(Authentication auth, String resource, IssueFilter... filters) {
+    public List<RadarIssue> getIssues(Authentication auth, String resource, IssueFilter... filters) {
         try (JsonReader reader = new JsonReader(new FileReader(file))) {
             List<Issue> issues = null;
             reader.beginObject();
@@ -103,7 +123,11 @@ public class SonarRunnerResult implements IssuesContainer {
                 }
             }
             reader.endObject();
-            return issues;
+            List<RadarIssue> tmp=new ArrayList<>(issues.size());
+            for (Issue issue : issues) {
+                tmp.add(new RadarIssue(issue, rulesByKey.get(issue.ruleKey())));
+            }
+            return tmp;
         } catch (IOException | ParseException ex) {
             throw new SonarRunnerException(ex);
         }
@@ -189,26 +213,26 @@ public class SonarRunnerResult implements IssuesContainer {
     private Rule readRule(JsonReader reader) throws IOException, ParseException {
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss-SSSS");
         reader.beginObject();
-        Map<String, String> map=new HashMap();
+        Rule rule=new Rule();
         while (reader.hasNext()) {
             
             String name = reader.nextName();
             switch (name) {
                 case "key":
-                    map.put("key", reader.nextString());
+                    rule.setKey(reader.nextString());
                     break;
                 case "rule":
-                    map.put("name", reader.nextString());
+                    rule.setTitle(reader.nextString());
                     break;
                 case "name":
-                    map.put("description", reader.nextString());
+                    rule.setDescription(reader.nextString());
                     break;
                 default:
                     reader.skipValue();
                     break;
             }
         }
-        Rule rule=new Rule(map);
+        
         reader.endObject();
         return rule;
     }
