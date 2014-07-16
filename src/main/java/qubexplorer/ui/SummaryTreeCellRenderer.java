@@ -2,27 +2,29 @@ package qubexplorer.ui;
 
 import java.awt.Component;
 import javax.swing.ImageIcon;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.JTree;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import org.sonar.wsclient.services.Rule;
 import qubexplorer.Severity;
+import qubexplorer.Summary;
 
 /**
  *
  * @author Victor
  */
-public class SummaryTreeCellRenderer extends DefaultTableCellRenderer{
+public class SummaryTreeCellRenderer extends DefaultTreeCellRenderer {
 
     @Override
-    public Component getTableCellRendererComponent(JTable jtable, Object o, boolean bln, boolean bln1, int i, int i1) {
-        System.out.println("getRenderer");
-        System.out.println(o.getClass());
-        if(o instanceof Severity) {
-            System.out.println("set icon");
-            setIcon(new ImageIcon(getClass().getResource("/qubexplorer/ui/images/"+o.toString().toLowerCase()+".png")));
+    public Component getTreeCellRendererComponent(JTree jtree, Object o, boolean bln, boolean bln1, boolean bln2, int i, boolean bln3) {
+        Component c = super.getTreeCellRendererComponent(jtree, o, bln, bln1, bln2, i, bln3);
+        if (o instanceof Severity) {
+            setIcon(new ImageIcon(getClass().getResource("/qubexplorer/ui/images/" + o.toString().toLowerCase() + ".png")));
+        }else if(o instanceof Rule) {
+            setText(((Rule)o).getTitle());
+        }else if(o instanceof Summary){
+            setText("Issues");
         }
-        setText(o.toString());
-        return this;
+        return c;
     }
-    
-    
+
 }

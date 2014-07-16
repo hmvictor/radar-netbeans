@@ -15,10 +15,12 @@ import java.util.EnumMap;
 import javax.swing.DefaultRowSorter;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import org.apache.maven.model.Model;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
@@ -50,8 +52,11 @@ import qubexplorer.RadarIssue;
 import qubexplorer.IssuesContainer;
 import qubexplorer.MvnModelFactory;
 import qubexplorer.Severity;
+import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
-import qubexplorer.runner.Summary;
+import qubexplorer.filter.RuleFilter;
+import qubexplorer.filter.SeverityFilter;
+import qubexplorer.runner.SonarRunnerSummary;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
@@ -61,7 +66,7 @@ import qubexplorer.ui.options.SonarQubeOptionsPanel;
         dtd = "-//qubexplorer.ui//Sonar//EN",
         autostore = false)
 @TopComponent.Description(
-        preferredID = "SonarTopComponent",
+        preferredID = "SonarIssuesTopComponent",
         //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_ALWAYS)
 @TopComponent.Registration(mode = "output", openAtStartup = false)
@@ -72,8 +77,8 @@ import qubexplorer.ui.options.SonarQubeOptionsPanel;
         preferredID = "SonarTopComponent")
 @Messages({
     "CTL_SonarAction=Sonar",
-    "CTL_SonarTopComponent=Sonar - Issues",
-    "HINT_SonarTopComponent=This is a Sonar window"
+    "CTL_SonarIssuesTopComponent=Sonar - Issues",
+    "HINT_SonarIssuesTopComponent=This is a Sonar window"
 })
 public final class SonarIssuesTopComponent extends TopComponent {
     private IssuesContainer issuesContainer;
@@ -118,9 +123,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
         issuesTable.getColumn("").setResizable(false);
         issuesTable.getColumnModel().getColumn(0).setPreferredWidth(16);
         issuesTable.getColumnModel().getColumn(0).setMaxWidth(16);
-        setName(Bundle.CTL_SonarTopComponent());
-        setToolTipText(Bundle.HINT_SonarTopComponent());
+        setName(Bundle.CTL_SonarIssuesTopComponent());
+        setToolTipText(Bundle.HINT_SonarIssuesTopComponent());
         filterText.getDocument().addDocumentListener(new DocumentListener() {
+            
             @Override
             public void insertUpdate(DocumentEvent de) {
                 filterTextChanged();
@@ -156,14 +162,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     public void setSummary(Summary summary) {
         tableSummary.setTreeTableModel(new SummaryModel(summary));
-        tableSummary.addMouseListener(new MouseAdapter() {
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-
-            }
-
-        });
+        DefaultTableCellRenderer renderer=new DefaultTableCellRenderer();
+        renderer.setHorizontalAlignment(JLabel.RIGHT);
+        tableSummary.getColumn(1).setCellRenderer(renderer);
     }
 
     public void setIssuesContainer(IssuesContainer issuesContainer) {
@@ -184,6 +185,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         jScrollPane1 = new javax.swing.JScrollPane();
         tableSummary = new org.jdesktop.swingx.JXTreeTable();
         tableSummary.getTableHeader().setReorderingAllowed(false);
+        tableSummary.setTreeCellRenderer(new SummaryTreeCellRenderer());
         jPanel1 = new javax.swing.JPanel();
         title = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -381,7 +383,16 @@ public final class SonarIssuesTopComponent extends TopComponent {
         int column = tableSummary.columnAtPoint(evt.getPoint());
         String serverUrl = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
         if (column == 1) {
-            new IssuesWorker(issuesContainer, project, serverUrl, "", new IssueFilter[0]).execute();
+            IssueFilter[] filters;
+            if(selectedNode instanceof SonarRunnerSummary) {
+                filters=new IssueFilter[0];
+            }else if(selectedNode instanceof Severity){
+                filters=new IssueFilter[]{new SeverityFilter((Severity)selectedNode)};
+            }else{
+                assert selectedNode instanceof Rule;
+                filters=new IssueFilter[]{new RuleFilter((Rule)selectedNode)};
+            }
+            new IssuesWorker(issuesContainer, project, serverUrl, "", filters).execute();
         } else if(selectedNode instanceof Rule){
             RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), (Rule)selectedNode);
         }
@@ -629,6 +640,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         public Severity getSeverity() {
             return severity;
         }
+        
     }
     
 }

@@ -1,14 +1,16 @@
 package qubexplorer;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.sonar.wsclient.services.Rule;
 
 /**
  *
  * @author Victor
  */
-public class Counting {
+public class Counting implements Summary{
     private Map<Severity, Map<Rule, Integer>> severityCounts=new HashMap<>();
     private double rulesCompliance;
     
@@ -43,6 +45,38 @@ public class Counting {
 
     public void setRuleCounts(Severity severity, Map<Rule, Integer> counts) {
         severityCounts.put(severity, counts);
+    }
+
+    @Override
+    public int getCount(Rule rule) {
+        for (Map<Rule, Integer> map : severityCounts.values()) {
+            for (Map.Entry<Rule, Integer> entry : map.entrySet()) {
+                if(entry.getKey().getKey().equals(rule.getKey())) {
+                    return entry.getValue();
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public int getCount() {
+        int suma=0;
+        for (Map<Rule, Integer> map : severityCounts.values()) {
+            for (Integer integer : map.values()) {
+                suma+=integer;
+            }
+        }
+        return suma;
+    }
+
+    @Override
+    public Set<Rule> getRules(Severity severity) {
+        if(severityCounts.containsKey(severity)) {
+            return severityCounts.get(severity).keySet();
+        }else{
+            return Collections.emptySet();
+        }
     }
     
 }

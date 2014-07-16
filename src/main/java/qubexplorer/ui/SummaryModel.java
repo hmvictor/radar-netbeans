@@ -1,22 +1,28 @@
 package qubexplorer.ui;
 
+import java.awt.Component;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import org.jdesktop.swingx.JXTreeTable;
 import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 import org.openide.util.Exceptions;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.Severity;
-import qubexplorer.runner.Summary;
+import qubexplorer.Summary;
+import qubexplorer.runner.SonarRunnerSummary;
 
 /**
  *
@@ -35,24 +41,24 @@ public class SummaryModel extends AbstractTreeTableModel {
 
     @Override
     public Object getValueAt(Object node, int i) {
-        System.out.println(node.getClass());
+        Summary summary = getSummary();
         if(node instanceof Summary){
             if(i == 0){
                 return "Issues";
             }else{
-                return getSummary().getCount();
+                return summary.getCount();
             }
         }else if (node instanceof Severity) {
             if (i == 0) {
                 return ((Severity) node).name();
             } else {
-                return (getSummary()).getCount((Severity) node);
+                return summary.getCount((Severity) node);
             }
         } else if (node instanceof Rule) {
            if(i == 0) {
-               return ((Rule)node).getTitle();
+               return ((Rule)node).getDescription();
            }else{
-               return (getSummary()).getCount((Rule) node);
+               return summary.getCount((Rule) node);
            }
         } else {
             return null;
@@ -80,13 +86,13 @@ public class SummaryModel extends AbstractTreeTableModel {
                 public int compare(Rule t, Rule t1) {
                     int count1=getSummary().getCount(t);
                     int count2=getSummary().getCount(t1);
-                    return count1 - count2;
+                    return count2 - count1;
                 }
                 
             });
             return rules[i];
         } else {
-            return null;
+            throw new AssertionError("Unknown parent object");
         }
     }
 
@@ -101,7 +107,7 @@ public class SummaryModel extends AbstractTreeTableModel {
         if (parent instanceof Summary) {
             return Severity.values().length;
         } else if (parent instanceof Severity) {
-            return (getSummary()).getRules((Severity) parent).size();
+            return getSummary().getRules((Severity) parent).size();
         } else {
             return 0;
         }
@@ -120,7 +126,7 @@ public class SummaryModel extends AbstractTreeTableModel {
 
     public static void main(String[] args) {
         final JFrame frame = new JFrame();
-        Summary summary = new Summary() {
+        Summary summary = new SonarRunnerSummary() {
             
             @Override
             public int getCount(Severity severity) {
@@ -148,6 +154,34 @@ public class SummaryModel extends AbstractTreeTableModel {
 //            }
             
         };
+        
+        table.setTreeCellRenderer(new DefaultTreeCellRenderer(){
+
+            @Override
+            public Component getTreeCellRendererComponent(JTree jtree, Object o, boolean bln, boolean bln1, boolean bln2, int i, boolean bln3) {
+                Component c = super.getTreeCellRendererComponent(jtree, o, bln, bln1, bln2, i, bln3); //To change body of generated methods, choose Tools | Templates.
+                if(o instanceof Severity){
+                    setIcon(new ImageIcon(getClass().getResource("/qubexplorer/ui/images/"+o.toString().toLowerCase()+".png")));
+                }
+                return c; //To change body of generated methods, choose Tools | Templates.
+            }
+            
+        });
+        table.getColumn(1).setCellRenderer(new DefaultTableCellRenderer(){
+
+            @Override
+            public Component getTableCellRendererComponent(JTable jtable, Object o, boolean bln, boolean bln1, int i, int i1) {
+                setHorizontalTextPosition(JLabel.RIGHT);
+                setHorizontalAlignment(JLabel.RIGHT);
+                setText("100");
+                return this;
+            }
+            
+        });
+        DefaultTableCellRenderer renderer=new DefaultTableCellRenderer();
+        renderer.setHorizontalAlignment(JLabel.RIGHT);
+        table.setDefaultRenderer(Integer.class, renderer);
+        table.getColumn(1).setCellRenderer(renderer);
         frame.add(new JScrollPane(table));
         frame.setLocationRelativeTo(null);
         frame.setSize(700, 600);

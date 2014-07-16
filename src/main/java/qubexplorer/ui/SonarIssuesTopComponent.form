@@ -94,7 +94,7 @@
                     <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="tableSummaryMouseClicked"/>
                   </Events>
                   <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_CreateCodePost" type="java.lang.String" value="tableSummary.getTableHeader().setReorderingAllowed(false);"/>
+                    <AuxValue name="JavaCodeGenerator_CreateCodePost" type="java.lang.String" value="tableSummary.getTableHeader().setReorderingAllowed(false);&#xd;&#xa;tableSummary.setTreeCellRenderer(new SummaryTreeCellRenderer());&#xd;&#xa;"/>
                   </AuxValues>
                 </Component>
               </SubComponents>

@@ -55,6 +55,13 @@ class CountsWorker extends SonarQubeWorker<Counting, Void> {
         infoTopComponent.setResourceKey(getResourceKey());
         infoTopComponent.open();
         infoTopComponent.requestVisible();
+        SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
+        sonarTopComponent.setProject(project);
+        sonarTopComponent.setSummary(counting);
+        sonarTopComponent.setIssuesContainer(new SonarQube(getServerUrl()));
+        sonarTopComponent.open();
+        sonarTopComponent.requestVisible();
+        sonarTopComponent.showSummary();
         try {
             if(triggerActionPlans) {
                 ActionPlansWorker workerPlans = new ActionPlansWorker(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"), SonarQube.toResource(project));
@@ -63,6 +70,7 @@ class CountsWorker extends SonarQubeWorker<Counting, Void> {
         } catch (IOException | XmlPullParserException ex) {
             Exceptions.printStackTrace(ex);
         }
+        
     }
 
     @Override

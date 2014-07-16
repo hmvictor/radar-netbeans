@@ -24,7 +24,7 @@ public class SeverityFilter implements IssueFilter{
 
     @Override
     public boolean isValid(Issue issue) {
-        return issue.severity().equals(severity.toString().toLowerCase());
+        return issue.severity().equalsIgnoreCase(severity.toString());
     }
     
     @Override

@@ -58,7 +58,7 @@ public class SonarRunnerResult implements IssuesContainer {
         }
     }
 
-    public Summary getSummary() {
+    public SonarRunnerSummary getSummary() {
         try (JsonReader reader = new JsonReader(new FileReader(file))) {
             List<Issue> issues = null;
             reader.beginObject();
@@ -73,13 +73,12 @@ public class SonarRunnerResult implements IssuesContainer {
             reader.endObject();
             Map<String, IntWrapper> countsByRule=new HashMap<>();
             Map<String, IntWrapper> countsBySeverity=new HashMap<>();
-
             Map<Severity, Set<Rule>> rulesBySeverity=new HashMap<>();
             for (Issue issue : issues) {
-                if(countsByRule.containsKey(issue.key())) {
-                    countsByRule.get(issue.key()).add(1);
+                if(countsByRule.containsKey(issue.ruleKey())) {
+                    countsByRule.get(issue.ruleKey()).add(1);
                 }else{
-                    countsByRule.put(issue.key(), new IntWrapper(1));
+                    countsByRule.put(issue.ruleKey(), new IntWrapper(1));
                 }
                 if(countsBySeverity.containsKey(issue.severity())) {
                     countsBySeverity.get(issue.severity()).add(1);
@@ -103,7 +102,7 @@ public class SonarRunnerResult implements IssuesContainer {
                     set.add(rulesByKey.get(issue.ruleKey()));
                 }
             }
-            return new Summary(countsBySeverity, countsByRule, rulesBySeverity);
+            return new SonarRunnerSummary(countsBySeverity, countsByRule, rulesBySeverity);
         } catch (IOException | ParseException ex) {
             throw new SonarRunnerException(ex);
         }
@@ -221,11 +220,8 @@ public class SonarRunnerResult implements IssuesContainer {
                 case "key":
                     rule.setKey(reader.nextString());
                     break;
-                case "rule":
-                    rule.setTitle(reader.nextString());
-                    break;
                 case "name":
-                    rule.setDescription(reader.nextString());
+                    rule.setTitle(reader.nextString());
                     break;
                 default:
                     reader.skipValue();

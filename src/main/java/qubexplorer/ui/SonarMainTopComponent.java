@@ -28,6 +28,7 @@ import qubexplorer.Counting;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.filter.RuleFilter;
 import qubexplorer.Severity;
+import qubexplorer.SonarQube;
 import qubexplorer.filter.SeverityFilter;
 
 /**
@@ -76,7 +77,7 @@ public final class SonarMainTopComponent extends TopComponent {
                 if (component.getClientProperty("rule") != null) {
                     filters.add(new RuleFilter((Rule) component.getClientProperty("rule")));
                 }
-                new IssuesWorker(project, sonarQubeUrl, resourceKey, filters.toArray(new IssueFilter[0])).execute();
+                new IssuesWorker(new SonarQube(sonarQubeUrl), project, sonarQubeUrl, resourceKey, filters.toArray(new IssueFilter[0])).execute();
             }
 
         };
@@ -468,7 +469,7 @@ public final class SonarMainTopComponent extends TopComponent {
         if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
             filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
         }
-        new IssuesWorker(project, sonarQubeUrl, resourceKey, filters.toArray(new IssueFilter[0])).execute();
+        new IssuesWorker(new SonarQube(sonarQubeUrl), project, sonarQubeUrl, resourceKey, filters.toArray(new IssueFilter[0])).execute();
     }//GEN-LAST:event_listAllIssuesActionPerformed
 
     private void actionPlansComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_actionPlansComboActionPerformed

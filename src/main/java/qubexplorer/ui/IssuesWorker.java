@@ -20,13 +20,13 @@ public class IssuesWorker extends SonarQubeWorker<List<RadarIssue>, Void> {
     private IssueFilter[] filters;
     private IssuesContainer issuesContainer;
     
-    public IssuesWorker(Project project, String url, String resourceKey, IssueFilter... filters) {
-        super(url, resourceKey);
-        this.project=project;
-        this.filters=filters;
-        issuesContainer=new SonarQube(getServerUrl());
-        init();
-    }
+//    public IssuesWorker(Project project, String url, String resourceKey, IssueFilter... filters) {
+//        super(url, resourceKey);
+//        this.project=project;
+//        this.filters=filters;
+//        issuesContainer=new SonarQube(getServerUrl());
+//        init();
+//    }
     
     public IssuesWorker(IssuesContainer container, Project project, String url, String resourceKey, IssueFilter... filters) {
         super(url, resourceKey);
@@ -49,7 +49,7 @@ public class IssuesWorker extends SonarQubeWorker<List<RadarIssue>, Void> {
 
     @Override
     protected void success(List<RadarIssue> result) {
-        SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarTopComponent");
+        SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
         sonarTopComponent.setIssues(filters, result.toArray(new RadarIssue[0]));
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
@@ -59,7 +59,7 @@ public class IssuesWorker extends SonarQubeWorker<List<RadarIssue>, Void> {
 
     @Override
     protected SonarQubeWorker createCopy() {
-        return new IssuesWorker(project, getServerUrl(), getResourceKey(), filters);
+        return new IssuesWorker(issuesContainer, project, getServerUrl(), getResourceKey(), filters);
     }
 
     @Override
