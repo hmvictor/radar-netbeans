@@ -35,7 +35,8 @@ public final class GetCountsAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent ev) {
         try {
-            CountsWorker worker = new CountsWorker(context, NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"), SonarQube.toResource(context));
+            String serverUrl = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
+            SummaryWorker worker=new SummaryWorker(new SonarQube(serverUrl), context, serverUrl, SonarQube.toResource(context));
             worker.setTriggerActionPlans(true);
             worker.execute();
         } catch (IOException | XmlPullParserException ex) {

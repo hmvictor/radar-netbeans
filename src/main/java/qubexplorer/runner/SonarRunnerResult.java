@@ -20,6 +20,7 @@ import qubexplorer.Authentication;
 import qubexplorer.IssuesContainer;
 import qubexplorer.RadarIssue;
 import qubexplorer.Severity;
+import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
 
 /**
@@ -231,6 +232,11 @@ public class SonarRunnerResult implements IssuesContainer {
         
         reader.endObject();
         return rule;
+    }
+
+    @Override
+    public Summary getSummary(Authentication authentication, String resourceKey, IssueFilter[] filters) {
+        return getSummary();
     }
 
     static class IntWrapper {

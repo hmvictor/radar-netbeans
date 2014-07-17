@@ -241,5 +241,10 @@ public class SonarQube implements IssuesContainer{
         model.setPomFile(new File(pomFile.getPath()));
         return model.getGroupId()+":"+model.getArtifactId();
     }
+
+    @Override
+    public Summary getSummary(Authentication authentication, String resourceKey, IssueFilter[] filters) {
+        return getCounting(authentication, resourceKey, filters);
+    }
     
 }

@@ -14,7 +14,8 @@ import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.api.queries.FileEncodingQuery;
-import org.sonar.runner.api.EmbeddedRunner;
+import org.sonar.runner.api.ForkedRunner;
+import org.sonar.runner.api.PrintStreamConsumer;
 import org.sonar.runner.api.Runner;
 import qubexplorer.MvnModelFactory;
 
@@ -28,6 +29,8 @@ public class SonarRunnerProccess {
     private final Project project;
     private final String sonarUrl;
     private AnalysisMode analysisMode=AnalysisMode.INCREMENTAL;
+    private PrintStreamConsumer outConsumer;
+    private PrintStreamConsumer errConsumer;
     
     public enum AnalysisMode {
         INCREMENTAL,
@@ -47,6 +50,22 @@ public class SonarRunnerProccess {
         this.project = project;
     }
 
+    public PrintStreamConsumer getOutConsumer() {
+        return outConsumer;
+    }
+
+    public void setOutConsumer(PrintStreamConsumer outConsumer) {
+        this.outConsumer = outConsumer;
+    }
+
+    public PrintStreamConsumer getErrConsumer() {
+        return errConsumer;
+    }
+
+    public void setErrConsumer(PrintStreamConsumer errConsumer) {
+        this.errConsumer = errConsumer;
+    }
+    
     public AnalysisMode getAnalysisMode() {
         return analysisMode;
     }
@@ -57,7 +76,7 @@ public class SonarRunnerProccess {
     }
     
     protected Runner createForProject() throws IOException, XmlPullParserException {
-        EmbeddedRunner runner=EmbeddedRunner.create();
+        ForkedRunner runner=ForkedRunner.create();
         projectHome=project.getProjectDirectory().getPath();
         Model model = mvnModelFactory.createModel(project);
         properties.put("sonar.projectKey", model.getGroupId()+":"+model.getArtifactId());
@@ -83,6 +102,12 @@ public class SonarRunnerProccess {
         }
         if(modules.length() > 0){
             properties.put("sonar.modules", modules);
+        }
+        if(outConsumer != null) {
+            runner.setStdOut(outConsumer);
+        }
+        if(errConsumer != null) {
+            runner.setStdErr(errConsumer);
         }
         runner.addProperties(properties);
         return runner;

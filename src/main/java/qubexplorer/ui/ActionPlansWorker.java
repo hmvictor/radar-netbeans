@@ -33,10 +33,10 @@ public class ActionPlansWorker extends SonarQubeWorker<List<ActionPlan>, Void>{
 
     @Override
     protected void success(List<ActionPlan> result) {
-        SonarMainTopComponent infoTopComponent = (SonarMainTopComponent) WindowManager.getDefault().findTopComponent("InfoTopComponent");
-        infoTopComponent.setActionPlans(result);
-        infoTopComponent.open();
-        infoTopComponent.requestVisible();
+        SonarIssuesTopComponent issuesTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
+        issuesTopComponent.setActionPlans(result);
+        issuesTopComponent.open();
+        issuesTopComponent.requestVisible();
     }
 
     @Override

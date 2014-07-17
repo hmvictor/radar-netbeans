@@ -1,7 +1,5 @@
 package qubexplorer.ui;
 
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -12,6 +10,9 @@ import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.LinkedList;
+import java.util.List;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultRowSorter;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -46,17 +47,19 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.NbPreferences;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import org.sonar.wsclient.issue.ActionPlan;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.RadarIssue;
 import qubexplorer.IssuesContainer;
 import qubexplorer.MvnModelFactory;
 import qubexplorer.Severity;
+import qubexplorer.SonarQube;
 import qubexplorer.Summary;
+import qubexplorer.filter.ActionPlanFilter;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.filter.RuleFilter;
 import qubexplorer.filter.SeverityFilter;
-import qubexplorer.runner.SonarRunnerSummary;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
@@ -171,6 +174,15 @@ public final class SonarIssuesTopComponent extends TopComponent {
         this.issuesContainer = issuesContainer;
     }
     
+    public void setActionPlans(List<ActionPlan> plans) {
+        DefaultComboBoxModel model = new DefaultComboBoxModel();
+        model.addElement(org.openide.util.NbBundle.getMessage(Bundle.class, "SonarIssuesTopComponent.actionPlansCombo.none"));
+        for (ActionPlan plan : plans) {
+            model.addElement(plan);
+        }
+        actionPlansCombo.setModel(model);
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -186,6 +198,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
         tableSummary = new org.jdesktop.swingx.JXTreeTable();
         tableSummary.getTableHeader().setReorderingAllowed(false);
         tableSummary.setTreeCellRenderer(new SummaryTreeCellRenderer());
+        panelTop = new javax.swing.JPanel();
+        actionPlansCombo = new javax.swing.JComboBox();
+        actionPlansCombo.setRenderer(new ActionPlansRenderer());
+        jLabel4 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         title = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -205,20 +221,52 @@ public final class SonarIssuesTopComponent extends TopComponent {
         });
         jScrollPane1.setViewportView(tableSummary);
 
+        actionPlansCombo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                actionPlansComboActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel4.text")); // NOI18N
+
+        javax.swing.GroupLayout panelTopLayout = new javax.swing.GroupLayout(panelTop);
+        panelTop.setLayout(panelTopLayout);
+        panelTopLayout.setHorizontalGroup(
+            panelTopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelTopLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(actionPlansCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        panelTopLayout.setVerticalGroup(
+            panelTopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelTopLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(panelTopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(actionPlansCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel4))
+                .addContainerGap())
+        );
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+            .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 626, Short.MAX_VALUE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 638, Short.MAX_VALUE)
+                    .addComponent(panelTop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 323, Short.MAX_VALUE)
+                .addComponent(panelTop, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 359, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -289,7 +337,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 .addGroup(jPanel1Layout.createSequentialGroup()
                     .addContainerGap()
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 626, Short.MAX_VALUE)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 638, Short.MAX_VALUE)
                         .addComponent(title, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
                             .addComponent(jLabel1)
@@ -307,7 +355,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                     .addContainerGap()
                     .addComponent(title)
                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel1)
@@ -323,17 +371,11 @@ public final class SonarIssuesTopComponent extends TopComponent {
             this.setLayout(layout);
             layout.setHorizontalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(tabbedPane)
-                    .addContainerGap())
+                .addComponent(tabbedPane)
             );
             layout.setVerticalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(tabbedPane)
-                    .addContainerGap())
+                .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 439, Short.MAX_VALUE)
             );
         }// </editor-fold>//GEN-END:initComponents
 
@@ -384,7 +426,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         String serverUrl = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
         if (column == 1) {
             IssueFilter[] filters;
-            if(selectedNode instanceof SonarRunnerSummary) {
+            if(selectedNode instanceof Summary) {
                 filters=new IssueFilter[0];
             }else if(selectedNode instanceof Severity){
                 filters=new IssueFilter[]{new SeverityFilter((Severity)selectedNode)};
@@ -392,22 +434,42 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 assert selectedNode instanceof Rule;
                 filters=new IssueFilter[]{new RuleFilter((Rule)selectedNode)};
             }
-            new IssuesWorker(issuesContainer, project, serverUrl, "", filters).execute();
+            try {
+                new IssuesWorker(issuesContainer, project, serverUrl, SonarQube.toResource(project), filters).execute();
+            } catch (IOException | XmlPullParserException ex) {
+                Exceptions.printStackTrace(ex);
+            }
         } else if(selectedNode instanceof Rule){
             RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), (Rule)selectedNode);
         }
     }//GEN-LAST:event_tableSummaryMouseClicked
 
+    private void actionPlansComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_actionPlansComboActionPerformed
+        List<IssueFilter> filters = new LinkedList<>();
+        String serverUrl = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
+        if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
+            filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
+        }
+        try {
+            new SummaryWorker(issuesContainer, project, serverUrl, SonarQube.toResource(project), filters.toArray(new IssueFilter[0])).execute();
+        } catch (IOException | XmlPullParserException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+    }//GEN-LAST:event_actionPlansComboActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox actionPlansCombo;
     private javax.swing.JTextField filterText;
     private org.jdesktop.swingx.JXTable issuesTable;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JPanel panelTop;
     private javax.swing.JTextField shownCount;
     private javax.swing.JTabbedPane tabbedPane;
     private org.jdesktop.swingx.JXTreeTable tableSummary;
@@ -579,6 +641,17 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     public void showSummary() {
         tabbedPane.setSelectedIndex(0);
+//        if(issuesContainer instanceof SonarQube) {
+//            panelTop.setVisible(true);
+//            String serverUrl = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
+//            try {
+//                new ActionPlansWorker(serverUrl, SonarQube.toResource(project)).execute();
+//            } catch (IOException | XmlPullParserException ex) {
+//                Exceptions.printStackTrace(ex);
+//            }
+//        }else{
+//            panelTop.setVisible(false);
+//        }
     }
 
     private static class BasicPomInfo {
