@@ -4,7 +4,7 @@ import java.util.concurrent.ExecutionException;
 import javax.swing.SwingWorker;
 import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
-import qubexplorer.Authentication;
+import qubexplorer.AuthenticationToken;
 import qubexplorer.AuthorizationException;
 
 /**
@@ -14,7 +14,7 @@ import qubexplorer.AuthorizationException;
 public abstract class SonarQubeWorker<R,P> extends UITask<R, P>{
     private String serverUrl;
     private String resourceKey;
-    private Authentication authentication;
+    private AuthenticationToken authentication;
     private SwingWorker<R, P> scheduledWorker;
 
     public SonarQubeWorker(String serverUrl, String resourceKey) {
@@ -23,11 +23,11 @@ public abstract class SonarQubeWorker<R,P> extends UITask<R, P>{
         authentication=AuthenticationRepository.getInstance().getAuthentication(serverUrl, resourceKey);
     }
 
-    public void setAuthentication(Authentication authentication) {
+    public void setAuthentication(AuthenticationToken authentication) {
         this.authentication = authentication;
     }
 
-    public Authentication getAuthentication() {
+    public AuthenticationToken getAuthentication() {
         return authentication;
     }
 
@@ -51,7 +51,7 @@ public abstract class SonarQubeWorker<R,P> extends UITask<R, P>{
             Throwable cause = ex.getCause();
             if (cause instanceof AuthorizationException) {
                 AuthenticationRepository repo = AuthenticationRepository.getInstance();
-                Authentication auth = repo.getAuthentication(serverUrl, resourceKey);
+                AuthenticationToken auth = repo.getAuthentication(serverUrl, resourceKey);
                 if (auth == null) {
                     auth = AuthDialog.showAuthDialog(WindowManager.getDefault().getMainWindow());
                 }

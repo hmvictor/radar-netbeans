@@ -1,10 +1,12 @@
-package qubexplorer;
+package qubexplorer.server;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.sonar.wsclient.services.Rule;
+import qubexplorer.Severity;
+import qubexplorer.Summary;
 
 /**
  *

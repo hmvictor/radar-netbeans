@@ -4,18 +4,14 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultRowSorter;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.RowFilter;
@@ -54,7 +50,7 @@ import qubexplorer.RadarIssue;
 import qubexplorer.IssuesContainer;
 import qubexplorer.MvnModelFactory;
 import qubexplorer.Severity;
-import qubexplorer.SonarQube;
+import qubexplorer.server.SonarQube;
 import qubexplorer.Summary;
 import qubexplorer.filter.ActionPlanFilter;
 import qubexplorer.filter.IssueFilter;
@@ -85,17 +81,8 @@ import qubexplorer.ui.options.SonarQubeOptionsPanel;
 })
 public final class SonarIssuesTopComponent extends TopComponent {
     private IssuesContainer issuesContainer;
-
-    private EnumMap<Severity, Icon> icons = new EnumMap<>(Severity.class);
     private Project project;
     private Issue[] issues;
-    
-    private final Comparator<SeverityIcon> severityIconComparator = Collections.reverseOrder(new Comparator<SeverityIcon>() {
-        @Override
-        public int compare(SeverityIcon t, SeverityIcon t1) {
-            return t.severity.compareTo(t1.severity);
-        }
-    });
     
     private final Comparator<Severity> severityComparator = Collections.reverseOrder(new Comparator<Severity>() {
         @Override
@@ -118,11 +105,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     public SonarIssuesTopComponent() {
         initComponents();
-        icons.put(Severity.BLOCKER, new SeverityIcon(Severity.BLOCKER, getClass().getResource("/qubexplorer/ui/images/blocker.png")));
-        icons.put(Severity.CRITICAL, new SeverityIcon(Severity.CRITICAL, getClass().getResource("/qubexplorer/ui/images/critical.png")));
-        icons.put(Severity.MAJOR, new SeverityIcon(Severity.MAJOR, getClass().getResource("/qubexplorer/ui/images/major.png")));
-        icons.put(Severity.MINOR, new SeverityIcon(Severity.MINOR, getClass().getResource("/qubexplorer/ui/images/minor.png")));
-        icons.put(Severity.INFO, new SeverityIcon(Severity.INFO, getClass().getResource("/qubexplorer/ui/images/info.png")));
         issuesTable.getColumn("").setResizable(false);
         issuesTable.getColumnModel().getColumn(0).setPreferredWidth(16);
         issuesTable.getColumnModel().getColumn(0).setMaxWidth(16);
@@ -146,7 +128,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
             }
         });
         issuesTable.getColumnExt("").setHideable(false);
-        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(0, severityIconComparator);
+        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(0, severityComparator);
         ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(2, severityComparator);
         ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(3, locationComparator);
         issuesTable.getColumnExt("Severity").addPropertyChangeListener(new PropertyChangeListener() {
@@ -286,7 +268,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 }
             ) {
                 Class[] types = new Class [] {
-                    SeverityIcon.class
+                    Severity.class
 
                     , java.lang.String.class
 
@@ -318,6 +300,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 }
             });
             jScrollPane2.setViewportView(issuesTable);
+            issuesTable.getColumnModel().getColumn(0).setCellRenderer(new SeverityIconRenderer());
 
             filterText.setText(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.filterText.text")); // NOI18N
 
@@ -375,7 +358,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
             );
             layout.setVerticalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 439, Short.MAX_VALUE)
+                .addComponent(tabbedPane)
             );
         }// </editor-fold>//GEN-END:initComponents
 
@@ -422,7 +405,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
             return;
         }
         Object selectedNode = tableSummary.getPathForRow(rowIndex).getLastPathComponent();
-        int column = tableSummary.columnAtPoint(evt.getPoint());
+        int column = tableSummary.convertColumnIndexToModel(tableSummary.columnAtPoint(evt.getPoint()));
         String serverUrl = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
         if (column == 1) {
             IssueFilter[] filters;
@@ -545,7 +528,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         for (RadarIssue issue : issues) {
             String name = toPath(issue.componentKey(), ".java");
             String mvnId = toMvnId(issue.componentKey());
-            model.addRow(new Object[]{icons.get(Severity.valueOf(issue.severity().toUpperCase())), issue.message(), issue.severityObject(), new Location(name, issue.line()), mvnId, issue.rule().getTitle()});
+            model.addRow(new Object[]{issue.severityObject(), issue.message(), issue.severityObject(), new Location(name, issue.line()), mvnId, issue.rule().getTitle()});
         }
         this.issues = issues;
         StringBuilder builder = new StringBuilder();
@@ -701,19 +684,4 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
     }
 
-    public static class SeverityIcon extends ImageIcon {
-
-        private Severity severity;
-
-        public SeverityIcon(Severity severity, URL url) {
-            super(url);
-            this.severity = severity;
-        }
-
-        public Severity getSeverity() {
-            return severity;
-        }
-        
-    }
-    
 }

@@ -24,11 +24,11 @@ import org.openide.util.NbBundle.Messages;
 import org.sonar.wsclient.issue.ActionPlan;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.filter.ActionPlanFilter;
-import qubexplorer.Counting;
+import qubexplorer.server.Counting;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.filter.RuleFilter;
 import qubexplorer.Severity;
-import qubexplorer.SonarQube;
+import qubexplorer.server.SonarQube;
 import qubexplorer.filter.SeverityFilter;
 
 /**

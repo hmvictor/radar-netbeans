@@ -30,7 +30,7 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="tabbedPane" alignment="0" pref="439" max="32767" attributes="0"/>
+          <Component id="tabbedPane" alignment="0" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -218,13 +218,16 @@
                 <Component class="org.jdesktop.swingx.JXTable" name="issuesTable">
                   <Properties>
                     <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                      <Connection code="&#xa;&#xa;new javax.swing.table.DefaultTableModel(&#xa;            new Object [][] {&#xa;&#xa;            },&#xa;            new String [] {&#xa;                &quot;&quot;, &quot;Message&quot;, &quot;Severity&quot;, &quot;Location&quot;, &quot;MvnId&quot;, &quot;Rule&quot;&#xa;            }&#xa;        ) {&#xa;            Class[] types = new Class [] {&#xa;                SeverityIcon.class  &#xa;&#xa;    , java.lang.String.class  &#xa;&#xa;        , Severity.class  &#xa;&#xa;            , java.lang.Object.class  &#xa;&#xa;                , java.lang.String.class  &#xa;&#xa;                    , java.lang.String.class  &#xa;                    };&#xa;                    boolean[] canEdit = new boolean[]{&#xa;                        false, false, false, false, false, false&#xa;                    };&#xa;&#xa;                    public Class getColumnClass(int columnIndex) {&#xa;                        return types[columnIndex];&#xa;                    }&#xa;&#xa;                    public boolean isCellEditable(int rowIndex, int columnIndex) {&#xa;                        return canEdit[columnIndex];&#xa;                    }&#xa;                &#xa;            &#xa;        &#xa;    &#xa;}" type="code"/>
+                      <Connection code="&#xa;&#xa;new javax.swing.table.DefaultTableModel(&#xa;            new Object [][] {&#xa;&#xa;            },&#xa;            new String [] {&#xa;                &quot;&quot;, &quot;Message&quot;, &quot;Severity&quot;, &quot;Location&quot;, &quot;MvnId&quot;, &quot;Rule&quot;&#xa;            }&#xa;        ) {&#xa;            Class[] types = new Class [] {&#xa;                Severity.class  &#xa;&#xa;    , java.lang.String.class  &#xa;&#xa;        , Severity.class  &#xa;&#xa;            , java.lang.Object.class  &#xa;&#xa;                , java.lang.String.class  &#xa;&#xa;                    , java.lang.String.class  &#xa;                    };&#xa;                    boolean[] canEdit = new boolean[]{&#xa;                        false, false, false, false, false, false&#xa;                    };&#xa;&#xa;                    public Class getColumnClass(int columnIndex) {&#xa;                        return types[columnIndex];&#xa;                    }&#xa;&#xa;                    public boolean isCellEditable(int rowIndex, int columnIndex) {&#xa;                        return canEdit[columnIndex];&#xa;                    }&#xa;                &#xa;            &#xa;        &#xa;    &#xa;}" type="code"/>
                     </Property>
                     <Property name="columnControlVisible" type="boolean" value="true"/>
                   </Properties>
                   <Events>
                     <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="issuesTableMouseClicked"/>
                   </Events>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_AddingCodePost" type="java.lang.String" value="issuesTable.getColumnModel().getColumn(0).setCellRenderer(new SeverityIconRenderer());"/>
+                  </AuxValues>
                 </Component>
               </SubComponents>
             </Container>

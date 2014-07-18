@@ -5,7 +5,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.windows.WindowManager;
 import org.sonar.wsclient.issue.ActionPlan;
-import qubexplorer.SonarQube;
+import qubexplorer.server.SonarQube;
 
 /**
  *

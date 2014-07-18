@@ -3,7 +3,7 @@ package qubexplorer.ui;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
-import qubexplorer.Authentication;
+import qubexplorer.AuthenticationToken;
 import static org.hamcrest.CoreMatchers.*;
 
 /**
@@ -15,11 +15,11 @@ public class AuthenticationRepositoryTest {
     @Test
     public void shouldContaintAuthentication(){
         AuthenticationRepository repo=AuthenticationRepository.getInstance();
-        Authentication auth=new Authentication("one", "two".toCharArray());
+        AuthenticationToken auth=new AuthenticationToken("one", "two".toCharArray());
         repo.saveAuthentication("url", "key", auth);
         assertThat(repo.getAuthentication("url", "key"), is(auth));
         assertThat(repo.getAuthentication("url", "key2"), is(auth));
-        Authentication auth2=new Authentication("one", "two".toCharArray());
+        AuthenticationToken auth2=new AuthenticationToken("one", "two".toCharArray());
         repo.saveAuthentication("url2", null, auth2);
         assertThat(repo.getAuthentication("url2", "key"), is(auth2));
         assertThat(repo.getAuthentication("url2", "key2"), is(auth2));

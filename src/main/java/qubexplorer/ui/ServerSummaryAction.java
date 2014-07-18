@@ -12,7 +12,7 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.NbPreferences;
-import qubexplorer.SonarQube;
+import qubexplorer.server.SonarQube;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 @ActionID(
@@ -24,11 +24,11 @@ import qubexplorer.ui.options.SonarQubeOptionsPanel;
 @ActionReferences(value = {
     @ActionReference(path = "Projects/Actions"),
     @ActionReference(path = "Menu/Source", position = 8962, separatorBefore = 8956, separatorAfter = 8968)})
-public final class GetCountsAction implements ActionListener {
+public final class ServerSummaryAction implements ActionListener {
 
     private final Project context;
 
-    public GetCountsAction(Project context) {
+    public ServerSummaryAction(Project context) {
         this.context = context;
     }
 

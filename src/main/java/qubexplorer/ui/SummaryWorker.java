@@ -11,7 +11,7 @@ import org.openide.windows.WindowManager;
 import qubexplorer.IssuesContainer;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.NoSuchProjectException;
-import qubexplorer.SonarQube;
+import qubexplorer.server.SonarQube;
 import qubexplorer.Summary;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
 

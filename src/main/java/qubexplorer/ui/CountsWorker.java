@@ -8,16 +8,17 @@ import org.netbeans.api.project.Project;
 import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
-import qubexplorer.Counting;
+import qubexplorer.server.Counting;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.NoSuchProjectException;
-import qubexplorer.SonarQube;
+import qubexplorer.server.SonarQube;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
  *
  * @author Victor
  */
+@Deprecated
 class CountsWorker extends SonarQubeWorker<Counting, Void> {
     private ProgressHandle handle;
     private Project project;

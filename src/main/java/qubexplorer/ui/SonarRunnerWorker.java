@@ -1,10 +1,12 @@
 package qubexplorer.ui;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
+import org.openide.util.Exceptions;
 import org.openide.windows.IOProvider;
 import org.openide.windows.InputOutput;
 import org.openide.windows.WindowManager;
@@ -34,6 +36,12 @@ public class SonarRunnerWorker extends UITask<SonarRunnerResult, Void> {
         handle.start();
         handle.switchToIndeterminate();
         io = IOProvider.getDefault().getIO("Sonar-runner", false);
+        try {
+            io.getOut().reset();
+            io.getErr().reset();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
         io.select();
         io.getOut().println("Starting sonar-runner");
     }

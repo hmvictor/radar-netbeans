@@ -7,7 +7,7 @@ import org.netbeans.api.project.Project;
 import org.openide.windows.WindowManager;
 import qubexplorer.IssuesContainer;
 import qubexplorer.RadarIssue;
-import qubexplorer.SonarQube;
+import qubexplorer.server.SonarQube;
 import qubexplorer.filter.IssueFilter;
 
 /**

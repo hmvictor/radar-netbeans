@@ -1,4 +1,4 @@
-package qubexplorer;
+package qubexplorer.server;
 
 import qubexplorer.filter.SeverityFilter;
 import qubexplorer.filter.IssueFilter;
@@ -30,6 +30,13 @@ import org.sonar.wsclient.services.Resource;
 import org.sonar.wsclient.services.ResourceQuery;
 import org.sonar.wsclient.services.Rule;
 import org.sonar.wsclient.services.RuleQuery;
+import qubexplorer.AuthenticationToken;
+import qubexplorer.AuthorizationException;
+import qubexplorer.IssuesContainer;
+import qubexplorer.NoSuchProjectException;
+import qubexplorer.RadarIssue;
+import qubexplorer.Severity;
+import qubexplorer.Summary;
 
 /**
  *
@@ -53,7 +60,7 @@ public class SonarQube implements IssuesContainer{
         this("http://localhost:9000");
     }
     
-    public double getRulesCompliance(Authentication auth, String resource) {
+    public double getRulesCompliance(AuthenticationToken auth, String resource) {
         try{
             if(!existsProject(auth, resource)) {
                 throw new NoSuchProjectException(resource);
@@ -77,7 +84,7 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
-    public List<RadarIssue> getIssues(Authentication auth, String resource, IssueFilter... filters) {
+    public List<RadarIssue> getIssues(AuthenticationToken auth, String resource, IssueFilter... filters) {
         if(!existsProject(auth, resource)) {
             throw new NoSuchProjectException(resource);
         }
@@ -88,7 +95,7 @@ public class SonarQube implements IssuesContainer{
         return getIssues(auth, query);
     }
     
-    private List<RadarIssue> getIssues(Authentication auth, IssueQuery query) {
+    private List<RadarIssue> getIssues(AuthenticationToken auth, IssueQuery query) {
         try{
             SonarClient client;
             if(auth == null) {
@@ -124,7 +131,7 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
-    public List<ActionPlan> getActionPlans(Authentication auth, String resource){ 
+    public List<ActionPlan> getActionPlans(AuthenticationToken auth, String resource){ 
         try{
             SonarClient client;
             if(auth == null) {
@@ -142,7 +149,7 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
-    public Rule getRule(Authentication auth, String ruleKey) {
+    public Rule getRule(AuthenticationToken auth, String ruleKey) {
         try{
             RuleQuery ruleQuery=new RuleQuery("java");
             String tokens[]=ruleKey.split(":");
@@ -169,7 +176,7 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
-    public Counting getCounting(Authentication auth, String resource, IssueFilter... filters) {
+    public Counting getCounting(AuthenticationToken auth, String resource, IssueFilter... filters) {
         if(!existsProject(auth, resource)) {
             throw new NoSuchProjectException(resource);
         }
@@ -202,7 +209,7 @@ public class SonarQube implements IssuesContainer{
         return counting;
     }
     
-    public List<String> getProjects(Authentication auth) {
+    public List<String> getProjects(AuthenticationToken auth) {
         try{
             Sonar sonar;
             if(auth == null) {
@@ -225,7 +232,7 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
-    public boolean existsProject(Authentication auth, String projectKey){
+    public boolean existsProject(AuthenticationToken auth, String projectKey){
         for(String tmp: getProjects(auth) ){
             if(tmp.equals(projectKey)) {
                 return true;
@@ -243,7 +250,7 @@ public class SonarQube implements IssuesContainer{
     }
 
     @Override
-    public Summary getSummary(Authentication authentication, String resourceKey, IssueFilter[] filters) {
+    public Summary getSummary(AuthenticationToken authentication, String resourceKey, IssueFilter[] filters) {
         return getCounting(authentication, resourceKey, filters);
     }
     

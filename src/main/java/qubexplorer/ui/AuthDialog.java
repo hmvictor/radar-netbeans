@@ -1,14 +1,14 @@
 package qubexplorer.ui;
 
 import java.awt.Frame;
-import qubexplorer.Authentication;
+import qubexplorer.AuthenticationToken;
 
 /**
  *
  * @author Victor
  */
 public class AuthDialog extends javax.swing.JDialog {
-    private Authentication authentication;
+    private AuthenticationToken authentication;
 
     /**
      * Creates new form AuthDialog
@@ -19,7 +19,7 @@ public class AuthDialog extends javax.swing.JDialog {
         getRootPane().setDefaultButton(acceptButton);
     }
 
-    public Authentication getAuthentication() {
+    public AuthenticationToken getAuthentication() {
         return authentication;
     }
     
@@ -118,7 +118,7 @@ public class AuthDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void acceptButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acceptButtonActionPerformed
-        authentication=new Authentication(usernameField.getText(), passwordField.getPassword());
+        authentication=new AuthenticationToken(usernameField.getText(), passwordField.getPassword());
         setVisible(false);
     }//GEN-LAST:event_acceptButtonActionPerformed
 
@@ -126,57 +126,15 @@ public class AuthDialog extends javax.swing.JDialog {
         authentication=null;
     }//GEN-LAST:event_formWindowClosing
 
-    public static Authentication showAuthDialog(Frame frame) {
+    public static AuthenticationToken showAuthDialog(Frame frame) {
         AuthDialog authDialog = new AuthDialog(frame, true);
         authDialog.setLocationRelativeTo(frame);
         authDialog.setVisible(true);
-        Authentication auth = authDialog.getAuthentication();
+        AuthenticationToken auth = authDialog.getAuthentication();
         authDialog.dispose();
         return auth;
     } 
-    
-    
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(AuthDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(AuthDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(AuthDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(AuthDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
 
-        /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                AuthDialog dialog = new AuthDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
-        });
-    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton acceptButton;
     private javax.swing.JButton cancelButton;
