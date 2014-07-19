@@ -1,8 +1,6 @@
 package qubexplorer.ui;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
@@ -84,7 +82,8 @@ public class SonarRunnerWorker extends UITask<SonarRunnerResult, Void> {
 
     @Override
     protected void error(Throwable cause) {
-        cause.printStackTrace();
+        io.getErr().println("Error executing sonar-runner");
+        Exceptions.printStackTrace(cause);
     }
 
     @Override
