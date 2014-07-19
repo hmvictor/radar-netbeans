@@ -17,22 +17,21 @@ public abstract class SonarQubeWorker<R,P> extends UITask<R, P>{
     private AuthenticationToken authentication;
     private SwingWorker<R, P> scheduledWorker;
 
-    public SonarQubeWorker(String serverUrl, String resourceKey) {
-        this.serverUrl = serverUrl;
+    public SonarQubeWorker(String resourceKey) {
         this.resourceKey = resourceKey;
-        authentication=AuthenticationRepository.getInstance().getAuthentication(serverUrl, resourceKey);
     }
 
+    protected void setServerUrl(String serverUrl) {
+        this.serverUrl = serverUrl;
+        authentication=AuthenticationRepository.getInstance().getAuthentication(serverUrl, resourceKey);
+    }
+    
     public void setAuthentication(AuthenticationToken authentication) {
         this.authentication = authentication;
     }
 
     public AuthenticationToken getAuthentication() {
         return authentication;
-    }
-
-    public String getServerUrl() {
-        return serverUrl;
     }
 
     public String getResourceKey() {
@@ -72,7 +71,6 @@ public abstract class SonarQubeWorker<R,P> extends UITask<R, P>{
             }
         }
     }
-    
     
     protected abstract SonarQubeWorker createCopy();
 

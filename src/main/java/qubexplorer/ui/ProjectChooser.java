@@ -218,15 +218,18 @@ public class ProjectChooser extends javax.swing.JDialog {
     // End of variables declaration//GEN-END:variables
 
     private class ProjectKeysLoader extends SonarQubeWorker<List<String>, Void> {
+        private String serverUrl;
 
         public ProjectKeysLoader() {
-            super(url.getText(), null);
+            super(null);
+            serverUrl=url.getText();
+            setServerUrl(serverUrl);
             loadButton.setEnabled(false);
         }
 
         @Override
         protected List<String> doInBackground() throws Exception {
-            return new SonarQube(getServerUrl()).getProjects(getAuthentication());
+            return new SonarQube(serverUrl).getProjects(getAuthentication());
         }
 
         @Override

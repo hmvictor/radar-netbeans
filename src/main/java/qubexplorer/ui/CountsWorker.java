@@ -6,13 +6,11 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
 import org.openide.util.Exceptions;
-import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
 import qubexplorer.server.Counting;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.NoSuchProjectException;
 import qubexplorer.server.SonarQube;
-import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
  *
@@ -24,11 +22,13 @@ class CountsWorker extends SonarQubeWorker<Counting, Void> {
     private Project project;
     private IssueFilter[] filters;
     private boolean triggerActionPlans;
+    private SonarQube sonarQube;
 
-    public CountsWorker(Project project, String url, String resource, IssueFilter... filters) {
-        super(url, resource);
+    public CountsWorker(SonarQube sonarQube, Project project, String resource, IssueFilter... filters) {
+        super(resource);
         this.project = project;
         this.filters=filters;
+        setServerUrl(sonarQube.getServerUrl());
         init();
     }
 
@@ -38,7 +38,7 @@ class CountsWorker extends SonarQubeWorker<Counting, Void> {
     
     @Override
     protected Counting doInBackground() throws Exception {
-        return new SonarQube(getServerUrl()).getCounting(getAuthentication(), getResourceKey(), filters);
+        return sonarQube.getCounting(getAuthentication(), getResourceKey(), filters);
     }
 
     private void init() {
@@ -52,20 +52,20 @@ class CountsWorker extends SonarQubeWorker<Counting, Void> {
         SonarMainTopComponent infoTopComponent = (SonarMainTopComponent) WindowManager.getDefault().findTopComponent("InfoTopComponent");
         infoTopComponent.setProject(project);
         infoTopComponent.setCounting(counting);
-        infoTopComponent.setSonarQubeUrl(getServerUrl());
+        infoTopComponent.setSonarQubeUrl(sonarQube.getServerUrl());
         infoTopComponent.setResourceKey(getResourceKey());
         infoTopComponent.open();
         infoTopComponent.requestVisible();
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
         sonarTopComponent.setProject(project);
         sonarTopComponent.setSummary(counting);
-        sonarTopComponent.setIssuesContainer(new SonarQube(getServerUrl()));
+        sonarTopComponent.setIssuesContainer(sonarQube);
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
         sonarTopComponent.showSummary();
         try {
             if(triggerActionPlans) {
-                ActionPlansWorker workerPlans = new ActionPlansWorker(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"), SonarQube.toResource(project));
+                ActionPlansWorker workerPlans = new ActionPlansWorker(SonarQubeFactory.createForDefaultServerUrl(), SonarQube.toResource(project));
                 workerPlans.execute();
             }
         } catch (IOException | XmlPullParserException ex) {
@@ -81,7 +81,7 @@ class CountsWorker extends SonarQubeWorker<Counting, Void> {
     
     @Override
     protected SonarQubeWorker createCopy() {
-        CountsWorker copy = new CountsWorker(project, getServerUrl(), getResourceKey());
+        CountsWorker copy = new CountsWorker(sonarQube, project, getResourceKey());
         copy.setTriggerActionPlans(triggerActionPlans);
         return copy;
     }
@@ -90,14 +90,14 @@ class CountsWorker extends SonarQubeWorker<Counting, Void> {
     protected void error(Throwable cause) {
         if(cause instanceof NoSuchProjectException) {
             if(getAuthentication() != null) {
-                AuthenticationRepository.getInstance().saveAuthentication(getServerUrl(), null, getAuthentication());
+                AuthenticationRepository.getInstance().saveAuthentication(sonarQube.getServerUrl(), null, getAuthentication());
             }
             ProjectChooser chooser=new ProjectChooser(WindowManager.getDefault().getMainWindow(), true);
-            chooser.setSelectedUrl(getServerUrl());
+            chooser.setSelectedUrl(sonarQube.getServerUrl());
             chooser.setServerUrlEnabled(false);
             chooser.loadProjectKeys();
             if(chooser.showDialog() == ProjectChooser.Option.ACCEPT) {
-                scheduleWorker(new CountsWorker(project, getServerUrl(), chooser.getSelectedProjectKey()));
+                scheduleWorker(new CountsWorker(sonarQube, project, chooser.getSelectedProjectKey()));
             }
         }else{
             super.error(cause);

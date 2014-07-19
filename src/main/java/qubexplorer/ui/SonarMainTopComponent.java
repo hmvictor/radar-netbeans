@@ -77,7 +77,7 @@ public final class SonarMainTopComponent extends TopComponent {
                 if (component.getClientProperty("rule") != null) {
                     filters.add(new RuleFilter((Rule) component.getClientProperty("rule")));
                 }
-                new IssuesWorker(new SonarQube(sonarQubeUrl), project, sonarQubeUrl, resourceKey, filters.toArray(new IssueFilter[0])).execute();
+                new IssuesWorker(new SonarQube(sonarQubeUrl), project, resourceKey, filters.toArray(new IssueFilter[0])).execute();
             }
 
         };
@@ -469,7 +469,7 @@ public final class SonarMainTopComponent extends TopComponent {
         if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
             filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
         }
-        new IssuesWorker(new SonarQube(sonarQubeUrl), project, sonarQubeUrl, resourceKey, filters.toArray(new IssueFilter[0])).execute();
+        new IssuesWorker(new SonarQube(sonarQubeUrl), project, resourceKey, filters.toArray(new IssueFilter[0])).execute();
     }//GEN-LAST:event_listAllIssuesActionPerformed
 
     private void actionPlansComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_actionPlansComboActionPerformed
@@ -477,7 +477,7 @@ public final class SonarMainTopComponent extends TopComponent {
         if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
             filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
         }
-        new CountsWorker(project, sonarQubeUrl, resourceKey, filters.toArray(new IssueFilter[0])).execute();
+        new CountsWorker(new SonarQube(sonarQubeUrl), project, resourceKey, filters.toArray(new IssueFilter[0])).execute();
     }//GEN-LAST:event_actionPlansComboActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -21,6 +21,7 @@ public class RuleDialog extends javax.swing.JDialog {
     public void setRule(Rule rule) {
         title.setText(rule.getTitle());
         description.setText(rule.getDescription());
+        description.setCaretPosition(0);
     }
 
     /**
@@ -70,7 +71,7 @@ public class RuleDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 399, Short.MAX_VALUE)
+                        .addGap(0, 412, Short.MAX_VALUE)
                         .addComponent(closeButton))
                     .addComponent(title, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -81,7 +82,7 @@ public class RuleDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addComponent(title)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(closeButton)
                 .addContainerGap())

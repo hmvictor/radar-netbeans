@@ -10,19 +10,7 @@ import qubexplorer.AuthenticationToken;
  * @author Victor
  */
 public class AuthenticationRepository {
-    private AuthenticationToken authentication;
     private Map<String, Map<String, AuthenticationToken>> cache=new HashMap<>();
-    
-    public void invalidateAuthentication(){
-        authentication=null;
-    }
-    
-    public AuthenticationToken getAuthentication() {
-        if(authentication == null) {
-            authentication=AuthDialog.showAuthDialog(WindowManager.getDefault().getMainWindow());
-        }
-        return authentication;
-    }
     
     public AuthenticationToken getAuthentication(String serverUrl, String resourceKey) {
         if(cache.containsKey(serverUrl)) {

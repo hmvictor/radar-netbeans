@@ -7,7 +7,6 @@ import org.netbeans.api.project.Project;
 import org.openide.windows.WindowManager;
 import qubexplorer.IssuesContainer;
 import qubexplorer.RadarIssue;
-import qubexplorer.server.SonarQube;
 import qubexplorer.filter.IssueFilter;
 
 /**
@@ -20,16 +19,8 @@ public class IssuesWorker extends SonarQubeWorker<List<RadarIssue>, Void> {
     private IssueFilter[] filters;
     private IssuesContainer issuesContainer;
     
-//    public IssuesWorker(Project project, String url, String resourceKey, IssueFilter... filters) {
-//        super(url, resourceKey);
-//        this.project=project;
-//        this.filters=filters;
-//        issuesContainer=new SonarQube(getServerUrl());
-//        init();
-//    }
-    
-    public IssuesWorker(IssuesContainer container, Project project, String url, String resourceKey, IssueFilter... filters) {
-        super(url, resourceKey);
+    public IssuesWorker(IssuesContainer container, Project project, String resourceKey, IssueFilter... filters) {
+        super(resourceKey);
         this.project=project;
         this.filters=filters;
         this.issuesContainer=container;
@@ -59,7 +50,7 @@ public class IssuesWorker extends SonarQubeWorker<List<RadarIssue>, Void> {
 
     @Override
     protected SonarQubeWorker createCopy() {
-        return new IssuesWorker(issuesContainer, project, getServerUrl(), getResourceKey(), filters);
+        return new IssuesWorker(issuesContainer, project, getResourceKey(), filters);
     }
 
     @Override

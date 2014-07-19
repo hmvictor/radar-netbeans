@@ -137,10 +137,6 @@ public class SonarRunnerProccess {
         if(errConsumer != null) {
             runner.setStdErr(errConsumer);
         }
-        //TODO
-        for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-            System.out.printf("%s : %s%n", entry.getKey(), entry.getValue());
-        }
         runner.addProperties(properties);
         return runner;
     }

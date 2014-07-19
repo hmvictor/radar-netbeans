@@ -56,6 +56,7 @@ import qubexplorer.filter.ActionPlanFilter;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.filter.RuleFilter;
 import qubexplorer.filter.SeverityFilter;
+import qubexplorer.runner.SonarRunnerResult;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
@@ -80,17 +81,18 @@ import qubexplorer.ui.options.SonarQubeOptionsPanel;
     "HINT_SonarIssuesTopComponent=This is a Sonar window"
 })
 public final class SonarIssuesTopComponent extends TopComponent {
+
     private IssuesContainer issuesContainer;
     private Project project;
     private Issue[] issues;
-    
+
     private final Comparator<Severity> severityComparator = Collections.reverseOrder(new Comparator<Severity>() {
         @Override
         public int compare(Severity t, Severity t1) {
             return t.compareTo(t1);
         }
     });
-    
+
     private final Comparator<Location> locationComparator = new Comparator<Location>() {
         @Override
         public int compare(Location t, Location t1) {
@@ -111,7 +113,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         setName(Bundle.CTL_SonarIssuesTopComponent());
         setToolTipText(Bundle.HINT_SonarIssuesTopComponent());
         filterText.getDocument().addDocumentListener(new DocumentListener() {
-            
+
             @Override
             public void insertUpdate(DocumentEvent de) {
                 filterTextChanged();
@@ -147,7 +149,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     public void setSummary(Summary summary) {
         tableSummary.setTreeTableModel(new SummaryModel(summary));
-        DefaultTableCellRenderer renderer=new DefaultTableCellRenderer();
+        DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
         renderer.setHorizontalAlignment(JLabel.RIGHT);
         tableSummary.getColumn(1).setCellRenderer(renderer);
     }
@@ -155,7 +157,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     public void setIssuesContainer(IssuesContainer issuesContainer) {
         this.issuesContainer = issuesContainer;
     }
-    
+
     public void setActionPlans(List<ActionPlan> plans) {
         DefaultComboBoxModel model = new DefaultComboBoxModel();
         model.addElement(org.openide.util.NbBundle.getMessage(Bundle.class, "SonarIssuesTopComponent.actionPlansCombo.none"));
@@ -164,7 +166,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
         actionPlansCombo.setModel(model);
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -406,35 +408,43 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
         Object selectedNode = tableSummary.getPathForRow(rowIndex).getLastPathComponent();
         int column = tableSummary.convertColumnIndexToModel(tableSummary.columnAtPoint(evt.getPoint()));
-        String serverUrl = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
         if (column == 1) {
             IssueFilter[] filters;
-            if(selectedNode instanceof Summary) {
-                filters=new IssueFilter[0];
-            }else if(selectedNode instanceof Severity){
-                filters=new IssueFilter[]{new SeverityFilter((Severity)selectedNode)};
-            }else{
+            if (selectedNode instanceof Summary) {
+                filters = new IssueFilter[0];
+            } else if (selectedNode instanceof Severity) {
+                filters = new IssueFilter[]{new SeverityFilter((Severity) selectedNode)};
+            } else {
                 assert selectedNode instanceof Rule;
-                filters=new IssueFilter[]{new RuleFilter((Rule)selectedNode)};
+                filters = new IssueFilter[]{new RuleFilter((Rule) selectedNode)};
             }
             try {
-                new IssuesWorker(issuesContainer, project, serverUrl, SonarQube.toResource(project), filters).execute();
+                new IssuesWorker(issuesContainer, project, SonarQube.toResource(project), filters).execute();
             } catch (IOException | XmlPullParserException ex) {
                 Exceptions.printStackTrace(ex);
             }
-        } else if(selectedNode instanceof Rule){
-            RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), (Rule)selectedNode);
+        } else if (selectedNode instanceof Rule) {
+            Rule rule = (Rule) selectedNode;
+            if (issuesContainer instanceof SonarRunnerResult && rule.getDescription() == null) {
+                try {
+                    SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
+                    Rule ruleInServer = sonarQube.getRule(AuthenticationRepository.getInstance().getAuthentication(sonarQube.getServerUrl(), SonarQube.toResource(project)), rule.getKey());
+                    rule.setDescription(ruleInServer.getDescription());
+                } catch (IOException | XmlPullParserException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }
+            RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), rule);
         }
     }//GEN-LAST:event_tableSummaryMouseClicked
 
     private void actionPlansComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_actionPlansComboActionPerformed
         List<IssueFilter> filters = new LinkedList<>();
-        String serverUrl = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
         if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
             filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
         }
         try {
-            new SummaryWorker(issuesContainer, project, serverUrl, SonarQube.toResource(project), filters.toArray(new IssueFilter[0])).execute();
+            new SummaryWorker(issuesContainer, project, SonarQube.toResource(project), filters.toArray(new IssueFilter[0])).execute();
         } catch (IOException | XmlPullParserException ex) {
             Exceptions.printStackTrace(ex);
         }

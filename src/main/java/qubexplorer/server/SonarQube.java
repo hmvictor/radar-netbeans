@@ -45,19 +45,23 @@ import qubexplorer.Summary;
 public class SonarQube implements IssuesContainer{
     private static final int UNAUTHORIZED_RESPONSE_STATUS = 401;
     private static final int PAGE_SIZE = 500;
-    private String address;
+    private String serverUrl;
 
-    public SonarQube(String address) {
-        this.address=address;
+    public SonarQube(String servelUrl) {
+        this.serverUrl=servelUrl;
         //remove ending '/' if needed because of a problem with the underlying http client.
-        assert this.address.length() > 1;
-        if(this.address.endsWith("/")) {
-            this.address=this.address.substring(0, this.address.length()-1);
+        assert this.serverUrl.length() > 1;
+        if(this.serverUrl.endsWith("/")) {
+            this.serverUrl=this.serverUrl.substring(0, this.serverUrl.length()-1);
         }
     }
 
     public SonarQube() {
         this("http://localhost:9000");
+    }
+
+    public String getServerUrl() {
+        return serverUrl;
     }
     
     public double getRulesCompliance(AuthenticationToken auth, String resource) {
@@ -67,9 +71,9 @@ public class SonarQube implements IssuesContainer{
             }
             Sonar sonar;
             if(auth == null) {
-                sonar=Sonar.create(address);
+                sonar=Sonar.create(serverUrl);
             }else{
-                sonar=Sonar.create(address, auth.getUsername(), new String(auth.getPassword()));
+                sonar=Sonar.create(serverUrl, auth.getUsername(), new String(auth.getPassword()));
             }
             ResourceQuery query=new ResourceQuery(resource);
             query.setMetrics("violations_density");
@@ -99,9 +103,9 @@ public class SonarQube implements IssuesContainer{
         try{
             SonarClient client;
             if(auth == null) {
-                client = SonarClient.create(address);
+                client = SonarClient.create(serverUrl);
             }else{
-                client=SonarClient.builder().url(address).login(auth.getUsername()).password(new String(auth.getPassword())).build();
+                client=SonarClient.builder().url(serverUrl).login(auth.getUsername()).password(new String(auth.getPassword())).build();
             }
             IssueClient issueClient = client.issueClient();
             List<RadarIssue> issues=new LinkedList<>();
@@ -135,9 +139,9 @@ public class SonarQube implements IssuesContainer{
         try{
             SonarClient client;
             if(auth == null) {
-                client = SonarClient.create(address);
+                client = SonarClient.create(serverUrl);
             }else{
-                client=SonarClient.builder().url(address).login(auth.getUsername()).password(new String(auth.getPassword())).build();
+                client=SonarClient.builder().url(serverUrl).login(auth.getUsername()).password(new String(auth.getPassword())).build();
             }
             return client.actionPlanClient().find(resource);
         }catch(HttpException ex) {
@@ -156,9 +160,9 @@ public class SonarQube implements IssuesContainer{
             ruleQuery.setSearchText(tokens.length == 2? tokens[1]: ruleKey);
             Sonar sonar;
             if(auth == null) {
-                sonar=Sonar.create(address);
+                sonar=Sonar.create(serverUrl);
             }else {
-                sonar=Sonar.create(address, auth.getUsername(), new String(auth.getPassword()));
+                sonar=Sonar.create(serverUrl, auth.getUsername(), new String(auth.getPassword()));
             }
             List<Rule> rules = sonar.findAll(ruleQuery);
             for(Rule rule:rules) {
@@ -213,9 +217,9 @@ public class SonarQube implements IssuesContainer{
         try{
             Sonar sonar;
             if(auth == null) {
-                sonar=Sonar.create(address);
+                sonar=Sonar.create(serverUrl);
             }else {
-                sonar=Sonar.create(address, auth.getUsername(), new String(auth.getPassword()));
+                sonar=Sonar.create(serverUrl, auth.getUsername(), new String(auth.getPassword()));
             }
             List<Resource> resources = sonar.findAll(new ResourceQuery());
             List<String> keys=new ArrayList<>(resources.size());

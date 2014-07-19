@@ -12,10 +12,13 @@ import qubexplorer.server.SonarQube;
  * @author Victor
  */
 public class ActionPlansWorker extends SonarQubeWorker<List<ActionPlan>, Void>{
-    private ProgressHandle handle;
+    private final ProgressHandle handle;
+    private final SonarQube sonarQube;
 
-    public ActionPlansWorker(String serverUrl, String resourceKey) {
-        super(serverUrl, resourceKey);
+    public ActionPlansWorker(SonarQube sonarQube, String resourceKey) {
+        super(resourceKey);
+        this.sonarQube=sonarQube;
+        setServerUrl(sonarQube.getServerUrl());
         handle = ProgressHandleFactory.createHandle("Sonar");
         handle.start();
         handle.switchToIndeterminate();
@@ -23,12 +26,12 @@ public class ActionPlansWorker extends SonarQubeWorker<List<ActionPlan>, Void>{
 
     @Override
     protected SonarQubeWorker createCopy() {
-        return new ActionPlansWorker(getServerUrl(), getResourceKey());
+        return new ActionPlansWorker(sonarQube, getResourceKey());
     }
 
     @Override
     protected List<ActionPlan> doInBackground() throws Exception {
-        return new SonarQube(getServerUrl()).getActionPlans(getAuthentication(), getResourceKey());
+        return sonarQube.getActionPlans(getAuthentication(), getResourceKey());
     }
 
     @Override

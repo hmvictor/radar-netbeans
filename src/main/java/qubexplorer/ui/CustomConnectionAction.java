@@ -10,6 +10,7 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
+import qubexplorer.server.SonarQube;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 @ActionID(
@@ -34,7 +35,7 @@ public final class CustomConnectionAction implements ActionListener {
         ProjectChooser chooser=new ProjectChooser(WindowManager.getDefault().getMainWindow(), true);
         chooser.setSelectedUrl(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"));
         if(chooser.showDialog() == ProjectChooser.Option.ACCEPT) {
-            CountsWorker worker=new CountsWorker(context, chooser.getSelectedUrl(), chooser.getSelectedProjectKey());
+            CountsWorker worker=new CountsWorker(new SonarQube(chooser.getSelectedUrl()), context, chooser.getSelectedProjectKey());
             worker.setTriggerActionPlans(true);
             worker.execute();
         }
