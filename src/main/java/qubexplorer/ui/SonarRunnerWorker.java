@@ -16,7 +16,7 @@ import qubexplorer.runner.SonarRunnerResult;
  *
  * @author Victor TODO: process result
  */
-public class SonarRunnerWorker extends UITask<SonarRunnerResult, Void> {
+public class SonarRunnerWorker extends SonarQubeWorker<SonarRunnerResult, Void> {
 
     private Project project;
     private String sonarUrl;
@@ -24,6 +24,7 @@ public class SonarRunnerWorker extends UITask<SonarRunnerResult, Void> {
     private InputOutput io;
 
     public SonarRunnerWorker(Project project, String sonarUrl) {
+        super(null);
         this.project = project;
         this.sonarUrl = sonarUrl;
         init();
@@ -66,7 +67,7 @@ public class SonarRunnerWorker extends UITask<SonarRunnerResult, Void> {
         SonarRunnerProccess sonarRunnerProccess = new SonarRunnerProccess(sonarUrl, project);
         sonarRunnerProccess.setOutConsumer(out);
         sonarRunnerProccess.setErrConsumer(err);
-        return sonarRunnerProccess.executeRunner();
+        return sonarRunnerProccess.executeRunner(getAuthentication());
     }
 
     @Override
@@ -91,6 +92,11 @@ public class SonarRunnerWorker extends UITask<SonarRunnerResult, Void> {
         handle.finish();
         io.getOut().close();
         io.getErr().close();
+    }
+
+    @Override
+    protected SonarQubeWorker createCopy() {
+        return new SonarRunnerWorker(project, sonarUrl);
     }
 
 }

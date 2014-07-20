@@ -156,6 +156,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     public void setIssuesContainer(IssuesContainer issuesContainer) {
         this.issuesContainer = issuesContainer;
+        panelTop.setVisible(issuesContainer instanceof SonarQube);
     }
 
     public void setActionPlans(List<ActionPlan> plans) {
@@ -409,17 +410,18 @@ public final class SonarIssuesTopComponent extends TopComponent {
         Object selectedNode = tableSummary.getPathForRow(rowIndex).getLastPathComponent();
         int column = tableSummary.convertColumnIndexToModel(tableSummary.columnAtPoint(evt.getPoint()));
         if (column == 1) {
-            IssueFilter[] filters;
-            if (selectedNode instanceof Summary) {
-                filters = new IssueFilter[0];
-            } else if (selectedNode instanceof Severity) {
-                filters = new IssueFilter[]{new SeverityFilter((Severity) selectedNode)};
+            List<IssueFilter> filters=new LinkedList<>();
+            if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
+                filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
+            }
+            if (selectedNode instanceof Severity) {
+                filters.add(new SeverityFilter((Severity) selectedNode));
             } else {
                 assert selectedNode instanceof Rule;
-                filters = new IssueFilter[]{new RuleFilter((Rule) selectedNode)};
+                filters.add(new RuleFilter((Rule) selectedNode));
             }
             try {
-                new IssuesWorker(issuesContainer, project, SonarQube.toResource(project), filters).execute();
+                new IssuesWorker(issuesContainer, project, SonarQube.toResource(project), filters.toArray(new IssueFilter[0])).execute();
             } catch (IOException | XmlPullParserException ex) {
                 Exceptions.printStackTrace(ex);
             }

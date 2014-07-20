@@ -51,10 +51,10 @@ class SummaryWorker extends SonarQubeWorker<Summary, Void> {
     }
 
     @Override
-    protected void success(Summary counting) {
+    protected void success(Summary summary) {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
         sonarTopComponent.setProject(project);
-        sonarTopComponent.setSummary(counting);
+        sonarTopComponent.setSummary(summary);
         sonarTopComponent.setIssuesContainer(issuesContainer);
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
