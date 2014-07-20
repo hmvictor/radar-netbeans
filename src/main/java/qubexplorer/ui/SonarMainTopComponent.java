@@ -477,7 +477,7 @@ public final class SonarMainTopComponent extends TopComponent {
         if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
             filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
         }
-        new CountsWorker(new SonarQube(sonarQubeUrl), project, resourceKey, filters.toArray(new IssueFilter[0])).execute();
+        new SummaryWorker(new SonarQube(sonarQubeUrl), project, resourceKey, filters.toArray(new IssueFilter[0])).execute();
     }//GEN-LAST:event_actionPlansComboActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

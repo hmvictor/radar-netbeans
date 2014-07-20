@@ -40,7 +40,6 @@ import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.text.Line;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.NbPreferences;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sonar.wsclient.issue.ActionPlan;
@@ -57,7 +56,6 @@ import qubexplorer.filter.IssueFilter;
 import qubexplorer.filter.RuleFilter;
 import qubexplorer.filter.SeverityFilter;
 import qubexplorer.runner.SonarRunnerResult;
-import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
  * Top component which displays something.
@@ -416,8 +414,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
             }
             if (selectedNode instanceof Severity) {
                 filters.add(new SeverityFilter((Severity) selectedNode));
-            } else {
-                assert selectedNode instanceof Rule;
+            } else if (selectedNode instanceof Rule) {
                 filters.add(new RuleFilter((Rule) selectedNode));
             }
             try {
@@ -636,17 +633,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     public void showSummary() {
         tabbedPane.setSelectedIndex(0);
-//        if(issuesContainer instanceof SonarQube) {
-//            panelTop.setVisible(true);
-//            String serverUrl = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
-//            try {
-//                new ActionPlansWorker(serverUrl, SonarQube.toResource(project)).execute();
-//            } catch (IOException | XmlPullParserException ex) {
-//                Exceptions.printStackTrace(ex);
-//            }
-//        }else{
-//            panelTop.setVisible(false);
-//        }
     }
 
     private static class BasicPomInfo {
