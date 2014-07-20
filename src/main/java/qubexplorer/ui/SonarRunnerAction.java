@@ -22,10 +22,10 @@ import qubexplorer.ui.options.SonarQubeOptionsPanel;
         id = "qubexplorer.ui.SonarRunnerAction")
 @ActionRegistration(
         displayName = "#CTL_SonarRunnerAction")
-@NbBundle.Messages("CTL_SonarRunnerAction=Execute Sonar-runner")
+@NbBundle.Messages("CTL_SonarRunnerAction=Get Issues with Sonar Runner")
 @ActionReferences(value = {
-    @ActionReference(path = "Projects/Actions"),
-    @ActionReference(path = "Menu/Source", position = 8962, separatorBefore = 8956, separatorAfter = 8968)})
+    @ActionReference(path = "Projects/Actions", position = 8964, separatorBefore = 8956, separatorAfter = 8968),
+    @ActionReference(path = "Menu/Source", position = 8964, separatorBefore = 8956, separatorAfter = 8968)})
 public class SonarRunnerAction implements ActionListener{
     private final Project context;
 

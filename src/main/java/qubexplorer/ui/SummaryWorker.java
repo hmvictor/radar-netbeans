@@ -61,8 +61,7 @@ class SummaryWorker extends SonarQubeWorker<Summary, Void> {
         sonarTopComponent.showSummary();
         try {
             if(triggerActionPlans) {
-                ActionPlansWorker workerPlans = new ActionPlansWorker(SonarQubeFactory.createForDefaultServerUrl(), SonarQube.toResource(project));
-                workerPlans.execute();
+                scheduleWorker(new ActionPlansWorker(SonarQubeFactory.createForDefaultServerUrl(), SonarQube.toResource(project)));
             }
         } catch (IOException | XmlPullParserException ex) {
             Exceptions.printStackTrace(ex);

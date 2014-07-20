@@ -11,24 +11,22 @@ import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.NbPreferences;
 import qubexplorer.server.SonarQube;
-import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 @ActionID(
         category = "Build",
         id = "qubexplorer.ui.SonarDialogAction")
 @ActionRegistration(
         displayName = "#CTL_SonarDialogAction")
-@Messages("CTL_SonarDialogAction=See Sonar Issues")
+@Messages("CTL_SonarDialogAction=Get Issues from Server")
 @ActionReferences(value = {
-    @ActionReference(path = "Projects/Actions"),
+    @ActionReference(path = "Projects/Actions", position = 8962, separatorBefore = 8956, separatorAfter = 8968),
     @ActionReference(path = "Menu/Source", position = 8962, separatorBefore = 8956, separatorAfter = 8968)})
-public final class ServerSummaryAction implements ActionListener {
+public final class ServerIssuesAction implements ActionListener {
 
     private final Project context;
 
-    public ServerSummaryAction(Project context) {
+    public ServerIssuesAction(Project context) {
         this.context = context;
     }
 

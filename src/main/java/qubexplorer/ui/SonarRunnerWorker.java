@@ -27,6 +27,7 @@ public class SonarRunnerWorker extends SonarQubeWorker<SonarRunnerResult, Void> 
         super(null);
         this.project = project;
         this.sonarUrl = sonarUrl;
+        setServerUrl(sonarUrl);
         init();
     }
 

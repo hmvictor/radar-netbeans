@@ -18,15 +18,15 @@ import qubexplorer.ui.options.SonarQubeOptionsPanel;
         id = "qubexplorer.ui.SonarDialogAction2")
 @ActionRegistration(
         displayName = "#CTL_SonarDialogAction2")
-@Messages("CTL_SonarDialogAction2=Custom Sonar Connection ...")
+@Messages("CTL_SonarDialogAction2=Get Issues from Server ...")
 @ActionReferences(value={
-@ActionReference(path="Projects/Actions"),
-@ActionReference(path = "Menu/Source", position = 8962, separatorBefore = 8956, separatorAfter = 8968)})
-public final class CustomConnectionAction implements ActionListener {
+@ActionReference(path="Projects/Actions", position = 8963, separatorBefore = 8956, separatorAfter = 8968),
+@ActionReference(path = "Menu/Source", position = 8963, separatorBefore = 8956, separatorAfter = 8968)})
+public final class CustomServerIssuesAction implements ActionListener {
 
     private final Project context;
 
-    public CustomConnectionAction(Project context) {
+    public CustomServerIssuesAction(Project context) {
         this.context = context;
     }
 

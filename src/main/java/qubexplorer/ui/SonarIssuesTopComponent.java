@@ -1,5 +1,6 @@
 package qubexplorer.ui;
 
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -14,6 +15,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultRowSorter;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -175,12 +177,16 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private void initComponents() {
 
         jLabel2 = new javax.swing.JLabel();
+        popupMenu = new javax.swing.JPopupMenu();
+        jMenuItem1 = new javax.swing.JMenuItem();
+        ruleInfoMenuItem = new javax.swing.JMenuItem();
         tabbedPane = new javax.swing.JTabbedPane();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tableSummary = new org.jdesktop.swingx.JXTreeTable();
         tableSummary.getTableHeader().setReorderingAllowed(false);
         tableSummary.setTreeCellRenderer(new SummaryTreeCellRenderer());
+        tableSummary.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         panelTop = new javax.swing.JPanel();
         actionPlansCombo = new javax.swing.JComboBox();
         actionPlansCombo.setRenderer(new ActionPlansRenderer());
@@ -196,10 +202,37 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel2.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jMenuItem1, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jMenuItem1.text")); // NOI18N
+        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem1ActionPerformed(evt);
+            }
+        });
+        popupMenu.add(jMenuItem1);
+
+        org.openide.awt.Mnemonics.setLocalizedText(ruleInfoMenuItem, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.ruleInfoMenuItem.text")); // NOI18N
+        ruleInfoMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ruleInfoMenuItemActionPerformed(evt);
+            }
+        });
+        popupMenu.add(ruleInfoMenuItem);
+
         tableSummary.setRootVisible(true);
         tableSummary.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 tableSummaryMouseClicked(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tableSummaryMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                tableSummaryMouseReleased(evt);
+            }
+        });
+        tableSummary.addTreeSelectionListener(new javax.swing.event.TreeSelectionListener() {
+            public void valueChanged(javax.swing.event.TreeSelectionEvent evt) {
+                tableSummaryValueChanged(evt);
             }
         });
         jScrollPane1.setViewportView(tableSummary);
@@ -398,6 +431,11 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }//GEN-LAST:event_issuesTableMouseClicked
 
     private void tableSummaryMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableSummaryMouseClicked
+        if(evt.isPopupTrigger()) {
+            triggerPopupMenu(evt);
+            return;
+        }
+        
         if (evt.getClickCount() != 2) {
             return;
         }
@@ -405,36 +443,20 @@ public final class SonarIssuesTopComponent extends TopComponent {
         if (rowIndex < 0) {
             return;
         }
-        Object selectedNode = tableSummary.getPathForRow(rowIndex).getLastPathComponent();
-        int column = tableSummary.convertColumnIndexToModel(tableSummary.columnAtPoint(evt.getPoint()));
-        if (column == 1) {
-            List<IssueFilter> filters=new LinkedList<>();
-            if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
-                filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
-            }
-            if (selectedNode instanceof Severity) {
-                filters.add(new SeverityFilter((Severity) selectedNode));
-            } else if (selectedNode instanceof Rule) {
-                filters.add(new RuleFilter((Rule) selectedNode));
-            }
-            try {
-                new IssuesWorker(issuesContainer, project, SonarQube.toResource(project), filters.toArray(new IssueFilter[0])).execute();
-            } catch (IOException | XmlPullParserException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-        } else if (selectedNode instanceof Rule) {
-            Rule rule = (Rule) selectedNode;
-            if (issuesContainer instanceof SonarRunnerResult && rule.getDescription() == null) {
-                try {
-                    SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
-                    Rule ruleInServer = sonarQube.getRule(AuthenticationRepository.getInstance().getAuthentication(sonarQube.getServerUrl(), SonarQube.toResource(project)), rule.getKey());
-                    rule.setDescription(ruleInServer.getDescription());
-                } catch (IOException | XmlPullParserException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-            }
-            RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), rule);
-        }
+        listIssues(rowIndex);
+//        } else if (selectedNode instanceof Rule) {
+//            Rule rule = (Rule) selectedNode;
+//            if (issuesContainer instanceof SonarRunnerResult && rule.getDescription() == null) {
+//                try {
+//                    SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
+//                    Rule ruleInServer = sonarQube.getRule(AuthenticationRepository.getInstance().getAuthentication(sonarQube.getServerUrl(), SonarQube.toResource(project)), rule.getKey());
+//                    rule.setDescription(ruleInServer.getDescription());
+//                } catch (IOException | XmlPullParserException ex) {
+//                    Exceptions.printStackTrace(ex);
+//                }
+//            }
+//            RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), rule);
+//        }
     }//GEN-LAST:event_tableSummaryMouseClicked
 
     private void actionPlansComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_actionPlansComboActionPerformed
@@ -449,6 +471,52 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
     }//GEN-LAST:event_actionPlansComboActionPerformed
 
+    private void tableSummaryMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableSummaryMousePressed
+        if(evt.isPopupTrigger()) {
+            triggerPopupMenu(evt);
+        }
+    }//GEN-LAST:event_tableSummaryMousePressed
+
+    private void tableSummaryMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableSummaryMouseReleased
+        if(evt.isPopupTrigger()) {
+            triggerPopupMenu(evt);
+        }
+    }//GEN-LAST:event_tableSummaryMouseReleased
+
+    private void ruleInfoMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ruleInfoMenuItemActionPerformed
+        int row = tableSummary.getSelectedRow();
+        if(row != -1) {
+            Object selectedNode = tableSummary.getPathForRow(row).getLastPathComponent();
+            assert selectedNode instanceof Rule;
+            Rule rule = (Rule) selectedNode;
+            if (issuesContainer instanceof SonarRunnerResult && rule.getDescription() == null) {
+                try {
+                    SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
+                    Rule ruleInServer = sonarQube.getRule(AuthenticationRepository.getInstance().getAuthentication(sonarQube.getServerUrl(), SonarQube.toResource(project)), rule.getKey());
+                    rule.setDescription(ruleInServer.getDescription());
+                } catch (IOException | XmlPullParserException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }
+            RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), rule);
+        }
+    }//GEN-LAST:event_ruleInfoMenuItemActionPerformed
+
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+        int row=tableSummary.getSelectedRow();
+        if(row != -1) {
+            listIssues(row);
+        }
+    }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+    private void tableSummaryValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_tableSummaryValueChanged
+        int row = tableSummary.getSelectedRow();
+        if(row != -1) {
+            Object selectedNode = tableSummary.getPathForRow(row).getLastPathComponent();
+            ruleInfoMenuItem.setVisible(selectedNode instanceof Rule);
+        }
+    }//GEN-LAST:event_tableSummaryValueChanged
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox actionPlansCombo;
     private javax.swing.JTextField filterText;
@@ -457,11 +525,14 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JPanel panelTop;
+    private javax.swing.JPopupMenu popupMenu;
+    private javax.swing.JMenuItem ruleInfoMenuItem;
     private javax.swing.JTextField shownCount;
     private javax.swing.JTabbedPane tabbedPane;
     private org.jdesktop.swingx.JXTreeTable tableSummary;
@@ -633,6 +704,32 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     public void showSummary() {
         tabbedPane.setSelectedIndex(0);
+    }
+
+    private void triggerPopupMenu(MouseEvent evt) {
+        int row = tableSummary.rowAtPoint(evt.getPoint());
+        if(row != -1) {
+            tableSummary.changeSelection(row, row, false, false);
+            popupMenu.show(tableSummary, evt.getX(), evt.getY());
+        }
+    }
+
+    private void listIssues(int row) {
+        Object selectedNode = tableSummary.getPathForRow(row).getLastPathComponent();
+        List<IssueFilter> filters=new LinkedList<>();
+        if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
+            filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
+        }
+        if (selectedNode instanceof Severity) {
+            filters.add(new SeverityFilter((Severity) selectedNode));
+        } else if (selectedNode instanceof Rule) {
+            filters.add(new RuleFilter((Rule) selectedNode));
+        }
+        try {
+            new IssuesWorker(issuesContainer, project, SonarQube.toResource(project), filters.toArray(new IssueFilter[0])).execute();
+        } catch (IOException | XmlPullParserException ex) {
+            Exceptions.printStackTrace(ex);
+        }
     }
 
     private static class BasicPomInfo {
