@@ -54,11 +54,10 @@ class SummaryWorker extends SonarQubeWorker<Summary, Void> {
     protected void success(Summary summary) {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
         sonarTopComponent.setProject(project);
-        sonarTopComponent.setSummary(summary);
         sonarTopComponent.setIssuesContainer(issuesContainer);
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
-        sonarTopComponent.showSummary();
+        sonarTopComponent.showSummary(summary);
         try {
             if(triggerActionPlans) {
                 scheduleWorker(new ActionPlansWorker(SonarQubeFactory.createForDefaultServerUrl(), SonarQube.toResource(project)));

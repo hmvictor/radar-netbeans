@@ -5,12 +5,14 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
 import org.openide.util.Exceptions;
+import org.openide.util.NbPreferences;
 import org.openide.windows.IOProvider;
 import org.openide.windows.InputOutput;
 import org.openide.windows.WindowManager;
 import org.sonar.runner.api.PrintStreamConsumer;
 import qubexplorer.runner.SonarRunnerProccess;
 import qubexplorer.runner.SonarRunnerResult;
+import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
  *
@@ -66,6 +68,7 @@ public class SonarRunnerWorker extends SonarQubeWorker<SonarRunnerResult, Void> 
             
         };
         SonarRunnerProccess sonarRunnerProccess = new SonarRunnerProccess(sonarUrl, project);
+        sonarRunnerProccess.setAnalysisMode(SonarRunnerProccess.AnalysisMode.valueOf(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.analysisMode", "Preview").toUpperCase()));
         sonarRunnerProccess.setOutConsumer(out);
         sonarRunnerProccess.setErrConsumer(err);
         return sonarRunnerProccess.executeRunner(getAuthentication());
@@ -75,11 +78,10 @@ public class SonarRunnerWorker extends SonarQubeWorker<SonarRunnerResult, Void> 
     protected void success(SonarRunnerResult result) {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
         sonarTopComponent.setProject(project);
-        sonarTopComponent.setSummary(result.getSummary());
         sonarTopComponent.setIssuesContainer(result);
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
-        sonarTopComponent.showSummary();
+        sonarTopComponent.showSummary(result.getSummary());
     }
 
     @Override

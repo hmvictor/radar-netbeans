@@ -41,11 +41,10 @@ public class IssuesWorker extends SonarQubeWorker<List<RadarIssue>, Void> {
     @Override
     protected void success(List<RadarIssue> result) {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
-        sonarTopComponent.setIssues(filters, result.toArray(new RadarIssue[0]));
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
         sonarTopComponent.setProject(project);
-        sonarTopComponent.showIssuesList();
+        sonarTopComponent.showIssues(filters, result.toArray(new RadarIssue[0]));
     }
 
     @Override
