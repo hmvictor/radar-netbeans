@@ -1,6 +1,9 @@
 package qubexplorer.ui;
 
+import java.awt.Dimension;
 import java.awt.Frame;
+import javax.swing.GroupLayout;
+import javax.swing.SwingConstants;
 import org.sonar.wsclient.services.Rule;
 
 /**
@@ -71,7 +74,7 @@ public class RuleDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 412, Short.MAX_VALUE)
+                        .addGap(0, 427, Short.MAX_VALUE)
                         .addComponent(closeButton))
                     .addComponent(title, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -82,7 +85,7 @@ public class RuleDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addComponent(title)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 269, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(closeButton)
                 .addContainerGap())
@@ -103,6 +106,9 @@ public class RuleDialog extends javax.swing.JDialog {
         RuleDialog dialog=new RuleDialog(owner, true);
         dialog.setLocationRelativeTo(owner);
         dialog.setRule(rule);
+        GroupLayout layout=(GroupLayout) dialog.getContentPane().getLayout();
+        int minWidth = Math.max(dialog.getWidth(), dialog.title.getMinimumSize().width);
+        dialog.setSize(minWidth+50, dialog.getHeight());
         dialog.setVisible(true);
         dialog.dispose();
     }
