@@ -153,6 +153,11 @@
             <artifactId>org-openide-io</artifactId>
             <version>RELEASE74</version>
         </dependency>
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-netbeans-api-java-classpath</artifactId>
+            <version>RELEASE74</version>
+        </dependency>
     </dependencies>
 
     <build>

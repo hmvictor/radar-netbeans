@@ -2,6 +2,7 @@ package qubexplorer.runner;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
@@ -10,15 +11,18 @@ import java.util.logging.Logger;
 import org.apache.maven.model.Model;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.java.project.JavaProjectConstants;
+import org.netbeans.api.java.queries.BinaryForSourceQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.api.queries.FileEncodingQuery;
 import org.netbeans.spi.project.SubprojectProvider;
+import org.openide.util.Utilities;
 import org.sonar.runner.api.ForkedRunner;
 import org.sonar.runner.api.PrintStreamConsumer;
 import org.sonar.runner.api.Runner;
+import org.sonar.runner.api.ScanProperties;
 import qubexplorer.AuthenticationToken;
 import qubexplorer.AuthorizationException;
 import qubexplorer.MvnModelFactory;
@@ -104,7 +108,14 @@ public class SonarRunnerProccess {
         SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
         if (sourceGroups != null && sourceGroups.length != 0) {
             properties.setProperty("sonar.sources", sourceGroups[0].getRootFolder().getPath());
+            URL[] roots = BinaryForSourceQuery.findBinaryRoots(sourceGroups[0].getRootFolder().toURL()).getRoots();
+            if(roots.length > 0){
+                File f = Utilities.toFile(roots[0]);
+                properties.setProperty("sonar.binaries", f.getPath());
+            }
         }
+        
+//        properties.setProperty("sonar.binaries", );
         SubprojectProvider subprojectProvider = project.getLookup().lookup(SubprojectProvider.class);
         boolean hasSubprojects = false;
         if (subprojectProvider != null) {
@@ -124,7 +135,13 @@ public class SonarRunnerProccess {
                 SourceGroup[] srcGroups = src.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
                 if (srcGroups != null && srcGroups.length != 0) {
                     properties.setProperty(module + ".sonar.sources", srcGroups[0].getRootFolder().getPath());
+                    URL[] roots = BinaryForSourceQuery.findBinaryRoots(srcGroups[0].getRootFolder().toURL()).getRoots();
+                    if(roots.length > 0){
+                        File f = Utilities.toFile(roots[0]);
+                        properties.setProperty(module + ".sonar.binaries", f.getPath());
+                    }
                 }
+//                properties.setProperty(module + ".sonar.binaries", );
             }
         }
         if (hasSubprojects) {

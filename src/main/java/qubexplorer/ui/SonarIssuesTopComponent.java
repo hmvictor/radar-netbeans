@@ -110,6 +110,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
     };
     
     private Action ruleInfoAction=new AbstractAction("Rule Info") {
+        
+        {
+            setEnabled(false);
+        }
 
         @Override
         public void actionPerformed(ActionEvent ae) {
@@ -134,6 +138,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
     };
     
     private Action listIssuesAction=new AbstractAction("List Issues") {
+        
+        {
+            setEnabled(false);
+        }
         
         @Override
         public void actionPerformed(ActionEvent e) {
