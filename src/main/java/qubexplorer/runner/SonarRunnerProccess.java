@@ -115,7 +115,6 @@ public class SonarRunnerProccess {
             }
         }
         
-//        properties.setProperty("sonar.binaries", );
         SubprojectProvider subprojectProvider = project.getLookup().lookup(SubprojectProvider.class);
         boolean hasSubprojects = false;
         if (subprojectProvider != null) {
@@ -141,7 +140,6 @@ public class SonarRunnerProccess {
                         properties.setProperty(module + ".sonar.binaries", f.getPath());
                     }
                 }
-//                properties.setProperty(module + ".sonar.binaries", );
             }
         }
         if (hasSubprojects) {
@@ -149,9 +147,6 @@ public class SonarRunnerProccess {
         } else {
             properties.setProperty("sonar.projectKey", model.getGroupId() + ":" + model.getArtifactId());
         }
-//        for(String module:model.getModules()) {
-//            proccessModule(module);
-//        }
         if (modules.length() > 0) {
             properties.setProperty("sonar.modules", modules.toString());
         }
@@ -164,30 +159,11 @@ public class SonarRunnerProccess {
         return runner;
     }
 
-    private void proccessModule(String module) throws IOException, XmlPullParserException {
-        if (modules.length() > 0) {
-            modules.append(module);
-        }
-        Model model = mvnModelFactory.createModel(new File(projectHome, module));
-        if (model.getModules().isEmpty()) {
-            String src = "src/main/java";
-            if (model.getBuild() != null && model.getBuild().getSourceDirectory() != null) {
-                src = model.getBuild().getSourceDirectory();
-            }
-            properties.setProperty(module + ".sonar.sources", src);
-        }
-        properties.setProperty(module + ".sonar.projectName", model.getName() != null ? model.getName() : model.getArtifactId());
-        for (String submodule : model.getModules()) {
-            proccessModule(submodule);
-        }
-    }
-
     public SonarRunnerResult executeRunner(AuthenticationToken token) throws IOException, XmlPullParserException {
         Runner runner = createForProject(token);
         try {
             runner.execute();
         } catch (Exception ex) {
-//            logger.log(Level.WARNING, ex.toString(), ex);
             if (wrapper.isUnauthorized()) {
                 throw new AuthorizationException();
             } else {

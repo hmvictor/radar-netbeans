@@ -23,12 +23,11 @@ import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import org.apache.maven.model.Model;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.java.project.JavaProjectConstants;
-import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
@@ -49,11 +48,9 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sonar.wsclient.issue.ActionPlan;
-import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.RadarIssue;
 import qubexplorer.IssuesContainer;
-import qubexplorer.MvnModelFactory;
 import qubexplorer.Severity;
 import qubexplorer.server.SonarQube;
 import qubexplorer.Summary;
@@ -88,60 +85,45 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private IssuesContainer issuesContainer;
     private Project project;
-    private Issue[] issues;
-
+    
     private final Comparator<Severity> severityComparator = Collections.reverseOrder(new Comparator<Severity>() {
+        
         @Override
         public int compare(Severity t, Severity t1) {
             return t.compareTo(t1);
         }
+        
     });
 
-    private final Comparator<Location> locationComparator = new Comparator<Location>() {
+    private final Comparator<IssueLocation> locationComparator = new Comparator<IssueLocation>() {
+        
         @Override
-        public int compare(Location t, Location t1) {
-            int result = t.component.compareTo(t1.component);
+        public int compare(IssueLocation t, IssueLocation t1) {
+            int result = t.getPath().compareTo(t1.getPath());
             if (result != 0) {
                 return result;
             } else {
-                return Integer.compare(t.lineNumber, t1.lineNumber);
+                return Integer.compare(t.getLineNumber(), t1.getLineNumber());
             }
         }
+        
     };
     
-    private Action ruleInfoAction=new AbstractAction("Rule Info") {
+    private final Action showRuleInfoAction=new AbstractAction("Show Rule Info") {
         
-        {
-            setEnabled(false);
-        }
-
         @Override
         public void actionPerformed(ActionEvent ae) {
             int row = tableSummary.getSelectedRow();
             if(row != -1) {
                 Object selectedNode = tableSummary.getPathForRow(row).getLastPathComponent();
                 assert selectedNode instanceof Rule;
-                Rule rule = (Rule) selectedNode;
-                if (issuesContainer instanceof SonarRunnerResult && rule.getDescription() == null) {
-                    try {
-                        SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
-                        Rule ruleInServer = sonarQube.getRule(AuthenticationRepository.getInstance().getAuthentication(sonarQube.getServerUrl(), SonarQube.toResource(project)), rule.getKey());
-                        rule.setDescription(ruleInServer.getDescription());
-                    } catch (IOException | XmlPullParserException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
-                }
-                RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), rule);
+                showRuleInfo((Rule)selectedNode);
             }
         }
         
     };
     
-    private Action listIssuesAction=new AbstractAction("List Issues") {
-        
-        {
-            setEnabled(false);
-        }
+    private final Action listIssuesAction=new AbstractAction("List Issues") {
         
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -166,9 +148,54 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
         
     };
+    
+    
+    public Action gotoIssueAction=new AbstractAction("Go to Source") {
+        
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+            IssuesTableModel model=(IssuesTableModel) issuesTable.getModel();
+            int row = issuesTable.getSelectedRow();
+            if (row != -1) {
+                row = issuesTable.getRowSorter().convertRowIndexToModel(row);
+                try {
+                    IssueLocation issueLocation = model.getIssueLocation(row);
+                    File file=issueLocation.getFile(project);
+                    if (issueLocation.getLineNumber() <= 0) {
+                        openFile(file, 1);
+                    } else {
+                        openFile(file, issueLocation.getLineNumber());
+                    }
+                } catch (IOException | XmlPullParserException ex) {
+                    Exceptions.printStackTrace(ex);
+                } catch(ProjectNotFoundException ex) {
+                    String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", ex.getShortProjectKey());
+                    DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
+                }
+            }
+        }
+        
+    };
+    
+    public Action showRuleInfoForIssueAction=new AbstractAction("Show Rule Info about Issue") {
+        
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+            int row=issuesTable.getSelectedRow();
+            if(row != -1) {
+                row = issuesTable.getRowSorter().convertRowIndexToModel(row);
+                IssuesTableModel model=(IssuesTableModel) issuesTable.getModel();
+                RadarIssue issue = model.getIssue(row);
+                showRuleInfo(issue.rule());
+            }
+        }
+
+        
+    };
 
     public SonarIssuesTopComponent() {
         initComponents();
+        issuesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         issuesTable.getColumn("").setResizable(false);
         issuesTable.getColumnModel().getColumn(0).setPreferredWidth(16);
         issuesTable.getColumnModel().getColumn(0).setMaxWidth(16);
@@ -192,6 +219,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
             }
         });
         issuesTable.getColumnExt("").setHideable(false);
+        issuesTable.getColumn("Location").setCellRenderer(new LocationRenderer());
         ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(0, severityComparator);
         ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(2, severityComparator);
         ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(3, locationComparator);
@@ -203,6 +231,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 }
             }
         });
+        showRuleInfoAction.setEnabled(false);
+        listIssuesAction.setEnabled(false);
+        gotoIssueAction.setEnabled(false);
+        showRuleInfoForIssueAction.setEnabled(false);
     }
 
     public void setProject(Project project) {
@@ -215,7 +247,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         renderer.setHorizontalAlignment(JLabel.RIGHT);
         tableSummary.getColumn(1).setCellRenderer(renderer);
         listIssuesAction.setEnabled(false);
-        ruleInfoAction.setEnabled(false);
+        showRuleInfoAction.setEnabled(false);
     }
 
     public void setIssuesContainer(IssuesContainer issuesContainer) {
@@ -231,6 +263,19 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
         actionPlansCombo.setModel(model);
     }
+    
+    public void showRuleInfo(Rule rule) {
+        if (issuesContainer instanceof SonarRunnerResult && rule.getDescription() == null) {
+            try {
+                SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
+                Rule ruleInServer = sonarQube.getRule(AuthenticationRepository.getInstance().getAuthentication(sonarQube.getServerUrl(), SonarQube.toResource(project)), rule.getKey());
+                rule.setDescription(ruleInServer.getDescription());
+            } catch (IOException | XmlPullParserException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+        RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), rule);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -240,7 +285,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        popupMenu = new javax.swing.JPopupMenu();
+        summaryPopupMenu = new javax.swing.JPopupMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
         ruleInfoMenuItem = new javax.swing.JMenuItem();
         issuesPanel = new javax.swing.JPanel();
@@ -251,6 +296,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
         jLabel3 = new javax.swing.JLabel();
         shownCount = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
+        issuesPopupMenu = new javax.swing.JPopupMenu();
+        jMenuItem2 = new javax.swing.JMenuItem();
+        jMenuItem3 = new javax.swing.JMenuItem();
         tabbedPane = new javax.swing.JTabbedPane();
         summaryPanel = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -268,247 +316,210 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         jMenuItem1.setAction(listIssuesAction);
         org.openide.awt.Mnemonics.setLocalizedText(jMenuItem1, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jMenuItem1.text")); // NOI18N
-        popupMenu.add(jMenuItem1);
+        summaryPopupMenu.add(jMenuItem1);
 
-        ruleInfoMenuItem.setAction(ruleInfoAction);
+        ruleInfoMenuItem.setAction(showRuleInfoAction);
         org.openide.awt.Mnemonics.setLocalizedText(ruleInfoMenuItem, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.ruleInfoMenuItem.text")); // NOI18N
-        popupMenu.add(ruleInfoMenuItem);
+        summaryPopupMenu.add(ruleInfoMenuItem);
 
         title.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         org.openide.awt.Mnemonics.setLocalizedText(title, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.title.text")); // NOI18N
 
-        issuesTable.setModel(
+        issuesTable.setModel(new IssuesTableModel());
+        issuesTable.setColumnControlVisible(true);
+        issuesTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                issuesTableMouseClicked(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                issuesTableMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                issuesTableMouseReleased(evt);
+            }
+        });
+        jScrollPane2.setViewportView(issuesTable);
+        issuesTable.getColumnModel().getColumn(0).setCellRenderer(new SeverityIconRenderer());
 
-            new javax.swing.table.DefaultTableModel(
-                new Object [][] {
+        filterText.setText(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.filterText.text")); // NOI18N
 
-                },
-                new String [] {
-                    "", "Message", "Severity", "Location", "MvnId", "Rule"
-                }
-            ) {
-                Class[] types = new Class [] {
-                    Severity.class
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel3.text")); // NOI18N
 
-                    , java.lang.String.class
+        shownCount.setEditable(false);
+        shownCount.setColumns(5);
+        shownCount.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        shownCount.setText(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.shownCount.text")); // NOI18N
 
-                    , Severity.class
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel1.text")); // NOI18N
 
-                    , java.lang.Object.class
-
-                    , java.lang.String.class
-
-                    , java.lang.String.class
-                };
-                boolean[] canEdit = new boolean[]{
-                    false, false, false, false, false, false
-                };
-
-                public Class getColumnClass(int columnIndex) {
-                    return types[columnIndex];
-                }
-
-                public boolean isCellEditable(int rowIndex, int columnIndex) {
-                    return canEdit[columnIndex];
-                }
-
-            });
-            issuesTable.setColumnControlVisible(true);
-            issuesTable.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseClicked(java.awt.event.MouseEvent evt) {
-                    issuesTableMouseClicked(evt);
-                }
-            });
-            jScrollPane2.setViewportView(issuesTable);
-            issuesTable.getColumnModel().getColumn(0).setCellRenderer(new SeverityIconRenderer());
-
-            filterText.setText(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.filterText.text")); // NOI18N
-
-            org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel3.text")); // NOI18N
-
-            shownCount.setEditable(false);
-            shownCount.setColumns(5);
-            shownCount.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-            shownCount.setText(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.shownCount.text")); // NOI18N
-
-            org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel1.text")); // NOI18N
-
-            javax.swing.GroupLayout issuesPanelLayout = new javax.swing.GroupLayout(issuesPanel);
-            issuesPanel.setLayout(issuesPanelLayout);
-            issuesPanelLayout.setHorizontalGroup(
-                issuesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(issuesPanelLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(issuesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 638, Short.MAX_VALUE)
-                        .addComponent(title, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, issuesPanelLayout.createSequentialGroup()
-                            .addComponent(jLabel1)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(filterText)
-                            .addGap(18, 18, 18)
-                            .addComponent(jLabel3)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(shownCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addContainerGap())
-            );
-            issuesPanelLayout.setVerticalGroup(
-                issuesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(issuesPanelLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(title)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addGroup(issuesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+        javax.swing.GroupLayout issuesPanelLayout = new javax.swing.GroupLayout(issuesPanel);
+        issuesPanel.setLayout(issuesPanelLayout);
+        issuesPanelLayout.setHorizontalGroup(
+            issuesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(issuesPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(issuesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 638, Short.MAX_VALUE)
+                    .addComponent(title, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, issuesPanelLayout.createSequentialGroup()
                         .addComponent(jLabel1)
-                        .addComponent(filterText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(shownCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel3))
-                    .addContainerGap())
-            );
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(filterText)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(shownCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
+        );
+        issuesPanelLayout.setVerticalGroup(
+            issuesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(issuesPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(title)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(issuesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(filterText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(shownCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3))
+                .addContainerGap())
+        );
 
-            tableSummary.setRootVisible(true);
-            tableSummary.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseClicked(java.awt.event.MouseEvent evt) {
-                    tableSummaryMouseClicked(evt);
-                }
-                public void mousePressed(java.awt.event.MouseEvent evt) {
-                    tableSummaryMousePressed(evt);
-                }
-                public void mouseReleased(java.awt.event.MouseEvent evt) {
-                    tableSummaryMouseReleased(evt);
-                }
-            });
-            tableSummary.addTreeSelectionListener(new javax.swing.event.TreeSelectionListener() {
-                public void valueChanged(javax.swing.event.TreeSelectionEvent evt) {
-                    tableSummaryValueChanged(evt);
-                }
-            });
-            jScrollPane1.setViewportView(tableSummary);
+        jMenuItem2.setAction(gotoIssueAction);
+        issuesPopupMenu.add(jMenuItem2);
 
-            org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel4.text")); // NOI18N
+        jMenuItem3.setAction(showRuleInfoForIssueAction);
+        issuesPopupMenu.add(jMenuItem3);
 
-            actionPlansCombo.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    actionPlansComboActionPerformed(evt);
-                }
-            });
+        tableSummary.setRootVisible(true);
+        tableSummary.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tableSummaryMouseClicked(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tableSummaryMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                tableSummaryMouseReleased(evt);
+            }
+        });
+        tableSummary.addTreeSelectionListener(new javax.swing.event.TreeSelectionListener() {
+            public void valueChanged(javax.swing.event.TreeSelectionEvent evt) {
+                tableSummaryValueChanged(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tableSummary);
 
-            javax.swing.GroupLayout actionPlansPanelLayout = new javax.swing.GroupLayout(actionPlansPanel);
-            actionPlansPanel.setLayout(actionPlansPanelLayout);
-            actionPlansPanelLayout.setHorizontalGroup(
-                actionPlansPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(actionPlansPanelLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jLabel4)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel4.text")); // NOI18N
+
+        actionPlansCombo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                actionPlansComboActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout actionPlansPanelLayout = new javax.swing.GroupLayout(actionPlansPanel);
+        actionPlansPanel.setLayout(actionPlansPanelLayout);
+        actionPlansPanelLayout.setHorizontalGroup(
+            actionPlansPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(actionPlansPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(actionPlansCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(12, Short.MAX_VALUE))
+        );
+        actionPlansPanelLayout.setVerticalGroup(
+            actionPlansPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(actionPlansPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(actionPlansPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(actionPlansCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(12, Short.MAX_VALUE))
-            );
-            actionPlansPanelLayout.setVerticalGroup(
-                actionPlansPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(actionPlansPanelLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(actionPlansPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(actionPlansCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel4))
-                    .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            );
+                    .addComponent(jLabel4))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
 
-            buttonListIssues.setAction(listIssuesAction);
-            org.openide.awt.Mnemonics.setLocalizedText(buttonListIssues, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.buttonListIssues.text")); // NOI18N
+        buttonListIssues.setAction(listIssuesAction);
+        org.openide.awt.Mnemonics.setLocalizedText(buttonListIssues, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.buttonListIssues.text")); // NOI18N
 
-            buttonRuleInfo.setAction(ruleInfoAction);
-            org.openide.awt.Mnemonics.setLocalizedText(buttonRuleInfo, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.buttonRuleInfo.text")); // NOI18N
+        buttonRuleInfo.setAction(showRuleInfoAction);
+        org.openide.awt.Mnemonics.setLocalizedText(buttonRuleInfo, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.buttonRuleInfo.text")); // NOI18N
 
-            javax.swing.GroupLayout panelTopLayout = new javax.swing.GroupLayout(panelTop);
-            panelTop.setLayout(panelTopLayout);
-            panelTopLayout.setHorizontalGroup(
-                panelTopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelTopLayout.createSequentialGroup()
-                    .addContainerGap()
+        javax.swing.GroupLayout panelTopLayout = new javax.swing.GroupLayout(panelTop);
+        panelTop.setLayout(panelTopLayout);
+        panelTopLayout.setHorizontalGroup(
+            panelTopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelTopLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(buttonListIssues)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(buttonRuleInfo)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(actionPlansPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+        panelTopLayout.setVerticalGroup(
+            panelTopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(actionPlansPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(panelTopLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(panelTopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(buttonListIssues)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(buttonRuleInfo)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(actionPlansPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            );
-            panelTopLayout.setVerticalGroup(
-                panelTopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(actionPlansPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(panelTopLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(panelTopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(buttonListIssues)
-                        .addComponent(buttonRuleInfo))
-                    .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            );
+                    .addComponent(buttonRuleInfo))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
 
-            javax.swing.GroupLayout summaryPanelLayout = new javax.swing.GroupLayout(summaryPanel);
-            summaryPanel.setLayout(summaryPanelLayout);
-            summaryPanelLayout.setHorizontalGroup(
-                summaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(summaryPanelLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(summaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 638, Short.MAX_VALUE)
-                        .addComponent(panelTop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addContainerGap())
-            );
-            summaryPanelLayout.setVerticalGroup(
-                summaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(summaryPanelLayout.createSequentialGroup()
-                    .addComponent(panelTop, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 358, Short.MAX_VALUE)
-                    .addContainerGap())
-            );
+        javax.swing.GroupLayout summaryPanelLayout = new javax.swing.GroupLayout(summaryPanel);
+        summaryPanel.setLayout(summaryPanelLayout);
+        summaryPanelLayout.setHorizontalGroup(
+            summaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(summaryPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(summaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 638, Short.MAX_VALUE)
+                    .addComponent(panelTop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        summaryPanelLayout.setVerticalGroup(
+            summaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(summaryPanelLayout.createSequentialGroup()
+                .addComponent(panelTop, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 358, Short.MAX_VALUE)
+                .addContainerGap())
+        );
 
-            tabbedPane.addTab(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.summaryPanel.TabConstraints.tabTitle"), summaryPanel); // NOI18N
+        tabbedPane.addTab(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.summaryPanel.TabConstraints.tabTitle"), summaryPanel); // NOI18N
 
-            javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-            this.setLayout(layout);
-            layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(tabbedPane)
-            );
-            layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(tabbedPane)
-            );
-        }// </editor-fold>//GEN-END:initComponents
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(tabbedPane)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(tabbedPane)
+        );
+    }// </editor-fold>//GEN-END:initComponents
 
     private void issuesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMouseClicked
+        if(evt.isPopupTrigger()) {
+            int row = issuesTable.rowAtPoint(evt.getPoint());
+            if(row != -1) {
+                issuesTable.changeSelection(row, row, false, false);
+                issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
+            }
+            return;
+        }
         if (evt.getClickCount() == 2) {
             int row = issuesTable.rowAtPoint(evt.getPoint());
             if (row != -1) {
-                row = issuesTable.getRowSorter().convertRowIndexToModel(row);
-                try {
-                    String shortKey = removeBranchPart(issues[row].componentKey());
-                    Project p = findProject(project, getBasicPomInfo(shortKey));
-                    if (p != null) {
-                        String componentKey = issues[row].componentKey();
-                        File file;
-                        if (componentKey.contains("/")) {
-                            file = new File(p.getProjectDirectory().getPath(), toPath(componentKey, ".java"));
-                        } else {
-                            Sources sources = ProjectUtils.getSources(p);
-                            SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
-                            file = new File(sourceGroups[0].getRootFolder().getPath(), toPath(componentKey, ".java"));
-                        }
-                        if (issues[row].line() == null) {
-                            openFile(file, 1);
-                        } else {
-                            openFile(file, issues[row].line());
-                        }
-                    } else {
-                        String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", shortKey);
-                        DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
-                    }
-                } catch (IOException | XmlPullParserException ex) {
-                    Exceptions.printStackTrace(ex);
+                if(issuesTable.getSelectedRow() != row){
+                    issuesTable.changeSelection(row, row, false, false);
                 }
+                gotoIssueAction.actionPerformed(new ActionEvent(issuesTable, Event.ACTION_EVENT, "Go to Source"));
             }
         }
     }//GEN-LAST:event_issuesTableMouseClicked
@@ -560,9 +571,29 @@ public final class SonarIssuesTopComponent extends TopComponent {
         if(row != -1) {
             Object selectedNode = tableSummary.getPathForRow(row).getLastPathComponent();
             ruleInfoMenuItem.setVisible(selectedNode instanceof Rule);
-            ruleInfoAction.setEnabled(selectedNode instanceof Rule);
+            showRuleInfoAction.setEnabled(selectedNode instanceof Rule);
         }
     }//GEN-LAST:event_tableSummaryValueChanged
+
+    private void issuesTableMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMousePressed
+        if(evt.isPopupTrigger()) {
+            int row = issuesTable.rowAtPoint(evt.getPoint());
+            if(row != -1) {
+                issuesTable.changeSelection(row, row, false, false);
+                issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
+            }
+        }
+    }//GEN-LAST:event_issuesTableMousePressed
+
+    private void issuesTableMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMouseReleased
+        if(evt.isPopupTrigger()) {
+            int row = issuesTable.rowAtPoint(evt.getPoint());
+            if(row != -1) {
+                issuesTable.changeSelection(row, row, false, false);
+                issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
+            }
+        }
+    }//GEN-LAST:event_issuesTableMouseReleased
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox actionPlansCombo;
@@ -571,18 +602,21 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private javax.swing.JButton buttonRuleInfo;
     private javax.swing.JTextField filterText;
     private javax.swing.JPanel issuesPanel;
+    private javax.swing.JPopupMenu issuesPopupMenu;
     private org.jdesktop.swingx.JXTable issuesTable;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenuItem jMenuItem2;
+    private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JPanel panelTop;
-    private javax.swing.JPopupMenu popupMenu;
     private javax.swing.JMenuItem ruleInfoMenuItem;
     private javax.swing.JTextField shownCount;
     private javax.swing.JPanel summaryPanel;
+    private javax.swing.JPopupMenu summaryPopupMenu;
     private javax.swing.JTabbedPane tabbedPane;
     private org.jdesktop.swingx.JXTreeTable tableSummary;
     private javax.swing.JLabel title;
@@ -650,16 +684,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }
 
     public void setIssues(IssueFilter[] filters, RadarIssue... issues) {
-        DefaultTableModel model = (DefaultTableModel) issuesTable.getModel();
-        while (model.getRowCount() > 0) {
-            model.removeRow(0);
-        }
-        for (RadarIssue issue : issues) {
-            String name = toPath(issue.componentKey(), ".java");
-            String mvnId = toMvnId(issue.componentKey());
-            model.addRow(new Object[]{issue.severityObject(), issue.message(), issue.severityObject(), new Location(name, issue.line()), mvnId, issue.rule().getTitle()});
-        }
-        this.issues = issues;
+        IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
+        model.setIssues(issues);
         StringBuilder builder = new StringBuilder();
         for (IssueFilter filter : filters) {
             if (builder.length() > 0) {
@@ -673,67 +699,20 @@ public final class SonarIssuesTopComponent extends TopComponent {
         builder.append("Number of issues:");
         builder.append(issues.length);
         title.setText(builder.toString());
-        issuesTable.getColumnExt("Severity").setVisible(true);
         issuesTable.getColumnExt("Rule").setVisible(true);
-        showIssuesCount();
-    }
+        issuesTable.getColumnExt("Severity").setVisible(false);
+        issuesTable.getColumnExt("Project Key").setVisible(false);
+        issuesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
-    public static String toPath(String componentKey, String extension) {
-        String path = componentKey;
-        int index = path.lastIndexOf(':');
-        if (index != -1) {
-            path = path.substring(index + 1);
-        }
-        if (!path.contains("/")) {
-            path = path.replace(".", "/") + extension;
-        }
-        return path;
-    }
-
-    public String toMvnId(String componentKey) {
-        String path = componentKey;
-        int index = path.lastIndexOf(':');
-        if (index != -1) {
-            path = path.substring(0, index);
-        }
-        return path;
-    }
-
-    private static BasicPomInfo getBasicPomInfo(String componentKey) {
-        String[] tokens = componentKey.split(":");
-        assert tokens.length >= 2;
-        return new BasicPomInfo(tokens[0], tokens[1]);
-    }
-
-    private static FileObject findMvnDir(Model model, BasicPomInfo basicPomInfo, String groupId) throws IOException, XmlPullParserException {
-        MvnModelFactory factory = new MvnModelFactory();
-        for (String module : model.getModules()) {
-            FileObject moduleFile = FileUtil.toFileObject(new File(model.getProjectDirectory(), module));
-            Model m = factory.createModel(moduleFile);
-            String tmpGroupId = m.getGroupId() == null ? groupId : m.getGroupId();
-            if (tmpGroupId.equals(basicPomInfo.getGroupId()) && m.getArtifactId().equals(basicPomInfo.getArtifactId())) {
-                return moduleFile;
-            } else {
-                FileObject o = findMvnDir(m, basicPomInfo, tmpGroupId);
-                if (o != null) {
-                    return o;
-                }
+            @Override
+            public void valueChanged(ListSelectionEvent lse) {
+                int row=issuesTable.getSelectedRow();
+                gotoIssueAction.setEnabled(row != -1);
+                showRuleInfoForIssueAction.setEnabled(row != -1);
             }
-        }
-        return null;
-    }
-
-    private static Project findProject(Project project, BasicPomInfo basicPomInfo) throws IOException, XmlPullParserException {
-        Model model = new MvnModelFactory().createModel(project);
-        if (model.getGroupId().equals(basicPomInfo.getGroupId()) && model.getArtifactId().equals(basicPomInfo.getArtifactId())) {
-            return project;
-        }
-        FileObject mavenDir = findMvnDir(model, basicPomInfo, model.getGroupId());
-        if (mavenDir != null) {
-            return FileOwnerQuery.getOwner(mavenDir);
-        } else {
-            return null;
-        }
+            
+        });
+        showIssuesCount();
     }
 
     private void showIssuesCount() {
@@ -741,7 +720,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         shownCount.setText(format.format(issuesTable.getRowSorter().getViewRowCount()));
     }
 
-    private String removeBranchPart(String componentKey) {
+    static  String removeBranchPart(String componentKey) {
         String[] tokens = componentKey.split(":");
         assert tokens.length >= 2;
         return tokens[0] + ":" + tokens[1];
@@ -753,6 +732,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
             tabbedPane.add("Issues", issuesPanel);
         }
         tabbedPane.setSelectedIndex(1);
+        gotoIssueAction.setEnabled(false);
+        showRuleInfoForIssueAction.setEnabled(false);
     }
 
     public void showSummary(Summary summary) {
@@ -767,54 +748,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         int row = tableSummary.rowAtPoint(evt.getPoint());
         if(row != -1) {
             tableSummary.changeSelection(row, row, false, false);
-            popupMenu.show(tableSummary, evt.getX(), evt.getY());
-        }
-    }
-
-    private static class BasicPomInfo {
-
-        private String groupId;
-        private String artifactId;
-
-        public BasicPomInfo(String groupId, String artifactId) {
-            this.groupId = groupId;
-            this.artifactId = artifactId;
-        }
-
-        public String getGroupId() {
-            return groupId;
-        }
-
-        public String getArtifactId() {
-            return artifactId;
-        }
-    }
-
-    public class Location {
-
-        private String component;
-        private Integer lineNumber;
-
-        public Location(String component, Integer lineNumber) {
-            this.component = component;
-            this.lineNumber = lineNumber;
-        }
-
-        public String getComponent() {
-            return component;
-        }
-
-        public Integer getLineNumber() {
-            return lineNumber;
-        }
-
-        @Override
-        public String toString() {
-            if (lineNumber == null) {
-                return component;
-            } else {
-                return component + " [" + lineNumber + "]";
-            }
+            summaryPopupMenu.show(tableSummary, evt.getX(), evt.getY());
         }
     }
 
