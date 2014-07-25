@@ -511,7 +511,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 if(issuesTable.getSelectedRow() != row){
                     issuesTable.changeSelection(row, row, false, false);
                 }
-                gotoIssueAction.actionPerformed(new ActionEvent(issuesTable, Event.ACTION_EVENT, "Go to Source"));
+                if(gotoIssueAction.isEnabled()){
+                    gotoIssueAction.actionPerformed(new ActionEvent(issuesTable, Event.ACTION_EVENT, "Go to Source"));
+                }
             }
         }
     }//GEN-LAST:event_issuesTableMouseClicked
@@ -530,7 +532,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
             return;
         }
         tableSummary.changeSelection(rowIndex, rowIndex, false, false);
-        listIssuesAction.actionPerformed(new ActionEvent(tableSummary, Event.ACTION_EVENT, "List Issues"));
+        if(listIssuesAction.isEnabled()) {
+            listIssuesAction.actionPerformed(new ActionEvent(tableSummary, Event.ACTION_EVENT, "List Issues"));
+        }
     }//GEN-LAST:event_tableSummaryMouseClicked
 
     private void actionPlansComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_actionPlansComboActionPerformed
@@ -555,11 +559,26 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private void tableSummaryValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_tableSummaryValueChanged
         int row = tableSummary.getSelectedRow();
-        listIssuesAction.setEnabled(row != -1);
         if(row != -1) {
             Object selectedNode = tableSummary.getPathForRow(row).getLastPathComponent();
             ruleInfoMenuItem.setVisible(selectedNode instanceof Rule);
             showRuleInfoAction.setEnabled(selectedNode instanceof Rule);
+            Summary summary = ((SummaryModel)tableSummary.getTreeTableModel()).getSummary();
+            int count;
+            if(selectedNode instanceof Summary) {
+                count=summary.getCount();
+            }else if(selectedNode instanceof Severity) {
+                count=summary.getCount((Severity)selectedNode);
+            }else if(selectedNode instanceof Rule) {
+                count=summary.getCount((Rule)selectedNode);
+            }else{
+                count=0;
+            }
+            listIssuesAction.setEnabled(count > 0);
+        }else{
+            listIssuesAction.setEnabled(false);
+            ruleInfoMenuItem.setVisible(false);
+            showRuleInfoAction.setEnabled(false);
         }
     }//GEN-LAST:event_tableSummaryValueChanged
 
