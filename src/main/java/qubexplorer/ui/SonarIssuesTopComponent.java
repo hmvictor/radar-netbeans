@@ -84,7 +84,7 @@ import qubexplorer.runner.SonarRunnerResult;
 public final class SonarIssuesTopComponent extends TopComponent {
 
     private IssuesContainer issuesContainer;
-    private Project project;
+    private ProjectContext projectContext;
     
     private final Comparator<Severity> severityComparator = Collections.reverseOrder(new Comparator<Severity>() {
         
@@ -139,11 +139,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 } else if (selectedNode instanceof Rule) {
                     filters.add(new RuleFilter((Rule) selectedNode));
                 }
-                try {
-                    new IssuesWorker(issuesContainer, project, SonarQube.toResource(project), filters.toArray(new IssueFilter[0])).execute();
-                } catch (IOException | XmlPullParserException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
+                new IssuesWorker(issuesContainer, projectContext.getProject(), projectContext.getProjectKey(), filters.toArray(new IssueFilter[0])).execute();
             }
         }
         
@@ -160,7 +156,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 row = issuesTable.getRowSorter().convertRowIndexToModel(row);
                 try {
                     IssueLocation issueLocation = model.getIssueLocation(row);
-                    File file=issueLocation.getFile(project);
+                    File file=issueLocation.getFile(projectContext.getProject());
                     if (issueLocation.getLineNumber() <= 0) {
                         openFile(file, 1);
                     } else {
@@ -237,10 +233,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
         showRuleInfoForIssueAction.setEnabled(false);
     }
 
-    public void setProject(Project project) {
-        this.project = project;
+    public void setProjectContext(ProjectContext projectContext) {
+        this.projectContext = projectContext;
     }
-
+    
     public void setSummary(Summary summary) {
         tableSummary.setTreeTableModel(new SummaryModel(summary));
         DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
@@ -266,13 +262,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
     
     public void showRuleInfo(Rule rule) {
         if (issuesContainer instanceof SonarRunnerResult && rule.getDescription() == null) {
-            try {
-                SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
-                Rule ruleInServer = sonarQube.getRule(AuthenticationRepository.getInstance().getAuthentication(sonarQube.getServerUrl(), SonarQube.toResource(project)), rule.getKey());
-                rule.setDescription(ruleInServer.getDescription());
-            } catch (IOException | XmlPullParserException ex) {
-                Exceptions.printStackTrace(ex);
-            }
+            SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
+            Rule ruleInServer = sonarQube.getRule(AuthenticationRepository.getInstance().getAuthentication(sonarQube.getServerUrl(), projectContext.getProjectKey()), rule.getKey());
+            rule.setDescription(ruleInServer.getDescription());
         }
         RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), rule);
     }
@@ -546,11 +538,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
             filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
         }
-        try {
-            new SummaryWorker(issuesContainer, project, SonarQube.toResource(project), filters.toArray(new IssueFilter[0])).execute();
-        } catch (IOException | XmlPullParserException ex) {
-            Exceptions.printStackTrace(ex);
-        }
+        new SummaryWorker(issuesContainer, projectContext.getProject(), projectContext.getProjectKey(), filters.toArray(new IssueFilter[0])).execute();
     }//GEN-LAST:event_actionPlansComboActionPerformed
 
     private void tableSummaryMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableSummaryMousePressed
@@ -702,6 +690,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         issuesTable.getColumnExt("Rule").setVisible(true);
         issuesTable.getColumnExt("Severity").setVisible(false);
         issuesTable.getColumnExt("Project Key").setVisible(false);
+        issuesTable.getColumnExt("Full Path").setVisible(false);
         issuesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
             @Override

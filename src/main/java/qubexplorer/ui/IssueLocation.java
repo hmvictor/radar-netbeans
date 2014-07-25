@@ -21,6 +21,7 @@ import qubexplorer.MvnModelFactory;
 public class IssueLocation {
     private final String componentKey;
     private final int lineNumber;
+    private static final String DEFAULT_EXTENSION=".java";
 
     public IssueLocation(String componentKey, int lineNumber) {
         this.componentKey = componentKey;
@@ -38,6 +39,23 @@ public class IssueLocation {
             path = path.substring(index + 1);
         }
         return path;
+    }
+    
+    public String getName() {
+        String extension="";
+        char separator;
+        if(componentKey.contains("/")) {
+            separator='/';
+        }else{
+            extension=DEFAULT_EXTENSION;
+            separator='.';
+        }
+        int index=componentKey.lastIndexOf(separator);
+        if(index < componentKey.length() -1) {
+            return componentKey.substring(index+1)+extension;
+        }else{
+            return "";
+        }
     }
     
     public String getComponentKey() {
@@ -84,10 +102,13 @@ public class IssueLocation {
             throw new ProjectNotFoundException(getShortProjectKey());
         }
         File file;
-        String filePath = toFilePath(componentKey, ".java");
-        if (componentKey.contains("/")) {
-            file = new File(projectOwner.getProjectDirectory().getPath(), filePath);
-        } else {
+        String path = getPath();
+        if(path.contains("/")) {
+            /* It's a relative file path*/
+            file = new File(projectOwner.getProjectDirectory().getPath(), path);
+        }else{
+            /* It's an element name. Assume is a java file */
+            String filePath=path.replace(".", "/")+".java";
             Sources sources = ProjectUtils.getSources(projectOwner);
             SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
             file = new File(sourceGroups[0].getRootFolder().getPath(), filePath);

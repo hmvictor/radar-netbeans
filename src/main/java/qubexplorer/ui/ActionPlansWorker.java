@@ -26,12 +26,12 @@ public class ActionPlansWorker extends SonarQubeWorker<List<ActionPlan>, Void>{
 
     @Override
     protected SonarQubeWorker createCopy() {
-        return new ActionPlansWorker(sonarQube, getResourceKey());
+        return new ActionPlansWorker(sonarQube, getProjectKey());
     }
 
     @Override
     protected List<ActionPlan> doInBackground() throws Exception {
-        return sonarQube.getActionPlans(getAuthentication(), getResourceKey());
+        return sonarQube.getActionPlans(getAuthentication(), getProjectKey());
     }
 
     @Override

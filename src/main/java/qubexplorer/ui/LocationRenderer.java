@@ -16,7 +16,7 @@ public class LocationRenderer extends DefaultTableCellRenderer{
         if(o instanceof IssueLocation){
             IssueLocation location = (IssueLocation)o;
             if(location.getLineNumber() > 0){
-                value=String.format("%s [%d]", location.getPath(), location.getLineNumber());
+                value=String.format("%5d:%s", location.getLineNumber(), location.getName());
             }else{
                 value=location.getPath();
             }

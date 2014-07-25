@@ -13,17 +13,17 @@ import qubexplorer.AuthorizationException;
  */
 public abstract class SonarQubeWorker<R,P> extends UITask<R, P>{
     private String serverUrl;
-    private String resourceKey;
+    private final String projectKey;
     private AuthenticationToken authentication;
     private SwingWorker<R, P> scheduledWorker;
 
-    public SonarQubeWorker(String resourceKey) {
-        this.resourceKey = resourceKey;
+    public SonarQubeWorker(String projectKey) {
+        this.projectKey = projectKey;
     }
 
     protected void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
-        authentication=AuthenticationRepository.getInstance().getAuthentication(serverUrl, resourceKey);
+        authentication=AuthenticationRepository.getInstance().getAuthentication(serverUrl, projectKey);
     }
     
     public void setAuthentication(AuthenticationToken authentication) {
@@ -34,8 +34,8 @@ public abstract class SonarQubeWorker<R,P> extends UITask<R, P>{
         return authentication;
     }
 
-    public String getResourceKey() {
-        return resourceKey;
+    public String getProjectKey() {
+        return projectKey;
     }
     
     @Override
@@ -44,13 +44,13 @@ public abstract class SonarQubeWorker<R,P> extends UITask<R, P>{
             R result = get();
             success(result);
             if (authentication != null) {
-                AuthenticationRepository.getInstance().saveAuthentication(serverUrl, resourceKey, authentication);
+                AuthenticationRepository.getInstance().saveAuthentication(serverUrl, projectKey, authentication);
             }
         } catch (ExecutionException ex) {
             Throwable cause = ex.getCause();
             if (cause instanceof AuthorizationException) {
                 AuthenticationRepository repo = AuthenticationRepository.getInstance();
-                AuthenticationToken auth = repo.getAuthentication(serverUrl, resourceKey);
+                AuthenticationToken auth = repo.getAuthentication(serverUrl, projectKey);
                 if (auth == null) {
                     auth = AuthDialog.showAuthDialog(WindowManager.getDefault().getMainWindow());
                 }

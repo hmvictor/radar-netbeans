@@ -88,11 +88,12 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
-    public List<RadarIssue> getIssues(AuthenticationToken auth, String resource, IssueFilter... filters) {
-        if(!existsProject(auth, resource)) {
-            throw new NoSuchProjectException(resource);
+    @Override
+    public List<RadarIssue> getIssues(AuthenticationToken auth, String projectKey, IssueFilter... filters) {
+        if(!existsProject(auth, projectKey)) {
+            throw new NoSuchProjectException(projectKey);
         }
-        IssueQuery query = IssueQuery.create().componentRoots(resource).pageSize(PAGE_SIZE).statuses("OPEN");
+        IssueQuery query = IssueQuery.create().componentRoots(projectKey).pageSize(PAGE_SIZE).statuses("OPEN");
         for(IssueFilter filter:filters) {
             filter.apply(query);
         }
@@ -254,8 +255,8 @@ public class SonarQube implements IssuesContainer{
     }
 
     @Override
-    public Summary getSummary(AuthenticationToken authentication, String resourceKey, IssueFilter[] filters) {
-        return getCounting(authentication, resourceKey, filters);
+    public Summary getSummary(AuthenticationToken authentication, String projectKey, IssueFilter[] filters) {
+        return getCounting(authentication, projectKey, filters);
     }
     
 }

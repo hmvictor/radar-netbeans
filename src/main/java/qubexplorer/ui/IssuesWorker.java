@@ -19,8 +19,8 @@ public class IssuesWorker extends SonarQubeWorker<List<RadarIssue>, Void> {
     private IssueFilter[] filters;
     private IssuesContainer issuesContainer;
     
-    public IssuesWorker(IssuesContainer container, Project project, String resourceKey, IssueFilter... filters) {
-        super(resourceKey);
+    public IssuesWorker(IssuesContainer container, Project project, String projectKey, IssueFilter... filters) {
+        super(projectKey);
         this.project=project;
         this.filters=filters;
         this.issuesContainer=container;
@@ -35,7 +35,7 @@ public class IssuesWorker extends SonarQubeWorker<List<RadarIssue>, Void> {
 
     @Override
     protected List<RadarIssue> doInBackground() throws Exception {
-        return issuesContainer.getIssues(getAuthentication(), getResourceKey(), filters);
+        return issuesContainer.getIssues(getAuthentication(), getProjectKey(), filters);
     }
 
     @Override
@@ -43,13 +43,13 @@ public class IssuesWorker extends SonarQubeWorker<List<RadarIssue>, Void> {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
-        sonarTopComponent.setProject(project);
+        sonarTopComponent.setProjectContext(new ProjectContext(project, getProjectKey()));
         sonarTopComponent.showIssues(filters, result.toArray(new RadarIssue[0]));
     }
 
     @Override
     protected SonarQubeWorker createCopy() {
-        return new IssuesWorker(issuesContainer, project, getResourceKey(), filters);
+        return new IssuesWorker(issuesContainer, project, getProjectKey(), filters);
     }
 
     @Override

@@ -41,7 +41,7 @@ class SummaryWorker extends SonarQubeWorker<Summary, Void> {
     
     @Override
     protected Summary doInBackground() throws Exception {
-        return issuesContainer.getSummary(getAuthentication(), getResourceKey(), filters);
+        return issuesContainer.getSummary(getAuthentication(), getProjectKey(), filters);
     }
 
     private void init() {
@@ -53,17 +53,13 @@ class SummaryWorker extends SonarQubeWorker<Summary, Void> {
     @Override
     protected void success(Summary summary) {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
-        sonarTopComponent.setProject(project);
+        sonarTopComponent.setProjectContext(new ProjectContext(project, getProjectKey()));
         sonarTopComponent.setIssuesContainer(issuesContainer);
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
         sonarTopComponent.showSummary(summary);
-        try {
-            if(triggerActionPlans) {
-                scheduleWorker(new ActionPlansWorker(SonarQubeFactory.createForDefaultServerUrl(), SonarQube.toResource(project)));
-            }
-        } catch (IOException | XmlPullParserException ex) {
-            Exceptions.printStackTrace(ex);
+        if(triggerActionPlans) {
+            scheduleWorker(new ActionPlansWorker(SonarQubeFactory.createForDefaultServerUrl(), getProjectKey()));
         }
     }
 
@@ -74,7 +70,7 @@ class SummaryWorker extends SonarQubeWorker<Summary, Void> {
     
     @Override
     protected SonarQubeWorker createCopy() {
-        SummaryWorker copy = new SummaryWorker(issuesContainer, project, getResourceKey());
+        SummaryWorker copy = new SummaryWorker(issuesContainer, project, getProjectKey());
         copy.setTriggerActionPlans(triggerActionPlans);
         return copy;
     }

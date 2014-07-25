@@ -77,7 +77,7 @@ public class SonarRunnerWorker extends SonarQubeWorker<SonarRunnerResult, Void> 
     @Override
     protected void success(SonarRunnerResult result) {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
-        sonarTopComponent.setProject(project);
+        sonarTopComponent.setProjectContext(new ProjectContext(project, getProjectKey()));
         sonarTopComponent.setIssuesContainer(result);
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();

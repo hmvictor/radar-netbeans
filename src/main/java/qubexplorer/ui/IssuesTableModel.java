@@ -12,17 +12,17 @@ public class IssuesTableModel extends DefaultTableModel {
     private RadarIssue[] issues;
     
     private final Class[] types = new Class[]{
-        Severity.class, java.lang.Object.class, java.lang.String.class, java.lang.String.class, Severity.class, java.lang.String.class
+        Severity.class, java.lang.Object.class, java.lang.String.class, java.lang.String.class, Severity.class, java.lang.String.class, String.class
     };
 
     public IssuesTableModel() {
-        super(new Object [][] {}, new String [] {"", "Location", "Message", "Rule", "Severity", "Project Key"});
+        super(new Object [][] {}, new String [] {"", "Location", "Message", "Rule", "Severity", "Project Key", "Full Path"});
     }
     
     public void add(RadarIssue issue) {
         int lineNumber=issue.line() == null ? 0: issue.line();
         IssueLocation issueLocation = new IssueLocation(issue.componentKey(), lineNumber);
-        addRow(new Object[]{issue.severityObject(), issueLocation, issue.message(), issue.rule().getTitle(), issue.severityObject(), issueLocation.getProjectKey()});
+        addRow(new Object[]{issue.severityObject(), issueLocation, issue.message(), issue.rule().getTitle(), issue.severityObject(), issueLocation.getProjectKey(), issueLocation.getPath()});
     }
     
     public void setIssues(RadarIssue[] issues) {
