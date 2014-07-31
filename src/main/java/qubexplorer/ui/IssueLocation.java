@@ -2,6 +2,7 @@ package qubexplorer.ui;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 import org.apache.maven.model.Model;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.java.project.JavaProjectConstants;
@@ -149,18 +150,6 @@ public class IssueLocation {
         return null;
     }
     
-    private static String toFilePath(String componentKey, String extension) {
-        String path = componentKey;
-        int index = path.lastIndexOf(':');
-        if (index != -1) {
-            path = path.substring(index + 1);
-        }
-        if (!path.contains("/")) {
-            path = path.replace(".", "/") + extension;
-        }
-        return path;
-    }
-    
     private static class BasicPomInfo {
 
         private String groupId;
@@ -178,6 +167,21 @@ public class IssueLocation {
         public String getArtifactId() {
             return artifactId;
         }
+    }
+    
+    public static class IssueLocationComparator implements Comparator<IssueLocation>{
+        
+        
+        @Override
+        public int compare(IssueLocation t, IssueLocation t1) {
+            int result = t.getPath().compareTo(t1.getPath());
+            if (result != 0) {
+                return result;
+            } else {
+                return Integer.compare(t.getLineNumber(), t1.getLineNumber());
+            }
+        }
+        
     }
 
 }

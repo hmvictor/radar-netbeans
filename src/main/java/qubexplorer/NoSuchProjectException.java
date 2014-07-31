@@ -5,7 +5,7 @@ package qubexplorer;
  * @author Victor
  */
 public class NoSuchProjectException extends RuntimeException{
-    private String projectKey;
+    private final String projectKey;
 
     public NoSuchProjectException(String projectKey) {
         this.projectKey = projectKey;

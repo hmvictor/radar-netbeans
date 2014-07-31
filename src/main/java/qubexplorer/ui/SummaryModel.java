@@ -1,28 +1,11 @@
 package qubexplorer.ui;
 
-import java.awt.Component;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTree;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import org.jdesktop.swingx.JXTreeTable;
 import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
-import org.openide.util.Exceptions;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.Severity;
 import qubexplorer.Summary;
-import qubexplorer.runner.SonarRunnerSummary;
 
 /**
  *

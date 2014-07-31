@@ -1,9 +1,6 @@
 package qubexplorer.ui;
 
-import java.awt.Dimension;
 import java.awt.Frame;
-import javax.swing.GroupLayout;
-import javax.swing.SwingConstants;
 import org.sonar.wsclient.services.Rule;
 
 /**
@@ -106,7 +103,6 @@ public class RuleDialog extends javax.swing.JDialog {
         RuleDialog dialog=new RuleDialog(owner, true);
         dialog.setLocationRelativeTo(owner);
         dialog.setRule(rule);
-        GroupLayout layout=(GroupLayout) dialog.getContentPane().getLayout();
         int minWidth = Math.max(dialog.getWidth(), dialog.title.getMinimumSize().width);
         dialog.setSize(minWidth+50, dialog.getHeight());
         dialog.setVisible(true);

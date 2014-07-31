@@ -27,11 +27,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.netbeans.api.java.project.JavaProjectConstants;
-import org.netbeans.api.project.Project;
-import org.netbeans.api.project.ProjectUtils;
-import org.netbeans.api.project.SourceGroup;
-import org.netbeans.api.project.Sources;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -95,20 +90,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
         
     });
 
-    private final Comparator<IssueLocation> locationComparator = new Comparator<IssueLocation>() {
-        
-        @Override
-        public int compare(IssueLocation t, IssueLocation t1) {
-            int result = t.getPath().compareTo(t1.getPath());
-            if (result != 0) {
-                return result;
-            } else {
-                return Integer.compare(t.getLineNumber(), t1.getLineNumber());
-            }
-        }
-        
-    };
-    
     private final Action showRuleInfoAction=new AbstractAction("Show Rule Info") {
         
         @Override
@@ -146,7 +127,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     };
     
     
-    public Action gotoIssueAction=new AbstractAction("Go to Source") {
+    private Action gotoIssueAction=new AbstractAction("Go to Source") {
         
         @Override
         public void actionPerformed(ActionEvent ae) {
@@ -173,7 +154,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         
     };
     
-    public Action showRuleInfoForIssueAction=new AbstractAction("Show Rule Info about Issue") {
+    private Action showRuleInfoForIssueAction=new AbstractAction("Show Rule Info about Issue") {
         
         @Override
         public void actionPerformed(ActionEvent ae) {
@@ -217,13 +198,13 @@ public final class SonarIssuesTopComponent extends TopComponent {
         issuesTable.getColumnExt("").setHideable(false);
         issuesTable.getColumn("Location").setCellRenderer(new LocationRenderer());
         ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(0, severityComparator);
-        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(2, severityComparator);
-        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(3, locationComparator);
+        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(4, severityComparator);
+        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(1,  new IssueLocation.IssueLocationComparator());
         issuesTable.getColumnExt("Severity").addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent pce) {
                 if (pce.getPropertyName().equals("visible") && pce.getNewValue().equals(Boolean.TRUE)) {
-                    ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(2, severityComparator);
+                    ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(4, severityComparator);
                 }
             }
         });
@@ -721,6 +702,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
             
         });
         showIssuesCount();
+        filterText.setText("");
     }
 
     private void showIssuesCount() {

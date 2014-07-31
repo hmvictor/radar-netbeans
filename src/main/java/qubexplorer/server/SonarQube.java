@@ -157,7 +157,7 @@ public class SonarQube implements IssuesContainer{
     public Rule getRule(AuthenticationToken auth, String ruleKey) {
         try{
             RuleQuery ruleQuery=new RuleQuery("java");
-            String tokens[]=ruleKey.split(":");
+            String[] tokens=ruleKey.split(":");
             ruleQuery.setSearchText(tokens.length == 2? tokens[1]: ruleKey);
             Sonar sonar;
             if(auth == null) {

@@ -134,14 +134,14 @@ public class SonarRunnerResult implements IssuesContainer {
     }
     
     private List<Rule> readRules(JsonReader reader) throws IOException, ParseException {
-        List<Rule> rules = new LinkedList<>();
+        List<Rule> ruleList = new LinkedList<>();
         reader.beginArray();
         while (reader.hasNext()) {
             Rule rule = readRule(reader);
-            rules.add(rule);
+            ruleList.add(rule);
         }
         reader.endArray();
-        return rules;
+        return ruleList;
     }
 
     private List<Issue> readIssues(JsonReader reader, IssueFilter[] filters) throws IOException, ParseException {
@@ -211,7 +211,6 @@ public class SonarRunnerResult implements IssuesContainer {
     }
     
     private Rule readRule(JsonReader reader) throws IOException, ParseException {
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss-SSSS");
         reader.beginObject();
         Rule rule=new Rule();
         while (reader.hasNext()) {

@@ -9,20 +9,27 @@ import qubexplorer.Severity;
  * @author Victor
  */
 public class IssuesTableModel extends DefaultTableModel {
-    private RadarIssue[] issues;
-    
-    private final Class[] types = new Class[]{
+    private static final Class[] COLUMN_TYPES = new Class[]{
         Severity.class, java.lang.Object.class, java.lang.String.class, java.lang.String.class, Severity.class, java.lang.String.class, String.class
     };
+    
+    public static final String[] COLUMN_NAMES = new String [] {"", "Location", "Message", "Rule", "Severity", "Project Key", "Full Path"};
+    
+    private RadarIssue[] issues;
 
     public IssuesTableModel() {
-        super(new Object [][] {}, new String [] {"", "Location", "Message", "Rule", "Severity", "Project Key", "Full Path"});
+        super(new Object [][] {}, COLUMN_NAMES);
     }
     
+    
     public void add(RadarIssue issue) {
+        addRow(createRowData(issue));
+    }
+    
+    public Object[] createRowData(RadarIssue issue){
         int lineNumber=issue.line() == null ? 0: issue.line();
         IssueLocation issueLocation = new IssueLocation(issue.componentKey(), lineNumber);
-        addRow(new Object[]{issue.severityObject(), issueLocation, issue.message(), issue.rule().getTitle(), issue.severityObject(), issueLocation.getProjectKey(), issueLocation.getPath()});
+        return new Object[]{issue.severityObject(), issueLocation, issue.message(), issue.rule().getTitle(), issue.severityObject(), issueLocation.getProjectKey(), issueLocation.getPath()};
     }
     
     public void setIssues(RadarIssue[] issues) {
@@ -46,7 +53,7 @@ public class IssuesTableModel extends DefaultTableModel {
 
     @Override
     public Class getColumnClass(int columnIndex) {
-        return types[columnIndex];
+        return COLUMN_TYPES[columnIndex];
     }
 
     @Override

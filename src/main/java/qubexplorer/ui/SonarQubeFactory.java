@@ -8,9 +8,10 @@ import qubexplorer.ui.options.SonarQubeOptionsPanel;
  *
  * @author Victor
  */
-public class SonarQubeFactory {
+public final class SonarQubeFactory {
     
-    private SonarQubeFactory(){}
+    private SonarQubeFactory(){
+    }
     
     public static SonarQube createForDefaultServerUrl(){
         String serverUrl=NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");

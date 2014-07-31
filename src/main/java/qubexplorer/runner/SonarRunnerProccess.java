@@ -6,8 +6,6 @@ import java.net.URL;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.maven.model.Model;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.java.project.JavaProjectConstants;
@@ -22,7 +20,6 @@ import org.openide.util.Utilities;
 import org.sonar.runner.api.ForkedRunner;
 import org.sonar.runner.api.PrintStreamConsumer;
 import org.sonar.runner.api.Runner;
-import org.sonar.runner.api.ScanProperties;
 import qubexplorer.AuthenticationToken;
 import qubexplorer.AuthorizationException;
 import qubexplorer.MvnModelFactory;
@@ -32,8 +29,6 @@ import qubexplorer.MvnModelFactory;
  * @author Victor
  */
 public class SonarRunnerProccess {
-
-    private static final Logger logger = Logger.getLogger(SonarRunnerProccess.class.getName());
 
     private final Project project;
     private final String sonarUrl;
@@ -54,7 +49,7 @@ public class SonarRunnerProccess {
     private final MvnModelFactory mvnModelFactory = new MvnModelFactory();
     private String projectHome;
     private final StringBuilder modules = new StringBuilder();
-    public Properties properties = new Properties();
+    private final Properties properties = new Properties();
 
     public SonarRunnerProccess(String sonarUrl, Project project) {
         this.sonarUrl = sonarUrl;
@@ -87,6 +82,7 @@ public class SonarRunnerProccess {
     }
 
     protected Runner createForProject(AuthenticationToken token) throws IOException, XmlPullParserException {
+        int sourcesCounter=0;
         ForkedRunner runner = ForkedRunner.create();
         projectHome = project.getProjectDirectory().getPath();
         Model model = mvnModelFactory.createModel(project);
@@ -108,6 +104,7 @@ public class SonarRunnerProccess {
         SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
         if (sourceGroups != null && sourceGroups.length != 0) {
             properties.setProperty("sonar.sources", sourceGroups[0].getRootFolder().getPath());
+            sourcesCounter++;
             URL[] roots = BinaryForSourceQuery.findBinaryRoots(sourceGroups[0].getRootFolder().toURL()).getRoots();
             if(roots.length > 0){
                 File f = Utilities.toFile(roots[0]);
@@ -121,7 +118,7 @@ public class SonarRunnerProccess {
             Set<? extends Project> subprojects = subprojectProvider.getSubprojects();
             hasSubprojects = !subprojects.isEmpty();
             for (Project subproject : subprojects) {
-                String module = subproject.getProjectDirectory().getName();
+                String module = subproject.getProjectDirectory().getNameExt();
                 if (modules.length() > 0) {
                     modules.append(',');
                 }
@@ -134,6 +131,7 @@ public class SonarRunnerProccess {
                 SourceGroup[] srcGroups = src.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
                 if (srcGroups != null && srcGroups.length != 0) {
                     properties.setProperty(module + ".sonar.sources", srcGroups[0].getRootFolder().getPath());
+                    sourcesCounter++;
                     URL[] roots = BinaryForSourceQuery.findBinaryRoots(srcGroups[0].getRootFolder().toURL()).getRoots();
                     if(roots.length > 0){
                         File f = Utilities.toFile(roots[0]);
@@ -141,6 +139,9 @@ public class SonarRunnerProccess {
                     }
                 }
             }
+        }
+        if(sourcesCounter == 0){
+            throw new SourcesNotFoundException();
         }
         if (hasSubprojects) {
             properties.setProperty("sonar.projectKey", model.getGroupId());

@@ -2,7 +2,6 @@ package qubexplorer.ui;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.openide.windows.WindowManager;
 import qubexplorer.AuthenticationToken;
 
 /**

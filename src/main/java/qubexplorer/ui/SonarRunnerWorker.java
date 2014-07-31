@@ -4,6 +4,8 @@ import java.io.IOException;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 import org.openide.windows.IOProvider;
@@ -12,6 +14,7 @@ import org.openide.windows.WindowManager;
 import org.sonar.runner.api.PrintStreamConsumer;
 import qubexplorer.runner.SonarRunnerProccess;
 import qubexplorer.runner.SonarRunnerResult;
+import qubexplorer.runner.SourcesNotFoundException;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
@@ -86,8 +89,13 @@ public class SonarRunnerWorker extends SonarQubeWorker<SonarRunnerResult, Void> 
 
     @Override
     protected void error(Throwable cause) {
-        io.getErr().println("Error executing sonar-runner");
-        Exceptions.printStackTrace(cause);
+        if(cause instanceof SourcesNotFoundException) {
+            String message = org.openide.util.NbBundle.getMessage(SonarRunnerWorker.class, "SourcesNotFound");
+            DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.WARNING_MESSAGE));
+        }else{
+            io.getErr().println("Error executing sonar-runner");
+            Exceptions.printStackTrace(cause);
+        }
     }
 
     @Override

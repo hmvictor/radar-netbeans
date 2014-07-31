@@ -1,11 +1,8 @@
 package qubexplorer.ui;
 
-import java.io.IOException;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.netbeans.api.project.Project;
-import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 import qubexplorer.IssuesContainer;
 import qubexplorer.filter.IssueFilter;
