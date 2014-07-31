@@ -8,6 +8,7 @@ import org.openide.windows.WindowManager;
 import qubexplorer.IssuesContainer;
 import qubexplorer.RadarIssue;
 import qubexplorer.filter.IssueFilter;
+import qubexplorer.server.SonarQube;
 
 /**
  *
@@ -24,6 +25,9 @@ public class IssuesWorker extends SonarQubeWorker<List<RadarIssue>, Void> {
         this.project=project;
         this.filters=filters;
         this.issuesContainer=container;
+        if(issuesContainer instanceof SonarQube) {
+            setServerUrl(((SonarQube)issuesContainer).getServerUrl());
+        }
         init();
     }
 

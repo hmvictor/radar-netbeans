@@ -244,10 +244,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
     public void showRuleInfo(Rule rule) {
         if (issuesContainer instanceof SonarRunnerResult && rule.getDescription() == null) {
             SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
-            Rule ruleInServer = sonarQube.getRule(AuthenticationRepository.getInstance().getAuthentication(sonarQube.getServerUrl(), projectContext.getProjectKey()), rule.getKey());
-            rule.setDescription(ruleInServer.getDescription());
+            new RuleInfoWorker(sonarQube, projectContext.getProjectKey(), rule).execute();
+        }else{
+            RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), rule);
         }
-        RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), rule);
     }
 
     /**
