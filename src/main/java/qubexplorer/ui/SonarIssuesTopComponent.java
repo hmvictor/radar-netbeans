@@ -230,6 +230,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
     public void setIssuesContainer(IssuesContainer issuesContainer) {
         this.issuesContainer = issuesContainer;
         actionPlansPanel.setVisible(issuesContainer instanceof SonarQube);
+        if(issuesContainer instanceof SonarRunnerResult){
+            setActionPlans(Collections.<ActionPlan>emptyList());
+        }
     }
 
     public void setActionPlans(List<ActionPlan> plans) {
