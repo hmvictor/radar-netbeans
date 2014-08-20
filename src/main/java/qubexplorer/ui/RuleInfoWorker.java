@@ -34,7 +34,7 @@ public class RuleInfoWorker extends SonarQubeWorker<Rule, Void>{
 
     @Override
     protected Rule doInBackground() throws Exception {
-        return sonarQube.getRule(AuthenticationRepository.getInstance().getAuthentication(sonarQube.getServerUrl(), getProjectKey()), rule.getKey());
+        return sonarQube.getRule(getAuthentication(), rule.getKey());
     }
 
     @Override
