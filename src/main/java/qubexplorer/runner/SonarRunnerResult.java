@@ -165,7 +165,7 @@ public class SonarRunnerResult implements IssuesContainer {
     }
 
     private Issue readIssue(JsonReader reader) throws IOException, ParseException {
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss-SSSS");
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
         SonarRunnerIssue issue = new SonarRunnerIssue();
         reader.beginObject();
         while (reader.hasNext()) {
