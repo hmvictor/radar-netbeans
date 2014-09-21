@@ -54,6 +54,10 @@ import qubexplorer.filter.IssueFilter;
 import qubexplorer.filter.RuleFilter;
 import qubexplorer.filter.SeverityFilter;
 import qubexplorer.runner.SonarRunnerResult;
+import qubexplorer.ui.task.IssuesTask;
+import qubexplorer.ui.task.RuleTask;
+import qubexplorer.ui.task.SummaryTask;
+import qubexplorer.ui.task.TaskExecutor;
 
 /**
  * Top component which displays something.
@@ -120,7 +124,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 } else if (selectedNode instanceof Rule) {
                     filters.add(new RuleFilter((Rule) selectedNode));
                 }
-                new IssuesWorker(issuesContainer, projectContext.getProject(), projectContext.getProjectKey(), filters.toArray(new IssueFilter[0])).execute();
+                TaskExecutor.execute(new IssuesTask(projectContext, issuesContainer, filters.toArray(new IssueFilter[0])));
+//                new IssuesWorker(issuesContainer, projectContext.getProject(), projectContext.getProjectKey(), filters.toArray(new IssueFilter[0])).execute();
             }
         }
         
@@ -247,7 +252,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
     public void showRuleInfo(Rule rule) {
         if (issuesContainer instanceof SonarRunnerResult && rule.getDescription() == null) {
             SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
-            new RuleInfoWorker(sonarQube, projectContext.getProjectKey(), rule).execute();
+            TaskExecutor.execute(new RuleTask(sonarQube, rule, projectContext));
+//            new RuleInfoWorker(sonarQube, projectContext.getProjectKey(), rule).execute();
         }else{
             RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), rule);
         }
@@ -526,7 +532,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
         if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
             filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
         }
-        new SummaryWorker(issuesContainer, projectContext.getProject(), projectContext.getProjectKey(), filters.toArray(new IssueFilter[0])).execute();
+        TaskExecutor.execute(new SummaryTask(issuesContainer, projectContext, filters.toArray(new IssueFilter[0])));
+//        new SummaryWorker(issuesContainer, projectContext.getProject(), projectContext.getProjectKey(), filters.toArray(new IssueFilter[0])).execute();
     }//GEN-LAST:event_actionPlansComboActionPerformed
 
     private void tableSummaryMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableSummaryMousePressed

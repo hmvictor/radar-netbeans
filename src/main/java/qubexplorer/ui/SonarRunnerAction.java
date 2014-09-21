@@ -11,11 +11,12 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
+import qubexplorer.ui.task.SonarRunnerTask;
+import qubexplorer.ui.task.TaskExecutor;
 
 /**
  *
- * @author Victor
- * TODO: register and customize
+ * @author Victor TODO: register and customize
  */
 @ActionID(
         category = "Build",
@@ -26,20 +27,19 @@ import qubexplorer.ui.options.SonarQubeOptionsPanel;
 @ActionReferences(value = {
     @ActionReference(path = "Projects/Actions", position = 8964, separatorBefore = 8956, separatorAfter = 8968),
     @ActionReference(path = "Menu/Source", position = 8964, separatorBefore = 8956, separatorAfter = 8968)})
-public class SonarRunnerAction implements ActionListener{
+public class SonarRunnerAction implements ActionListener {
+
     private final Project context;
 
     public SonarRunnerAction(Project context) {
         this.context = context;
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent ae) {
-        try{
-            new SonarRunnerWorker(context, NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000")).execute();
-        }catch(Exception ex) {
-            Exceptions.printStackTrace(ex);
-        }
+        String serverUrl = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
+//            new SonarRunnerWorker(context, serverUrl).execute();
+        TaskExecutor.execute(new SonarRunnerTask(new ProjectContext(context), serverUrl));
     }
-    
+
 }

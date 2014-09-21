@@ -15,6 +15,11 @@ public class ProjectContext {
         this.projectKey = projectKey;
     }
 
+    public ProjectContext(Project project) {
+        this.project = project;
+        this.projectKey = null;
+    }
+    
     public Project getProject() {
         return project;
     }

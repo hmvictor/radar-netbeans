@@ -1,11 +1,16 @@
 package qubexplorer.ui;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import qubexplorer.server.SonarProject;
 import qubexplorer.server.SonarQube;
+import qubexplorer.ui.task.Task;
+import qubexplorer.ui.task.TaskExecutor;
 
 /**
  *
@@ -27,6 +32,7 @@ public class ProjectChooser extends javax.swing.JDialog {
     public ProjectChooser(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        resourceCombox.setRenderer(new ProjectRenderer());
         url.getDocument().addDocumentListener(new DocumentListener() {
 
             @Override
@@ -43,10 +49,10 @@ public class ProjectChooser extends javax.swing.JDialog {
             public void changedUpdate(DocumentEvent de) {
                 validateDialog();
             }
-            
+
         });
     }
-    
+
     public void setServerUrlEnabled(boolean b) {
         url.setEnabled(b);
     }
@@ -57,7 +63,7 @@ public class ProjectChooser extends javax.swing.JDialog {
         setVisible(true);
         return option;
     }
-    
+
     public void setSelectedUrl(String selectedUrl) {
         url.setText(selectedUrl);
     }
@@ -67,17 +73,18 @@ public class ProjectChooser extends javax.swing.JDialog {
     }
 
     public String getSelectedProjectKey() {
-        return resourceCombox.getSelectedItem() == null ? null : resourceCombox.getSelectedItem().toString();
+        return resourceCombox.getSelectedItem() == null ? null : ((SonarProject)resourceCombox.getSelectedItem()).getKey();
     }
-    
-    public void validateDialog(){
-        boolean valid=resourceCombox.getSelectedItem() != null && url.getText() != null;
+
+    public void validateDialog() {
+        boolean valid = resourceCombox.getSelectedItem() != null && url.getText() != null;
         okButton.setEnabled(valid);
     }
-    
+
     public void loadProjectKeys() {
-        SwingWorker<List<String>, Void> worker = new ProjectKeysLoader();
-        worker.execute();
+        TaskExecutor.execute(new ProjectsTask(new SonarQube(getSelectedUrl()), new ProjectContext(null)));
+//        SwingWorker<List<String>, Void> worker = new ProjectKeysLoader();
+//        worker.execute();
     }
 
     /**
@@ -217,19 +224,59 @@ public class ProjectChooser extends javax.swing.JDialog {
     private javax.swing.JTextField url;
     // End of variables declaration//GEN-END:variables
 
+    public class ProjectsTask extends Task<List<SonarProject>> {
+
+        private final SonarQube sonarQube;
+
+        public ProjectsTask(SonarQube sonarQube, ProjectContext projectContext) {
+            super(projectContext, sonarQube.getServerUrl());
+            this.sonarQube = sonarQube;
+            loadButton.setEnabled(false);
+        }
+
+        @Override
+        public List<SonarProject> execute() throws Exception {
+            return sonarQube.getProjects(getToken());
+        }
+
+        @Override
+        protected void success(List<SonarProject> result) {
+            resourceCombox.removeAllItems();
+            Collections.sort(result, new Comparator<SonarProject>() {
+
+                @Override
+                public int compare(SonarProject t, SonarProject t1) {
+                    return t.getName().compareToIgnoreCase(t1.getName());
+                }
+                
+            });
+            DefaultComboBoxModel model = (DefaultComboBoxModel) resourceCombox.getModel();
+            for (SonarProject sonarProject : result) {
+                model.addElement(sonarProject);
+            }
+        }
+
+        @Override
+        protected void destroy() {
+            loadButton.setEnabled(true);
+        }
+        
+    }
+
     private class ProjectKeysLoader extends SonarQubeWorker<List<String>, Void> {
+
         private String serverUrl;
 
         public ProjectKeysLoader() {
             super(null);
-            serverUrl=url.getText();
+            serverUrl = url.getText();
             setServerUrl(serverUrl);
             loadButton.setEnabled(false);
         }
 
         @Override
         protected List<String> doInBackground() throws Exception {
-            return new SonarQube(serverUrl).getProjects(getAuthentication());
+            return new SonarQube(serverUrl).getProjectsKeys(getAuthentication());
         }
 
         @Override
@@ -250,7 +297,7 @@ public class ProjectChooser extends javax.swing.JDialog {
         protected SonarQubeWorker createCopy() {
             return new ProjectKeysLoader();
         }
-        
+
     }
-    
+
 }

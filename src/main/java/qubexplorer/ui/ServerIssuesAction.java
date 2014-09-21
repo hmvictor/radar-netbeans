@@ -11,7 +11,13 @@ import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
+import qubexplorer.Summary;
+import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
+import qubexplorer.ui.task.ActionPlansTask;
+import qubexplorer.ui.task.IssuesTask;
+import qubexplorer.ui.task.SummaryTask;
+import qubexplorer.ui.task.TaskExecutor;
 
 @ActionID(
         category = "Build",
@@ -33,9 +39,20 @@ public final class ServerIssuesAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent ev) {
         try {
-            SummaryWorker worker=new SummaryWorker(SonarQubeFactory.createForDefaultServerUrl(), context, SonarQube.toResource(context));
-            worker.setTriggerActionPlans(true);
-            worker.execute();
+            final ProjectContext projectContext = new ProjectContext(context, SonarQube.toResource(context));
+            final SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
+            TaskExecutor.execute(new SummaryTask(sonarQube, projectContext, new IssueFilter[0]){
+
+                @Override
+                protected void success(Summary summary) {
+                    super.success(summary);
+                    TaskExecutor.execute(new ActionPlansTask(sonarQube, projectContext));
+                }
+                
+            });
+//            SummaryWorker worker=new SummaryWorker(SonarQubeFactory.createForDefaultServerUrl(), context, SonarQube.toResource(context));
+//            worker.setTriggerActionPlans(true);
+//            worker.execute();
         } catch (IOException | XmlPullParserException ex) {
             Exceptions.printStackTrace(ex);
         }

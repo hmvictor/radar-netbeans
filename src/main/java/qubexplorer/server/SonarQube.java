@@ -214,7 +214,7 @@ public class SonarQube implements IssuesContainer{
         return counting;
     }
     
-    public List<String> getProjects(AuthenticationToken auth) {
+    public List<String> getProjectsKeys(AuthenticationToken auth) {
         try{
             Sonar sonar;
             if(auth == null) {
@@ -237,8 +237,31 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
+    public List<SonarProject> getProjects(AuthenticationToken token) {
+        try{
+            Sonar sonar;
+            if(token == null) {
+                sonar=Sonar.create(serverUrl);
+            }else {
+                sonar=Sonar.create(serverUrl, token.getUsername(), new String(token.getPassword()));
+            }
+            List<Resource> resources = sonar.findAll(new ResourceQuery());
+            List<SonarProject> projects=new ArrayList<>(resources.size());
+            for(Resource r:resources) {
+                projects.add(new SonarProject(r.getKey(), r.getName()));
+            }
+            return projects;
+        }catch(ConnectionException ex) {
+            if(ex.getMessage().contains("HTTP error: 401")){
+                throw new AuthorizationException(ex);
+            }else{
+                throw ex;
+            }
+        }
+    }
+    
     public boolean existsProject(AuthenticationToken auth, String projectKey){
-        for(String tmp: getProjects(auth) ){
+        for(String tmp: getProjectsKeys(auth) ){
             if(tmp.equals(projectKey)) {
                 return true;
             }
@@ -258,5 +281,5 @@ public class SonarQube implements IssuesContainer{
     public Summary getSummary(AuthenticationToken authentication, String projectKey, IssueFilter[] filters) {
         return getCounting(authentication, projectKey, filters);
     }
-    
+
 }
