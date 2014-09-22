@@ -1,6 +1,6 @@
 package qubexplorer.ui.task;
 
-import qubexplorer.AuthenticationToken;
+import qubexplorer.UserCredentials;
 import qubexplorer.ui.ProjectContext;
 
 /**
@@ -8,7 +8,7 @@ import qubexplorer.ui.ProjectContext;
  * @author Victor
  */
 public abstract class Task<T> {
-    private AuthenticationToken token;
+    private UserCredentials userCredentials;
     private final ProjectContext projectContext;
     private final String serverUrl;
 
@@ -17,12 +17,12 @@ public abstract class Task<T> {
         this.serverUrl=serverUrl;
     }
     
-    public void setToken(AuthenticationToken token) {
-        this.token = token;
+    public void setUserCredentials(UserCredentials userCredentials) {
+        this.userCredentials = userCredentials;
     }
 
-    public AuthenticationToken getToken() {
-        return token;
+    public UserCredentials getUserCredentials() {
+        return userCredentials;
     }
 
     public ProjectContext getProjectContext() {

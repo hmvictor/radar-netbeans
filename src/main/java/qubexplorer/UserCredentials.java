@@ -4,11 +4,11 @@ package qubexplorer;
  *
  * @author Victor
  */
-public class AuthenticationToken {
+public class UserCredentials {
     private String username;
     private char[] password;
 
-    public AuthenticationToken(String username, char[] password) {
+    public UserCredentials(String username, char[] password) {
         this.username = username;
         this.password = password.clone();
     }
@@ -19,6 +19,12 @@ public class AuthenticationToken {
 
     public char[] getPassword() {
         return password.clone();
+    }
+    
+    public void done(){
+        for (int i = 0; i < password.length; i++) {
+            password[i]=0;
+        }
     }
     
 }

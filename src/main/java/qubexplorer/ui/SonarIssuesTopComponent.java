@@ -54,9 +54,6 @@ import qubexplorer.filter.IssueFilter;
 import qubexplorer.filter.RuleFilter;
 import qubexplorer.filter.SeverityFilter;
 import qubexplorer.runner.SonarRunnerResult;
-import qubexplorer.ui.task.IssuesTask;
-import qubexplorer.ui.task.RuleTask;
-import qubexplorer.ui.task.SummaryTask;
 import qubexplorer.ui.task.TaskExecutor;
 
 /**

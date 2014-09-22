@@ -8,7 +8,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
-import qubexplorer.AuthenticationToken;
+import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
 import qubexplorer.ui.AuthDialog;
 import qubexplorer.ui.AuthenticationRepository;
@@ -65,9 +65,9 @@ public class TaskExecutor {
                 task.success(result);
                 handle.finish();
                 handle = null;
-                if (task.getToken() != null) {
+                if (task.getUserCredentials() != null) {
                     assert task.getServerUrl() != null;
-                    authenticationRepository.saveAuthentication(task.getServerUrl(), task.getProjectContext().getProjectKey(), task.getToken());
+                    authenticationRepository.saveAuthentication(task.getServerUrl(), task.getProjectContext().getProjectKey(), task.getUserCredentials());
                 }
             } catch (ExecutionException ex) {
                 handle.finish();
@@ -79,14 +79,14 @@ public class TaskExecutor {
                     if (task.getProjectContext() != null) {
                         resourceKey = task.getProjectContext().getProjectKey();
                     }
-                    AuthenticationToken auth = authenticationRepository.getAuthentication(task.getServerUrl(), resourceKey);
+                    UserCredentials auth = authenticationRepository.getAuthentication(task.getServerUrl(), resourceKey);
                     if (auth == null) {
                         auth = AuthDialog.showAuthDialog(WindowManager.getDefault().getMainWindow());
                     }
                     if (auth != null) {
                         willRetry = true;
                         task.reset();
-                        task.setToken(auth);
+                        task.setUserCredentials(auth);
                         TaskExecutor.execute(authenticationRepository, task);
                     }
                 } else {

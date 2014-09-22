@@ -1,14 +1,14 @@
 package qubexplorer.ui;
 
 import java.awt.Frame;
-import qubexplorer.AuthenticationToken;
+import qubexplorer.UserCredentials;
 
 /**
  *
  * @author Victor
  */
 public class AuthDialog extends javax.swing.JDialog {
-    private AuthenticationToken authentication;
+    private UserCredentials authentication;
 
     /**
      * Creates new form AuthDialog
@@ -19,7 +19,7 @@ public class AuthDialog extends javax.swing.JDialog {
         getRootPane().setDefaultButton(acceptButton);
     }
 
-    public AuthenticationToken getAuthentication() {
+    public UserCredentials getAuthentication() {
         return authentication;
     }
     
@@ -118,7 +118,7 @@ public class AuthDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void acceptButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acceptButtonActionPerformed
-        authentication=new AuthenticationToken(usernameField.getText(), passwordField.getPassword());
+        authentication=new UserCredentials(usernameField.getText(), passwordField.getPassword());
         setVisible(false);
     }//GEN-LAST:event_acceptButtonActionPerformed
 
@@ -126,11 +126,11 @@ public class AuthDialog extends javax.swing.JDialog {
         authentication=null;
     }//GEN-LAST:event_formWindowClosing
 
-    public static AuthenticationToken showAuthDialog(Frame frame) {
+    public static UserCredentials showAuthDialog(Frame frame) {
         AuthDialog authDialog = new AuthDialog(frame, true);
         authDialog.setLocationRelativeTo(frame);
         authDialog.setVisible(true);
-        AuthenticationToken auth = authDialog.getAuthentication();
+        UserCredentials auth = authDialog.getAuthentication();
         authDialog.dispose();
         return auth;
     } 

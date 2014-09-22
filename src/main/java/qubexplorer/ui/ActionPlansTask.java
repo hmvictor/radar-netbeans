@@ -1,4 +1,4 @@
-package qubexplorer.ui.task;
+package qubexplorer.ui;
 
 import java.util.List;
 import org.openide.windows.WindowManager;
@@ -6,6 +6,7 @@ import org.sonar.wsclient.issue.ActionPlan;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.ProjectContext;
 import qubexplorer.ui.SonarIssuesTopComponent;
+import qubexplorer.ui.task.Task;
 
 /**
  *
@@ -20,7 +21,7 @@ public class ActionPlansTask extends Task<List<ActionPlan>>{
 
     @Override
     public List<ActionPlan> execute() {
-        return sonarQube.getActionPlans(getToken(), getProjectContext().getProjectKey());
+        return sonarQube.getActionPlans(getUserCredentials(), getProjectContext().getProjectKey());
     }
 
     @Override

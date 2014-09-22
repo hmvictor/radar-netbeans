@@ -9,8 +9,8 @@ import qubexplorer.filter.IssueFilter;
  */
 public interface IssuesContainer {
     
-    List<RadarIssue> getIssues(AuthenticationToken auth, String projectKey, IssueFilter... filters);
+    List<RadarIssue> getIssues(UserCredentials auth, String projectKey, IssueFilter... filters);
 
-    Summary getSummary(AuthenticationToken authentication, String projectKey, IssueFilter[] filters);
+    Summary getSummary(UserCredentials authentication, String projectKey, IssueFilter[] filters);
     
 }

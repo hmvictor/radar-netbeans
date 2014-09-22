@@ -1,4 +1,4 @@
-package qubexplorer.ui.task;
+package qubexplorer.ui;
 
 import java.io.IOException;
 import org.openide.DialogDisplayer;
@@ -15,6 +15,7 @@ import qubexplorer.runner.SourcesNotFoundException;
 import qubexplorer.ui.ProjectContext;
 import qubexplorer.ui.SonarIssuesTopComponent;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
+import qubexplorer.ui.task.Task;
 
 /**
  *
@@ -63,7 +64,7 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
         sonarRunnerProccess.setAnalysisMode(SonarRunnerProccess.AnalysisMode.valueOf(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.analysisMode", "Preview").toUpperCase()));
         sonarRunnerProccess.setOutConsumer(out);
         sonarRunnerProccess.setErrConsumer(err);
-        return sonarRunnerProccess.executeRunner(getToken());
+        return sonarRunnerProccess.executeRunner(getUserCredentials());
     }
 
     @Override

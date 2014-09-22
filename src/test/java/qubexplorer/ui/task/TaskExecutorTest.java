@@ -12,7 +12,7 @@ import static org.mockito.Mockito.when;
 import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openide.util.Exceptions;
-import qubexplorer.AuthenticationToken;
+import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
 import qubexplorer.ui.AuthenticationRepository;
 import qubexplorer.ui.ProjectContext;
@@ -32,7 +32,7 @@ public class TaskExecutorTest {
 
     @Before
     public void init() {
-        when(repository.getAuthentication(anyString(), anyString())).thenReturn(new AuthenticationToken("username", new char[0]));
+        when(repository.getAuthentication(anyString(), anyString())).thenReturn(new UserCredentials("username", new char[0]));
     }
 
     @Test(timeout = 5000)

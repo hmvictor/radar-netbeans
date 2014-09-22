@@ -236,7 +236,7 @@ public class ProjectChooser extends javax.swing.JDialog {
 
         @Override
         public List<SonarProject> execute() throws Exception {
-            return sonarQube.getProjects(getToken());
+            return sonarQube.getProjects(getUserCredentials());
         }
 
         @Override

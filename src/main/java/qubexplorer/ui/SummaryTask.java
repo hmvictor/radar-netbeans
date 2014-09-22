@@ -1,17 +1,13 @@
-package qubexplorer.ui.task;
+package qubexplorer.ui;
 
-import java.lang.reflect.InvocationTargetException;
-import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 import qubexplorer.IssuesContainer;
 import qubexplorer.NoSuchProjectException;
 import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
-import qubexplorer.ui.AuthenticationRepository;
-import qubexplorer.ui.ProjectChooser;
-import qubexplorer.ui.ProjectContext;
-import qubexplorer.ui.SonarIssuesTopComponent;
+import qubexplorer.ui.task.Task;
+import qubexplorer.ui.task.TaskExecutor;
 
 /**
  *
@@ -29,7 +25,7 @@ public class SummaryTask extends Task<Summary>{
     
     @Override
     public Summary execute() {
-        return issuesContainer.getSummary(getToken(), getProjectContext().getProjectKey(), filters);
+        return issuesContainer.getSummary(getUserCredentials(), getProjectContext().getProjectKey(), filters);
     }
     
     @Override
@@ -47,8 +43,8 @@ public class SummaryTask extends Task<Summary>{
         if(cause instanceof NoSuchProjectException) {
             assert issuesContainer instanceof SonarQube;
             SonarQube sonarQube=(SonarQube) issuesContainer;
-            if(getToken()!= null) {
-                AuthenticationRepository.getInstance().saveAuthentication(sonarQube.getServerUrl(), null, getToken());
+            if(getUserCredentials()!= null) {
+                AuthenticationRepository.getInstance().saveAuthentication(sonarQube.getServerUrl(), null, getUserCredentials());
             }
             ProjectChooser chooser=new ProjectChooser(WindowManager.getDefault().getMainWindow(), true);
             chooser.setSelectedUrl(sonarQube.getServerUrl());

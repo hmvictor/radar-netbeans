@@ -20,7 +20,7 @@ import org.openide.util.Utilities;
 import org.sonar.runner.api.ForkedRunner;
 import org.sonar.runner.api.PrintStreamConsumer;
 import org.sonar.runner.api.Runner;
-import qubexplorer.AuthenticationToken;
+import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
 import qubexplorer.MvnModelFactory;
 
@@ -81,7 +81,7 @@ public class SonarRunnerProccess {
         this.analysisMode = analysisMode;
     }
 
-    protected Runner createForProject(AuthenticationToken token) throws IOException, XmlPullParserException {
+    protected Runner createForProject(UserCredentials token) throws IOException, XmlPullParserException {
         int sourcesCounter=0;
         ForkedRunner runner = ForkedRunner.create();
         projectHome = project.getProjectDirectory().getPath();
@@ -160,7 +160,7 @@ public class SonarRunnerProccess {
         return runner;
     }
 
-    public SonarRunnerResult executeRunner(AuthenticationToken token) throws IOException, XmlPullParserException {
+    public SonarRunnerResult executeRunner(UserCredentials token) throws IOException, XmlPullParserException {
         Runner runner = createForProject(token);
         try {
             runner.execute();

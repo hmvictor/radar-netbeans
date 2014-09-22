@@ -1,10 +1,11 @@
-package qubexplorer.ui.task;
+package qubexplorer.ui;
 
 import org.openide.windows.WindowManager;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.ProjectContext;
 import qubexplorer.ui.RuleDialog;
+import qubexplorer.ui.task.Task;
 
 /**
  *
@@ -22,7 +23,7 @@ public class RuleTask extends Task<Rule>{
 
     @Override
     public Rule execute() {
-        return sonarQube.getRule(getToken(), rule.getKey());
+        return sonarQube.getRule(getUserCredentials(), rule.getKey());
     }
 
     @Override

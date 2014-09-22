@@ -1,4 +1,4 @@
-package qubexplorer.ui.task;
+package qubexplorer.ui;
 
 import java.util.List;
 import org.openide.windows.WindowManager;
@@ -8,6 +8,7 @@ import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.ProjectContext;
 import qubexplorer.ui.SonarIssuesTopComponent;
+import qubexplorer.ui.task.Task;
 
 /**
  *
@@ -25,7 +26,7 @@ public class IssuesTask extends Task<List<RadarIssue>>{
 
     @Override
     public List<RadarIssue> execute() {
-        return issuesContainer.getIssues(getToken(), getProjectContext().getProjectKey(), filters);
+        return issuesContainer.getIssues(getUserCredentials(), getProjectContext().getProjectKey(), filters);
     }
 
     @Override

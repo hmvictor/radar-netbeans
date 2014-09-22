@@ -11,7 +11,6 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
-import qubexplorer.ui.task.SonarRunnerTask;
 import qubexplorer.ui.task.TaskExecutor;
 
 /**

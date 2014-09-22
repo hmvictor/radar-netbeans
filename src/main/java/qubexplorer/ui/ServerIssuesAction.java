@@ -14,9 +14,6 @@ import org.openide.util.NbBundle.Messages;
 import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
-import qubexplorer.ui.task.ActionPlansTask;
-import qubexplorer.ui.task.IssuesTask;
-import qubexplorer.ui.task.SummaryTask;
 import qubexplorer.ui.task.TaskExecutor;
 
 @ActionID(

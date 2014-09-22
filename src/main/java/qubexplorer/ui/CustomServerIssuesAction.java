@@ -14,8 +14,6 @@ import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
-import qubexplorer.ui.task.ActionPlansTask;
-import qubexplorer.ui.task.SummaryTask;
 import qubexplorer.ui.task.TaskExecutor;
 
 @ActionID(

@@ -1,9 +1,10 @@
-package qubexplorer.ui.task;
+package qubexplorer.ui;
 
 import java.util.List;
 import qubexplorer.server.SonarProject;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.ProjectContext;
+import qubexplorer.ui.task.Task;
 
 /**
  *
@@ -19,7 +20,7 @@ public class ProjectsTask extends Task<List<SonarProject>>{
 
     @Override
     public List<SonarProject> execute() throws Exception {
-        return sonarQube.getProjects(getToken());
+        return sonarQube.getProjects(getUserCredentials());
     }
     
 }
