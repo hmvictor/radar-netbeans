@@ -2,9 +2,6 @@ package qubexplorer.server;
 
 import qubexplorer.filter.SeverityFilter;
 import qubexplorer.filter.IssueFilter;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -13,10 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.project.Project;
-import org.openide.filesystems.FileObject;
 import org.sonar.wsclient.Sonar;
 import org.sonar.wsclient.SonarClient;
 import org.sonar.wsclient.base.HttpException;
@@ -33,6 +27,8 @@ import org.sonar.wsclient.services.RuleQuery;
 import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
 import qubexplorer.IssuesContainer;
+import qubexplorer.MvnModelFactory;
+import qubexplorer.MvnModelInputException;
 import qubexplorer.NoSuchProjectException;
 import qubexplorer.PassEncoder;
 import qubexplorer.RadarIssue;
@@ -44,6 +40,7 @@ import qubexplorer.Summary;
  * @author Victor
  */
 public class SonarQube implements IssuesContainer{
+    private static final String VIOLATIONS_DENSITY_METRICS = "violations_density";
     private static final int UNAUTHORIZED_RESPONSE_STATUS = 401;
     private static final int PAGE_SIZE = 500;
     private String serverUrl;
@@ -77,11 +74,11 @@ public class SonarQube implements IssuesContainer{
                 sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
             }
             ResourceQuery query=new ResourceQuery(resource);
-            query.setMetrics("violations_density");
+            query.setMetrics(VIOLATIONS_DENSITY_METRICS);
             Resource r = sonar.find(query);
-            return r.getMeasure("violations_density").getValue();
+            return r.getMeasure(VIOLATIONS_DENSITY_METRICS).getValue();
         } catch(ConnectionException ex) {
-            if(ex.getMessage().contains("HTTP error: 401")){
+            if(isError401(ex)){
                 throw new AuthorizationException(ex);
             }else{
                 throw ex;
@@ -174,7 +171,7 @@ public class SonarQube implements IssuesContainer{
             }
             return null;
         }catch(ConnectionException ex) {
-            if(ex.getMessage().contains("HTTP error: 401")){
+            if(isError401(ex)){
                 throw new AuthorizationException(ex);
             }else{
                 throw ex;
@@ -230,12 +227,16 @@ public class SonarQube implements IssuesContainer{
             }
             return keys;
         }catch(ConnectionException ex) {
-            if(ex.getMessage().contains("HTTP error: 401")){
+            if(isError401(ex)){
                 throw new AuthorizationException(ex);
             }else{
                 throw ex;
             }
         }
+    }
+
+    private static boolean isError401(ConnectionException ex) {
+        return ex.getMessage().contains("HTTP error: 401");
     }
     
     public List<SonarProject> getProjects(UserCredentials userCredentials) {
@@ -253,7 +254,7 @@ public class SonarQube implements IssuesContainer{
             }
             return projects;
         }catch(ConnectionException ex) {
-            if(ex.getMessage().contains("HTTP error: 401")){
+            if(isError401(ex)){
                 throw new AuthorizationException(ex);
             }else{
                 throw ex;
@@ -270,11 +271,8 @@ public class SonarQube implements IssuesContainer{
         return false;
     }
 
-    public static String toResource(Project project) throws IOException, XmlPullParserException {
-        FileObject pomFile = project.getProjectDirectory().getFileObject("pom.xml");
-        MavenXpp3Reader mavenreader = new MavenXpp3Reader();
-        Model model = mavenreader.read(new InputStreamReader(pomFile.getInputStream()));
-        model.setPomFile(new File(pomFile.getPath()));
+    public static String toResource(Project project) throws MvnModelInputException {
+        Model model = new MvnModelFactory().createModel(project);
         return model.getGroupId()+":"+model.getArtifactId();
     }
 

@@ -1,7 +1,6 @@
 package qubexplorer;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -17,27 +16,19 @@ import org.openide.filesystems.FileObject;
  */
 public class MvnModelFactory {
     
-    public Model createModel(Project project) throws IOException, XmlPullParserException {
+    public Model createModel(Project project) throws MvnModelInputException{
         return createModel(project.getProjectDirectory());
     }
     
-    public Model createModel(FileObject projectDir) throws IOException, XmlPullParserException {
+    public Model createModel(FileObject projectDir) throws MvnModelInputException {
         FileObject pomFile = projectDir.getFileObject("pom.xml");
         MavenXpp3Reader mavenreader = new MavenXpp3Reader();
         try(Reader reader=new InputStreamReader(pomFile.getInputStream())){
             Model model = mavenreader.read(reader);
             model.setPomFile(new File(pomFile.getPath()));
             return model;
-        }
-    }
-    
-    public Model createModel(File projectDir) throws IOException, XmlPullParserException {
-        File pomFile=new File(projectDir, "pom.xml");
-        MavenXpp3Reader mavenreader = new MavenXpp3Reader();
-        try(Reader reader=new FileReader(pomFile)) {
-            Model model = mavenreader.read(reader);
-            model.setPomFile(pomFile);
-            return model;
+        }catch(XmlPullParserException | IOException ex) {
+            throw new MvnModelInputException(ex);
         }
     }
     

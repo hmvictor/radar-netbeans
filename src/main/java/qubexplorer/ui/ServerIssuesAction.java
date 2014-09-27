@@ -2,8 +2,6 @@ package qubexplorer.ui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.project.Project;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -11,6 +9,7 @@ import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
+import qubexplorer.MvnModelInputException;
 import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
@@ -47,10 +46,7 @@ public final class ServerIssuesAction implements ActionListener {
                 }
                 
             });
-//            SummaryWorker worker=new SummaryWorker(SonarQubeFactory.createForDefaultServerUrl(), context, SonarQube.toResource(context));
-//            worker.setTriggerActionPlans(true);
-//            worker.execute();
-        } catch (IOException | XmlPullParserException ex) {
+        } catch (MvnModelInputException ex) {
             Exceptions.printStackTrace(ex);
         }
     }

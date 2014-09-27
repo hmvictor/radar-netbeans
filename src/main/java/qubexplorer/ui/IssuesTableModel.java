@@ -34,7 +34,6 @@ public class IssuesTableModel extends DefaultTableModel {
     
     public void setIssues(RadarIssue[] issues) {
         this.issues=issues;
-        //TODO call setData
         while (getRowCount() > 0) {
             removeRow(0);
         }

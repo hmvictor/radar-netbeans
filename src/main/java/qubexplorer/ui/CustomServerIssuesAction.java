@@ -49,9 +49,6 @@ public final class CustomServerIssuesAction implements ActionListener {
                 }
                 
             });
-//            SummaryWorker worker=new SummaryWorker(new SonarQube(chooser.getSelectedUrl()), context, chooser.getSelectedProjectKey());
-//            worker.setTriggerActionPlans(true);
-//            worker.execute();
         }
     }
     

@@ -1,6 +1,5 @@
 package qubexplorer;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import org.apache.commons.codec.binary.Base64;
 
@@ -8,7 +7,11 @@ import org.apache.commons.codec.binary.Base64;
  *
  * @author Victor
  */
-public class PassEncoder {
+public final class PassEncoder {
+    
+    private PassEncoder() {
+        
+    }
     
     public static char[] encode(char[] chars){
         return new String(Base64.encodeBase64(new String(chars).getBytes(StandardCharsets.UTF_8))).toCharArray();

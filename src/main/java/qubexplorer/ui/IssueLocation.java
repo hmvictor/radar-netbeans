@@ -1,10 +1,8 @@
 package qubexplorer.ui;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Comparator;
 import org.apache.maven.model.Model;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
@@ -14,6 +12,7 @@ import org.netbeans.api.project.Sources;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import qubexplorer.MvnModelFactory;
+import qubexplorer.MvnModelInputException;
 
 /**
  *
@@ -82,7 +81,7 @@ public class IssueLocation {
         return tokens[0] + ":" + tokens[1];
     }
     
-    public Project getProjectOwner(Project parentProject) throws IOException, XmlPullParserException {
+    public Project getProjectOwner(Project parentProject)throws MvnModelInputException {
         BasicPomInfo basicPomInfo = getBasicPomInfo(getShortProjectKey());
         Model model = new MvnModelFactory().createModel(parentProject);
         if (model.getGroupId().equals(basicPomInfo.getGroupId()) && model.getArtifactId().equals(basicPomInfo.getArtifactId())) {
@@ -97,7 +96,7 @@ public class IssueLocation {
     }
     
 
-    public File getFile(Project parentProject) throws IOException, XmlPullParserException {
+    public File getFile(Project parentProject) throws MvnModelInputException {
         Project projectOwner = getProjectOwner(parentProject);
         if(projectOwner == null) {
             throw new ProjectNotFoundException(getShortProjectKey());
@@ -109,7 +108,7 @@ public class IssueLocation {
             file = new File(projectOwner.getProjectDirectory().getPath(), path);
         }else{
             /* It's an element name. Assume is a java file */
-            String filePath=path.replace(".", "/")+".java";
+            String filePath=path.replace(".", "/")+DEFAULT_EXTENSION;
             Sources sources = ProjectUtils.getSources(projectOwner);
             SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
             file = new File(sourceGroups[0].getRootFolder().getPath(), filePath);
@@ -132,7 +131,7 @@ public class IssueLocation {
         return new BasicPomInfo(tokens[0], tokens[1]);
     }
     
-    private static FileObject findMvnDir(Model model, BasicPomInfo basicPomInfo, String groupId) throws IOException, XmlPullParserException {
+    private static FileObject findMvnDir(Model model, BasicPomInfo basicPomInfo, String groupId)throws MvnModelInputException {
         MvnModelFactory factory = new MvnModelFactory();
         for (String module : model.getModules()) {
             FileObject moduleFile = FileUtil.toFileObject(new File(model.getProjectDirectory(), module));

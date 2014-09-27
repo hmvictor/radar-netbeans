@@ -6,7 +6,6 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.io.IOException;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.Collections;
@@ -26,7 +25,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -46,6 +44,7 @@ import org.sonar.wsclient.issue.ActionPlan;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.RadarIssue;
 import qubexplorer.IssuesContainer;
+import qubexplorer.MvnModelInputException;
 import qubexplorer.Severity;
 import qubexplorer.server.SonarQube;
 import qubexplorer.Summary;
@@ -122,14 +121,13 @@ public final class SonarIssuesTopComponent extends TopComponent {
                     filters.add(new RuleFilter((Rule) selectedNode));
                 }
                 TaskExecutor.execute(new IssuesTask(projectContext, issuesContainer, filters.toArray(new IssueFilter[0])));
-//                new IssuesWorker(issuesContainer, projectContext.getProject(), projectContext.getProjectKey(), filters.toArray(new IssueFilter[0])).execute();
             }
         }
         
     };
     
     
-    private Action gotoIssueAction=new AbstractAction("Go to Source") {
+    private final Action gotoIssueAction=new AbstractAction("Go to Source") {
         
         @Override
         public void actionPerformed(ActionEvent ae) {
@@ -145,7 +143,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                     } else {
                         openFile(file, issueLocation.getLineNumber());
                     }
-                } catch (IOException | XmlPullParserException ex) {
+                } catch (MvnModelInputException ex) {
                     Exceptions.printStackTrace(ex);
                 } catch(ProjectNotFoundException ex) {
                     String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", ex.getShortProjectKey());
@@ -156,7 +154,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         
     };
     
-    private Action showRuleInfoForIssueAction=new AbstractAction("Show Rule Info about Issue") {
+    private final Action showRuleInfoForIssueAction=new AbstractAction("Show Rule Info about Issue") {
         
         @Override
         public void actionPerformed(ActionEvent ae) {
@@ -250,7 +248,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
         if (issuesContainer instanceof SonarRunnerResult && rule.getDescription() == null) {
             SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
             TaskExecutor.execute(new RuleTask(sonarQube, rule, projectContext));
-//            new RuleInfoWorker(sonarQube, projectContext.getProjectKey(), rule).execute();
         }else{
             RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), rule);
         }
@@ -530,7 +527,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
             filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
         }
         TaskExecutor.execute(new SummaryTask(issuesContainer, projectContext, filters.toArray(new IssueFilter[0])));
-//        new SummaryWorker(issuesContainer, projectContext.getProject(), projectContext.getProjectKey(), filters.toArray(new IssueFilter[0])).execute();
     }//GEN-LAST:event_actionPlansComboActionPerformed
 
     private void tableSummaryMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableSummaryMousePressed
@@ -617,21 +613,11 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private javax.swing.JLabel title;
     // End of variables declaration//GEN-END:variables
 
-    @Override
-    public void componentOpened() {
-        // TODO add custom code on component opening
-    }
-
-    @Override
-    public void componentClosed() {
-        // TODO add custom code on component closing
-    }
 
     void writeProperties(java.util.Properties p) {
         // better to version settings since initial version as advocated at
         // http://wiki.apidesign.org/wiki/PropertyFiles
         p.setProperty("version", "1.0");
-        // TODO store your settings
     }
 
     void readProperties(java.util.Properties p) {

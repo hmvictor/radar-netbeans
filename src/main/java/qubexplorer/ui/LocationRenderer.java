@@ -23,7 +23,7 @@ public class LocationRenderer extends DefaultTableCellRenderer{
         }else{
             value=o;
         }
-        return super.getTableCellRendererComponent(jtable, value, bln, bln1, i, i1); //To change body of generated methods, choose Tools | Templates.
+        return super.getTableCellRendererComponent(jtable, value, bln, bln1, i, i1);
     }
     
 }

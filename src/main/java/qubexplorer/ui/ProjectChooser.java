@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import qubexplorer.server.SonarProject;
@@ -83,8 +82,6 @@ public class ProjectChooser extends javax.swing.JDialog {
 
     public void loadProjectKeys() {
         TaskExecutor.execute(new ProjectsTask(new SonarQube(getSelectedUrl()), new ProjectContext(null)));
-//        SwingWorker<List<String>, Void> worker = new ProjectKeysLoader();
-//        worker.execute();
     }
 
     /**
@@ -261,43 +258,6 @@ public class ProjectChooser extends javax.swing.JDialog {
             loadButton.setEnabled(true);
         }
         
-    }
-
-    private class ProjectKeysLoader extends SonarQubeWorker<List<String>, Void> {
-
-        private String serverUrl;
-
-        public ProjectKeysLoader() {
-            super(null);
-            serverUrl = url.getText();
-            setServerUrl(serverUrl);
-            loadButton.setEnabled(false);
-        }
-
-        @Override
-        protected List<String> doInBackground() throws Exception {
-            return new SonarQube(serverUrl).getProjectsKeys(getAuthentication());
-        }
-
-        @Override
-        protected void success(List<String> projectKeys) {
-            resourceCombox.removeAllItems();
-            DefaultComboBoxModel model = (DefaultComboBoxModel) resourceCombox.getModel();
-            for (String key : projectKeys) {
-                model.addElement(key);
-            }
-        }
-
-        @Override
-        protected void finished() {
-            loadButton.setEnabled(true);
-        }
-
-        @Override
-        protected SonarQubeWorker createCopy() {
-            return new ProjectKeysLoader();
-        }
-
     }
 
 }

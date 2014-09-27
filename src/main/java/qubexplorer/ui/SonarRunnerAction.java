@@ -7,7 +7,6 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
@@ -15,7 +14,7 @@ import qubexplorer.ui.task.TaskExecutor;
 
 /**
  *
- * @author Victor TODO: register and customize
+ * @author Victor
  */
 @ActionID(
         category = "Build",
@@ -37,7 +36,6 @@ public class SonarRunnerAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent ae) {
         String serverUrl = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
-//            new SonarRunnerWorker(context, serverUrl).execute();
         TaskExecutor.execute(new SonarRunnerTask(new ProjectContext(context), serverUrl));
     }
 

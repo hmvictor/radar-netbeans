@@ -9,7 +9,7 @@ import qubexplorer.UserCredentials;
  * @author Victor
  */
 public class AuthenticationRepository {
-
+    private static AuthenticationRepository repository;
     private final Map<String, Map<String, UserCredentials>> cache = new HashMap<>();
 
     public UserCredentials getAuthentication(String serverUrl, String resourceKey) {
@@ -33,8 +33,6 @@ public class AuthenticationRepository {
             cache.get(serverUrl).put(resourceKey, authentication);
         }
     }
-
-    private static AuthenticationRepository repository;
 
     public static synchronized AuthenticationRepository getInstance() {
         if (repository == null) {

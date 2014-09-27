@@ -23,6 +23,7 @@ import org.sonar.runner.api.Runner;
 import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
 import qubexplorer.MvnModelFactory;
+import qubexplorer.MvnModelInputException;
 import qubexplorer.PassEncoder;
 
 /**
@@ -82,7 +83,7 @@ public class SonarRunnerProccess {
         this.analysisMode = analysisMode;
     }
 
-    protected Runner createForProject(UserCredentials userCredentials) throws IOException, XmlPullParserException {
+    protected Runner createForProject(UserCredentials userCredentials)throws MvnModelInputException {
         int sourcesCounter=0;
         ForkedRunner runner = ForkedRunner.create();
         projectHome = project.getProjectDirectory().getPath();
@@ -161,7 +162,7 @@ public class SonarRunnerProccess {
         return runner;
     }
 
-    public SonarRunnerResult executeRunner(UserCredentials token) throws IOException, XmlPullParserException {
+    public SonarRunnerResult executeRunner(UserCredentials token) throws MvnModelInputException{
         Runner runner = createForProject(token);
         try {
             runner.execute();
@@ -169,7 +170,7 @@ public class SonarRunnerProccess {
             if (wrapper.isUnauthorized()) {
                 throw new AuthorizationException();
             } else {
-                throw new SonarRunnerException();
+                throw new SonarRunnerException(ex);
             }
         }
         File jsonFile = new File(properties.getProperty("sonar.working.directory"), "sonar-report.json");

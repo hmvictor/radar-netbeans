@@ -17,7 +17,11 @@ import qubexplorer.ui.AuthenticationRepository;
  *
  * @author Victor
  */
-public class TaskExecutor {
+public final class TaskExecutor {
+    
+    private TaskExecutor() {
+        
+    }
 
     public static <T> void execute(Task<T> task) {
         execute(AuthenticationRepository.getInstance(), task);
@@ -68,7 +72,6 @@ public class TaskExecutor {
                 handle = null;
                 if (task.getUserCredentials() != null) {
                     assert task.getServerUrl() != null;
-                    //save in proper media according to persistent mode
                     authenticationRepository.saveAuthentication(task.getServerUrl(), task.getProjectContext().getProjectKey(), task.getUserCredentials());
                 }
             } catch (ExecutionException ex) {
@@ -82,17 +85,14 @@ public class TaskExecutor {
                         resourceKey = task.getProjectContext().getProjectKey();
                     }
                     UserCredentials auth = authenticationRepository.getAuthentication(task.getServerUrl(), resourceKey);
-                    //persistentMode=xyz;
                     if (auth == null) {
                         auth = AuthDialog.showAuthDialog(WindowManager.getDefault().getMainWindow());
-                        //get persistent mode
                     }
                     if (auth != null) {
                         willRetry = true;
                         task.reset();
                         task.setUserCredentials(auth);
                         TaskExecutor.execute(authenticationRepository, task);
-                        //TaskExecutor.execute(authenticationRepository, task, persistent mode);
                     }
                 } else {
                     task.completed();

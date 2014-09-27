@@ -74,7 +74,6 @@ public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
     }
 
     boolean valid() {
-        // TODO check whether form is consistent and complete
         return true;
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
