@@ -23,6 +23,7 @@ import org.sonar.runner.api.Runner;
 import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
 import qubexplorer.MvnModelFactory;
+import qubexplorer.PassEncoder;
 
 /**
  *
@@ -81,7 +82,7 @@ public class SonarRunnerProccess {
         this.analysisMode = analysisMode;
     }
 
-    protected Runner createForProject(UserCredentials token) throws IOException, XmlPullParserException {
+    protected Runner createForProject(UserCredentials userCredentials) throws IOException, XmlPullParserException {
         int sourcesCounter=0;
         ForkedRunner runner = ForkedRunner.create();
         projectHome = project.getProjectDirectory().getPath();
@@ -96,9 +97,9 @@ public class SonarRunnerProccess {
         properties.setProperty("project.home", projectHome);
         properties.setProperty("sonar.projectBaseDir", projectHome);
         properties.setProperty("sonar.working.directory", projectHome + "/./.sonar");
-        if (token != null) {
-            properties.setProperty("sonar.login", token.getUsername());
-            properties.setProperty("sonar.password", new String(token.getPassword()));
+        if (userCredentials != null) {
+            properties.setProperty("sonar.login", userCredentials.getUsername());
+            properties.setProperty("sonar.password", PassEncoder.decodeAsString(userCredentials.getPassword()));
         }
         Sources sources = ProjectUtils.getSources(project);
         SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);

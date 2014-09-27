@@ -34,6 +34,7 @@ import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
 import qubexplorer.IssuesContainer;
 import qubexplorer.NoSuchProjectException;
+import qubexplorer.PassEncoder;
 import qubexplorer.RadarIssue;
 import qubexplorer.Severity;
 import qubexplorer.Summary;
@@ -64,16 +65,16 @@ public class SonarQube implements IssuesContainer{
         return serverUrl;
     }
     
-    public double getRulesCompliance(UserCredentials auth, String resource) {
+    public double getRulesCompliance(UserCredentials userCredentials, String resource) {
         try{
-            if(!existsProject(auth, resource)) {
+            if(!existsProject(userCredentials, resource)) {
                 throw new NoSuchProjectException(resource);
             }
             Sonar sonar;
-            if(auth == null) {
+            if(userCredentials == null) {
                 sonar=Sonar.create(serverUrl);
             }else{
-                sonar=Sonar.create(serverUrl, auth.getUsername(), new String(auth.getPassword()));
+                sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
             }
             ResourceQuery query=new ResourceQuery(resource);
             query.setMetrics("violations_density");
@@ -100,13 +101,13 @@ public class SonarQube implements IssuesContainer{
         return getIssues(auth, query);
     }
     
-    private List<RadarIssue> getIssues(UserCredentials auth, IssueQuery query) {
+    private List<RadarIssue> getIssues(UserCredentials userCredentials, IssueQuery query) {
         try{
             SonarClient client;
-            if(auth == null) {
+            if(userCredentials == null) {
                 client = SonarClient.create(serverUrl);
             }else{
-                client=SonarClient.builder().url(serverUrl).login(auth.getUsername()).password(new String(auth.getPassword())).build();
+                client=SonarClient.builder().url(serverUrl).login(userCredentials.getUsername()).password(PassEncoder.decodeAsString(userCredentials.getPassword())).build();
             }
             IssueClient issueClient = client.issueClient();
             List<RadarIssue> issues=new LinkedList<>();
@@ -119,7 +120,7 @@ public class SonarQube implements IssuesContainer{
                 for(Issue issue:result.list()) {
                     Rule rule = rulesCache.get(issue.ruleKey());
                     if(rule == null) {
-                        rule=getRule(auth, issue.ruleKey());
+                        rule=getRule(userCredentials, issue.ruleKey());
                         rulesCache.put(issue.ruleKey(), rule);
                     }
                     issues.add(new RadarIssue(issue, rule));
@@ -136,13 +137,13 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
-    public List<ActionPlan> getActionPlans(UserCredentials auth, String resource){ 
+    public List<ActionPlan> getActionPlans(UserCredentials userCredentials, String resource){ 
         try{
             SonarClient client;
-            if(auth == null) {
+            if(userCredentials == null) {
                 client = SonarClient.create(serverUrl);
             }else{
-                client=SonarClient.builder().url(serverUrl).login(auth.getUsername()).password(new String(auth.getPassword())).build();
+                client=SonarClient.builder().url(serverUrl).login(userCredentials.getUsername()).password(PassEncoder.decodeAsString(userCredentials.getPassword())).build();
             }
             return client.actionPlanClient().find(resource);
         }catch(HttpException ex) {
@@ -154,16 +155,16 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
-    public Rule getRule(UserCredentials auth, String ruleKey) {
+    public Rule getRule(UserCredentials userCredentials, String ruleKey) {
         try{
             RuleQuery ruleQuery=new RuleQuery("java");
             String[] tokens=ruleKey.split(":");
             ruleQuery.setSearchText(tokens.length == 2? tokens[1]: ruleKey);
             Sonar sonar;
-            if(auth == null) {
+            if(userCredentials == null) {
                 sonar=Sonar.create(serverUrl);
             }else {
-                sonar=Sonar.create(serverUrl, auth.getUsername(), new String(auth.getPassword()));
+                sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
             }
             List<Rule> rules = sonar.findAll(ruleQuery);
             for(Rule rule:rules) {
@@ -214,13 +215,13 @@ public class SonarQube implements IssuesContainer{
         return counting;
     }
     
-    public List<String> getProjectsKeys(UserCredentials auth) {
+    public List<String> getProjectsKeys(UserCredentials userCredentials) {
         try{
             Sonar sonar;
-            if(auth == null) {
+            if(userCredentials == null) {
                 sonar=Sonar.create(serverUrl);
             }else {
-                sonar=Sonar.create(serverUrl, auth.getUsername(), new String(auth.getPassword()));
+                sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
             }
             List<Resource> resources = sonar.findAll(new ResourceQuery());
             List<String> keys=new ArrayList<>(resources.size());
@@ -237,13 +238,13 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
-    public List<SonarProject> getProjects(UserCredentials token) {
+    public List<SonarProject> getProjects(UserCredentials userCredentials) {
         try{
             Sonar sonar;
-            if(token == null) {
+            if(userCredentials == null) {
                 sonar=Sonar.create(serverUrl);
             }else {
-                sonar=Sonar.create(serverUrl, token.getUsername(), new String(token.getPassword()));
+                sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
             }
             List<Resource> resources = sonar.findAll(new ResourceQuery());
             List<SonarProject> projects=new ArrayList<>(resources.size());
