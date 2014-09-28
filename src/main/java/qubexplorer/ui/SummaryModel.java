@@ -2,6 +2,8 @@ package qubexplorer.ui;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.Severity;
@@ -12,11 +14,38 @@ import qubexplorer.Summary;
  * @author Victor
  */
 public class SummaryModel extends AbstractTreeTableModel {
+    private boolean skipEmptySeverity=false;
+    private Severity[] severities;
 
-    public SummaryModel(Summary summary) {
+    public SummaryModel(Summary summary, boolean skip) {
         super(summary);
+        skipEmptySeverity=skip;
+        setSeverities();
     }
 
+    public boolean isSkipEmptySeverity() {
+        return skipEmptySeverity;
+    }
+
+    public void setSkipEmptySeverity(boolean skipEmptySeverity) {
+        this.skipEmptySeverity = skipEmptySeverity;
+        setSeverities();
+    }
+    
+    private void setSeverities(){
+        if(skipEmptySeverity) {
+            List<Severity> tmp=new LinkedList<>();
+            for(Severity s:Severity.values()) {
+                if(getSummary().getCount(s) > 0) {
+                    tmp.add(s);
+                }
+            }
+            severities=tmp.toArray(new Severity[tmp.size()]);
+        }else{
+            severities=Severity.values();
+        }
+    }
+    
     @Override
     public int getColumnCount() {
         return 2;
@@ -60,7 +89,7 @@ public class SummaryModel extends AbstractTreeTableModel {
     @Override
     public Object getChild(Object parent, int i) {
         if (parent instanceof Summary) {
-            return Severity.values()[i];
+            return severities[i];
         } else if (parent instanceof Severity) {
             Rule[] rules = getSummary().getRules((Severity) parent).toArray(new Rule[0]);
             Arrays.sort(rules, new Comparator<Rule>() {
@@ -83,12 +112,11 @@ public class SummaryModel extends AbstractTreeTableModel {
         return (Summary) getRoot();
     }
     
-    
 
     @Override
     public int getChildCount(Object parent) {
         if (parent instanceof Summary) {
-            return Severity.values().length;
+            return severities.length;
         } else if (parent instanceof Severity) {
             return getSummary().getRules((Severity) parent).size();
         } else {
@@ -99,7 +127,7 @@ public class SummaryModel extends AbstractTreeTableModel {
     @Override
     public int getIndexOfChild(Object parent, Object o1) {
         if (parent instanceof Summary) {
-            return Arrays.asList(Severity.values()).indexOf(o1);
+            return Arrays.asList(severities).indexOf(o1);
         } else if (parent instanceof Severity) {
             return -1;
         } else {

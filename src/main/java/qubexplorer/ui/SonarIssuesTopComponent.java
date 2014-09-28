@@ -18,6 +18,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultRowSorter;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
@@ -59,7 +60,10 @@ import qubexplorer.runner.SonarRunnerResult;
 import qubexplorer.ui.task.TaskExecutor;
 
 /**
- * Top component which displays something.
+ * Top component for issues.
+ * 
+ * This component uses icons from the Silk Icon Set at http://famfamfam.com/lab/icons/silk/.
+ * 
  */
 @ConvertAsProperties(
         dtd = "-//qubexplorer.ui//Sonar//EN",
@@ -107,7 +111,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         
     };
     
-    private final Action listIssuesAction=new AbstractAction("List Issues") {
+    private final Action listIssuesAction=new AbstractAction("List Issues", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/application_view_list.png"))) {
         
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -157,7 +161,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         
     };
     
-    private final Action showRuleInfoForIssueAction=new AbstractAction("Show Rule Info about Issue") {
+    private final Action showRuleInfoForIssueAction=new AbstractAction("Show Rule Info about Issue", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"))) {
         
         @Override
         public void actionPerformed(ActionEvent ae) {
@@ -173,21 +177,20 @@ public final class SonarIssuesTopComponent extends TopComponent {
         
     };
     
-    private final ItemListener showEmptySeverities=new ItemListener() {
+    private final ItemListener skipEmptySeverities=new ItemListener() {
 
         @Override
         public void itemStateChanged(ItemEvent ie) {
             SummaryModel summaryModel=(SummaryModel) tableSummary.getTreeTableModel();
-            summaryModel.setSkipEmptySeverity(showEmptySeverity.isSelected());
+            summaryModel.setSkipEmptySeverity(!showEmptySeverity.isSelected());
             SwingUtilities.updateComponentTreeUI(tableSummary);
-//            tableSummary.setTreeTableModel(new SummaryModel(summaryModel.getSummary(), !showEmptySeverity.isSelected()));
         }
         
     };
 
     public SonarIssuesTopComponent() {
         initComponents();
-        showEmptySeverity.addItemListener(showEmptySeverities);
+        showEmptySeverity.addItemListener(skipEmptySeverities);
         issuesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         issuesTable.getColumn("").setResizable(false);
         issuesTable.getColumnModel().getColumn(0).setPreferredWidth(16);
@@ -235,7 +238,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }
     
     public void setSummary(Summary summary) {
-        tableSummary.setTreeTableModel(new SummaryModel(summary, showEmptySeverity.isSelected()));
+        tableSummary.setTreeTableModel(new SummaryModel(summary, !showEmptySeverity.isSelected()));
         DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
         renderer.setHorizontalAlignment(JLabel.RIGHT);
         tableSummary.getColumn(1).setCellRenderer(renderer);
@@ -293,6 +296,11 @@ public final class SonarIssuesTopComponent extends TopComponent {
         jMenuItem3 = new javax.swing.JMenuItem();
         tabbedPane = new javax.swing.JTabbedPane();
         summaryPanel = new javax.swing.JPanel();
+        jPanel1 = new javax.swing.JPanel();
+        buttonListIssues = new javax.swing.JButton();
+        buttonRuleInfo = new javax.swing.JButton();
+        showEmptySeverity = new javax.swing.JToggleButton();
+        jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tableSummary = new org.jdesktop.swingx.JXTreeTable();
         tableSummary.getTableHeader().setReorderingAllowed(false);
@@ -303,10 +311,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
         jLabel4 = new javax.swing.JLabel();
         actionPlansCombo = new javax.swing.JComboBox();
         actionPlansCombo.setRenderer(new ActionPlansRenderer());
-        jPanel1 = new javax.swing.JPanel();
-        buttonListIssues = new javax.swing.JButton();
-        buttonRuleInfo = new javax.swing.JButton();
-        showEmptySeverity = new javax.swing.JToggleButton();
 
         jMenuItem1.setAction(listIssuesAction);
         org.openide.awt.Mnemonics.setLocalizedText(jMenuItem1, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jMenuItem1.text")); // NOI18N
@@ -387,6 +391,36 @@ public final class SonarIssuesTopComponent extends TopComponent {
         jMenuItem3.setAction(showRuleInfoForIssueAction);
         issuesPopupMenu.add(jMenuItem3);
 
+        summaryPanel.setLayout(new java.awt.BorderLayout());
+
+        jPanel1.setLayout(new javax.swing.BoxLayout(jPanel1, javax.swing.BoxLayout.PAGE_AXIS));
+
+        buttonListIssues.setAction(listIssuesAction);
+        buttonListIssues.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/application_view_list.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(buttonListIssues, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.buttonListIssues.text")); // NOI18N
+        buttonListIssues.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        buttonListIssues.setBorderPainted(false);
+        buttonListIssues.setIconTextGap(0);
+        jPanel1.add(buttonListIssues);
+
+        buttonRuleInfo.setAction(showRuleInfoAction);
+        buttonRuleInfo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(buttonRuleInfo, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.buttonRuleInfo.text")); // NOI18N
+        buttonRuleInfo.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        buttonRuleInfo.setBorderPainted(false);
+        buttonRuleInfo.setIconTextGap(0);
+        jPanel1.add(buttonRuleInfo);
+
+        showEmptySeverity.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/eye.png"))); // NOI18N
+        showEmptySeverity.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(showEmptySeverity, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.showEmptySeverity.text")); // NOI18N
+        showEmptySeverity.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        showEmptySeverity.setBorderPainted(false);
+        showEmptySeverity.setIconTextGap(0);
+        jPanel1.add(showEmptySeverity);
+
+        summaryPanel.add(jPanel1, java.awt.BorderLayout.LINE_START);
+
         tableSummary.setRootVisible(true);
         tableSummary.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -440,7 +474,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         panelTopLayout.setHorizontalGroup(
             panelTopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelTopLayout.createSequentialGroup()
-                .addContainerGap(729, Short.MAX_VALUE)
+                .addContainerGap(848, Short.MAX_VALUE)
                 .addComponent(actionPlansPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         panelTopLayout.setVerticalGroup(
@@ -448,61 +482,28 @@ public final class SonarIssuesTopComponent extends TopComponent {
             .addComponent(actionPlansPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
-        buttonListIssues.setAction(listIssuesAction);
-        org.openide.awt.Mnemonics.setLocalizedText(buttonListIssues, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.buttonListIssues.text")); // NOI18N
-
-        buttonRuleInfo.setAction(showRuleInfoAction);
-        org.openide.awt.Mnemonics.setLocalizedText(buttonRuleInfo, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.buttonRuleInfo.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(showEmptySeverity, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.showEmptySeverity.text")); // NOI18N
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(buttonListIssues)
-                    .addComponent(buttonRuleInfo, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(showEmptySeverity))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(buttonListIssues)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(buttonRuleInfo)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(showEmptySeverity)
-                .addContainerGap(301, Short.MAX_VALUE))
-        );
-
-        javax.swing.GroupLayout summaryPanelLayout = new javax.swing.GroupLayout(summaryPanel);
-        summaryPanel.setLayout(summaryPanelLayout);
-        summaryPanelLayout.setHorizontalGroup(
-            summaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, summaryPanelLayout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(summaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
-                    .addComponent(panelTop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(panelTop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
         );
-        summaryPanelLayout.setVerticalGroup(
-            summaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(summaryPanelLayout.createSequentialGroup()
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
                 .addComponent(panelTop, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
-            .addGroup(summaryPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        summaryPanel.add(jPanel2, java.awt.BorderLayout.CENTER);
 
         tabbedPane.addTab(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.summaryPanel.TabConstraints.tabTitle"), summaryPanel); // NOI18N
 
@@ -640,6 +641,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JPanel panelTop;
