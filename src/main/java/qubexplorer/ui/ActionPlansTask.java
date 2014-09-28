@@ -4,8 +4,6 @@ import java.util.List;
 import org.openide.windows.WindowManager;
 import org.sonar.wsclient.issue.ActionPlan;
 import qubexplorer.server.SonarQube;
-import qubexplorer.ui.ProjectContext;
-import qubexplorer.ui.SonarIssuesTopComponent;
 import qubexplorer.ui.task.Task;
 
 /**
@@ -13,10 +11,11 @@ import qubexplorer.ui.task.Task;
  * @author Victor
  */
 public class ActionPlansTask extends Task<List<ActionPlan>>{
-    private SonarQube sonarQube;
+    private final SonarQube sonarQube;
 
     public ActionPlansTask(SonarQube sonarQube, ProjectContext projectContext) {
         super(projectContext, sonarQube.getServerUrl());
+        this.sonarQube=sonarQube;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package qubexplorer.ui.task;
 
+import org.openide.util.Exceptions;
 import qubexplorer.UserCredentials;
 import qubexplorer.ui.ProjectContext;
 
@@ -48,7 +49,7 @@ public abstract class Task<T> {
     }
 
     protected void fail(Throwable ex) {
-
+        Exceptions.printStackTrace(ex);
     }
 
     protected void completed() {

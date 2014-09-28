@@ -2,6 +2,7 @@ package qubexplorer.ui;
 
 import java.awt.Event;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
@@ -12,15 +13,20 @@ import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
@@ -35,6 +41,7 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
+import org.openide.awt.DropDownButtonFactory;
 import org.openide.cookies.LineCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -62,9 +69,10 @@ import qubexplorer.ui.task.TaskExecutor;
 
 /**
  * Top component for issues.
- * 
- * This component uses icons from the Silk Icon Set at http://famfamfam.com/lab/icons/silk/.
- * 
+ *
+ * This component uses icons from the Silk Icon Set at
+ * http://famfamfam.com/lab/icons/silk/.
+ *
  */
 @ConvertAsProperties(
         dtd = "-//qubexplorer.ui//Sonar//EN",
@@ -88,40 +96,41 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private IssuesContainer issuesContainer;
     private ProjectContext projectContext;
-    
+    private JPopupMenu dropDownMenu;
+
     private final Comparator<Severity> severityComparator = Collections.reverseOrder(new Comparator<Severity>() {
-        
+
         @Override
         public int compare(Severity t, Severity t1) {
             return t.compareTo(t1);
         }
-        
+
     });
 
-    private final Action showRuleInfoAction=new AbstractAction("Show Rule Info") {
-        
+    private final Action showRuleInfoAction = new AbstractAction("Show Rule Info") {
+
         @Override
         public void actionPerformed(ActionEvent ae) {
             int row = tableSummary.getSelectedRow();
-            if(row != -1) {
+            if (row != -1) {
                 Object selectedNode = tableSummary.getPathForRow(row).getLastPathComponent();
                 assert selectedNode instanceof Rule;
-                showRuleInfo((Rule)selectedNode);
+                showRuleInfo((Rule) selectedNode);
             }
         }
-        
+
     };
-    
-    private final Action listIssuesAction=new AbstractAction("List Issues", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/application_view_list.png"))) {
-        
+
+    private final Action listIssuesAction = new AbstractAction("List Issues", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/application_view_list.png"))) {
+
         @Override
         public void actionPerformed(ActionEvent e) {
-            int row=tableSummary.getSelectedRow();
-            if(row != -1) {
+            int row = tableSummary.getSelectedRow();
+            if (row != -1) {
                 Object selectedNode = tableSummary.getPathForRow(row).getLastPathComponent();
-                List<IssueFilter> filters=new LinkedList<>();
-                if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
-                    filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
+                List<IssueFilter> filters = new LinkedList<>();
+                if(getSelectedActionPlan() != null) {
+                    filters.add(new ActionPlanFilter(getSelectedActionPlan()));
                 }
                 if (selectedNode instanceof Severity) {
                     filters.add(new SeverityFilter((Severity) selectedNode));
@@ -131,21 +140,20 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 TaskExecutor.execute(new IssuesTask(projectContext, issuesContainer, filters.toArray(new IssueFilter[0])));
             }
         }
-        
+
     };
-    
-    
-    private final Action gotoIssueAction=new AbstractAction("Go to Source") {
-        
+
+    private final Action gotoIssueAction = new AbstractAction("Go to Source") {
+
         @Override
         public void actionPerformed(ActionEvent ae) {
-            IssuesTableModel model=(IssuesTableModel) issuesTable.getModel();
+            IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
             int row = issuesTable.getSelectedRow();
             if (row != -1) {
                 row = issuesTable.getRowSorter().convertRowIndexToModel(row);
                 try {
                     IssueLocation issueLocation = model.getIssueLocation(row);
-                    File file=issueLocation.getFile(projectContext.getProject());
+                    File file = issueLocation.getFile(projectContext.getProject());
                     if (issueLocation.getLineNumber() <= 0) {
                         openFile(file, 1);
                     } else {
@@ -153,40 +161,52 @@ public final class SonarIssuesTopComponent extends TopComponent {
                     }
                 } catch (MvnModelInputException ex) {
                     Exceptions.printStackTrace(ex);
-                } catch(ProjectNotFoundException ex) {
+                } catch (ProjectNotFoundException ex) {
                     String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", ex.getShortProjectKey());
                     DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
                 }
             }
         }
-        
+
     };
-    
-    private final Action showRuleInfoForIssueAction=new AbstractAction("Show Rule Info about Issue", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"))) {
-        
+
+    private final Action showRuleInfoForIssueAction = new AbstractAction("Show Rule Info about Issue", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"))) {
+
         @Override
         public void actionPerformed(ActionEvent ae) {
-            int row=issuesTable.getSelectedRow();
-            if(row != -1) {
+            int row = issuesTable.getSelectedRow();
+            if (row != -1) {
                 row = issuesTable.getRowSorter().convertRowIndexToModel(row);
-                IssuesTableModel model=(IssuesTableModel) issuesTable.getModel();
+                IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
                 RadarIssue issue = model.getIssue(row);
                 showRuleInfo(issue.rule());
             }
         }
 
-        
     };
-    
-    private final ItemListener skipEmptySeverities=new ItemListener() {
+
+    private final ItemListener skipEmptySeverities = new ItemListener() {
 
         @Override
         public void itemStateChanged(ItemEvent ie) {
-            SummaryModel summaryModel=(SummaryModel) tableSummary.getTreeTableModel();
+            SummaryModel summaryModel = (SummaryModel) tableSummary.getTreeTableModel();
             summaryModel.setSkipEmptySeverity(!showEmptySeverity.isSelected());
             SwingUtilities.updateComponentTreeUI(tableSummary);
         }
-        
+
+    };
+
+    private final ActionListener actionPlanItemListener = new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+            List<IssueFilter> filters = new LinkedList<>();
+            if(getSelectedActionPlan() != null) {
+                filters.add(new ActionPlanFilter(getSelectedActionPlan()));
+            }
+            TaskExecutor.execute(new SummaryTask(issuesContainer, projectContext, filters.toArray(new IssueFilter[0])));
+        }
+
     };
 
     public SonarIssuesTopComponent() {
@@ -219,7 +239,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         issuesTable.getColumn("Location").setCellRenderer(new LocationRenderer());
         ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(0, severityComparator);
         ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(4, severityComparator);
-        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(1,  new IssueLocation.IssueLocationComparator());
+        ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(1, new IssueLocation.IssueLocationComparator());
         issuesTable.getColumnExt("Severity").addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent pce) {
@@ -238,7 +258,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         this.projectContext = projectContext;
         setName(String.format("SonarQube - %s", ProjectUtils.getInformation(projectContext.getProject()).getDisplayName()));
     }
-    
+
     public void setSummary(Summary summary) {
         tableSummary.setTreeTableModel(new SummaryModel(summary, !showEmptySeverity.isSelected()));
         DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
@@ -247,29 +267,47 @@ public final class SonarIssuesTopComponent extends TopComponent {
         listIssuesAction.setEnabled(false);
         showRuleInfoAction.setEnabled(false);
     }
+    
+    public ActionPlan getSelectedActionPlan(){
+        Enumeration<AbstractButton> elements = actionPlanGroup.getElements();
+        while (elements.hasMoreElements()) {
+            JRadioButtonMenuItem item = (JRadioButtonMenuItem) elements.nextElement();
+            if (item.isSelected() && item.getClientProperty("actionPlan") instanceof ActionPlan) {
+                return (ActionPlan) item.getClientProperty("actionPlan");
+            }
+        }
+        return null;
+    }
 
     public void setIssuesContainer(IssuesContainer issuesContainer) {
         this.issuesContainer = issuesContainer;
-        actionPlansPanel.setVisible(issuesContainer instanceof SonarQube);
-        if(issuesContainer instanceof SonarRunnerResult){
+        if (issuesContainer instanceof SonarRunnerResult) {
             setActionPlans(Collections.<ActionPlan>emptyList());
         }
     }
 
     public void setActionPlans(List<ActionPlan> plans) {
-        DefaultComboBoxModel model = new DefaultComboBoxModel();
-        model.addElement(org.openide.util.NbBundle.getMessage(Bundle.class, "SonarIssuesTopComponent.actionPlansCombo.none"));
+        dropDownMenu.removeAll();
+        JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem(org.openide.util.NbBundle.getMessage(Bundle.class, "SonarIssuesTopComponent.actionPlansCombo.none"));
+        menuItem.setSelected(true);
+        menuItem.addActionListener(actionPlanItemListener);
+        menuItem.putClientProperty("actionPlan", null);
+        actionPlanGroup.add(menuItem);
+        dropDownMenu.add(menuItem);
         for (ActionPlan plan : plans) {
-            model.addElement(plan);
+            menuItem = new JRadioButtonMenuItem(plan.name());
+            menuItem.putClientProperty("actionPlan", plan);
+            menuItem.addActionListener(actionPlanItemListener);
+            actionPlanGroup.add(menuItem);
+            dropDownMenu.add(menuItem);
         }
-        actionPlansCombo.setModel(model);
     }
-    
+
     public void showRuleInfo(Rule rule) {
         if (issuesContainer instanceof SonarRunnerResult && rule.getDescription() == null) {
             SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
             TaskExecutor.execute(new RuleTask(sonarQube, rule, projectContext));
-        }else{
+        } else {
             RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), rule);
         }
     }
@@ -297,24 +335,19 @@ public final class SonarIssuesTopComponent extends TopComponent {
         jMenuItem2 = new javax.swing.JMenuItem();
         jMenuItem3 = new javax.swing.JMenuItem();
         jPopupMenu1 = new javax.swing.JPopupMenu();
+        actionPlanGroup = new javax.swing.ButtonGroup();
         tabbedPane = new javax.swing.JTabbedPane();
         summaryPanel = new javax.swing.JPanel();
         sidebar = new javax.swing.JPanel();
         buttonListIssues = new javax.swing.JButton();
         buttonRuleInfo = new javax.swing.JButton();
         showEmptySeverity = new javax.swing.JToggleButton();
-        jSeparator1 = new javax.swing.JSeparator();
-        jPanel2 = new javax.swing.JPanel();
+        jButton1 = DropDownButtonFactory.createDropDownButton(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/page_gear.png")), dropDownMenu=new JPopupMenu());
         jScrollPane1 = new javax.swing.JScrollPane();
         tableSummary = new org.jdesktop.swingx.JXTreeTable();
         tableSummary.getTableHeader().setReorderingAllowed(false);
         tableSummary.setTreeCellRenderer(new SummaryTreeCellRenderer());
         tableSummary.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        panelTop = new javax.swing.JPanel();
-        actionPlansPanel = new javax.swing.JPanel();
-        jLabel4 = new javax.swing.JLabel();
-        actionPlansCombo = new javax.swing.JComboBox();
-        actionPlansCombo.setRenderer(new ActionPlansRenderer());
 
         jMenuItem1.setAction(listIssuesAction);
         org.openide.awt.Mnemonics.setLocalizedText(jMenuItem1, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jMenuItem1.text")); // NOI18N
@@ -397,32 +430,54 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         summaryPanel.setLayout(new java.awt.BorderLayout());
 
-        sidebar.setLayout(new javax.swing.BoxLayout(sidebar, javax.swing.BoxLayout.PAGE_AXIS));
-
         buttonListIssues.setAction(listIssuesAction);
         buttonListIssues.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/application_view_list.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(buttonListIssues, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.buttonListIssues.text")); // NOI18N
-        buttonListIssues.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        buttonListIssues.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         buttonListIssues.setBorderPainted(false);
         buttonListIssues.setIconTextGap(0);
-        sidebar.add(buttonListIssues);
 
         buttonRuleInfo.setAction(showRuleInfoAction);
         buttonRuleInfo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(buttonRuleInfo, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.buttonRuleInfo.text")); // NOI18N
-        buttonRuleInfo.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        buttonRuleInfo.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         buttonRuleInfo.setBorderPainted(false);
         buttonRuleInfo.setIconTextGap(0);
-        sidebar.add(buttonRuleInfo);
 
         showEmptySeverity.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/eye.png"))); // NOI18N
         showEmptySeverity.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(showEmptySeverity, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.showEmptySeverity.text")); // NOI18N
-        showEmptySeverity.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        showEmptySeverity.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         showEmptySeverity.setBorderPainted(false);
         showEmptySeverity.setIconTextGap(0);
-        sidebar.add(showEmptySeverity);
-        sidebar.add(jSeparator1);
+
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/page_gear.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jButton1.text")); // NOI18N
+        jButton1.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        jButton1.setBorderPainted(false);
+
+        javax.swing.GroupLayout sidebarLayout = new javax.swing.GroupLayout(sidebar);
+        sidebar.setLayout(sidebarLayout);
+        sidebarLayout.setHorizontalGroup(
+            sidebarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, 32, Short.MAX_VALUE)
+            .addComponent(showEmptySeverity, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(buttonRuleInfo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(buttonListIssues, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        sidebarLayout.setVerticalGroup(
+            sidebarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(sidebarLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(buttonListIssues)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(buttonRuleInfo)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(showEmptySeverity)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButton1)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
 
         summaryPanel.add(sidebar, java.awt.BorderLayout.LINE_START);
 
@@ -445,70 +500,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         });
         jScrollPane1.setViewportView(tableSummary);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel4.text")); // NOI18N
-
-        actionPlansCombo.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                actionPlansComboActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout actionPlansPanelLayout = new javax.swing.GroupLayout(actionPlansPanel);
-        actionPlansPanel.setLayout(actionPlansPanelLayout);
-        actionPlansPanelLayout.setHorizontalGroup(
-            actionPlansPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(actionPlansPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(actionPlansCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(12, Short.MAX_VALUE))
-        );
-        actionPlansPanelLayout.setVerticalGroup(
-            actionPlansPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(actionPlansPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(actionPlansPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(actionPlansCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel4))
-                .addContainerGap(7, Short.MAX_VALUE))
-        );
-
-        javax.swing.GroupLayout panelTopLayout = new javax.swing.GroupLayout(panelTop);
-        panelTop.setLayout(panelTopLayout);
-        panelTopLayout.setHorizontalGroup(
-            panelTopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelTopLayout.createSequentialGroup()
-                .addContainerGap(848, Short.MAX_VALUE)
-                .addComponent(actionPlansPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
-        panelTopLayout.setVerticalGroup(
-            panelTopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(actionPlansPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(panelTop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1))
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(panelTop, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
-        summaryPanel.add(jPanel2, java.awt.BorderLayout.CENTER);
+        summaryPanel.add(jScrollPane1, java.awt.BorderLayout.CENTER);
 
         tabbedPane.addTab(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.summaryPanel.TabConstraints.tabTitle"), summaryPanel); // NOI18N
 
@@ -516,18 +508,18 @@ public final class SonarIssuesTopComponent extends TopComponent {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tabbedPane)
+            .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 648, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tabbedPane)
+            .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 413, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void issuesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMouseClicked
-        if(evt.isPopupTrigger()) {
+        if (evt.isPopupTrigger()) {
             int row = issuesTable.rowAtPoint(evt.getPoint());
-            if(row != -1) {
+            if (row != -1) {
                 issuesTable.changeSelection(row, row, false, false);
                 issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
             }
@@ -536,10 +528,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
         if (evt.getClickCount() == 2) {
             int row = issuesTable.rowAtPoint(evt.getPoint());
             if (row != -1) {
-                if(issuesTable.getSelectedRow() != row){
+                if (issuesTable.getSelectedRow() != row) {
                     issuesTable.changeSelection(row, row, false, false);
                 }
-                if(gotoIssueAction.isEnabled()){
+                if (gotoIssueAction.isEnabled()) {
                     gotoIssueAction.actionPerformed(new ActionEvent(issuesTable, Event.ACTION_EVENT, "Go to Source"));
                 }
             }
@@ -547,11 +539,11 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }//GEN-LAST:event_issuesTableMouseClicked
 
     private void tableSummaryMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableSummaryMouseClicked
-        if(evt.isPopupTrigger()) {
+        if (evt.isPopupTrigger()) {
             triggerPopupMenu(evt);
             return;
         }
-        
+
         if (evt.getClickCount() != 2) {
             return;
         }
@@ -560,50 +552,42 @@ public final class SonarIssuesTopComponent extends TopComponent {
             return;
         }
         tableSummary.changeSelection(rowIndex, rowIndex, false, false);
-        if(listIssuesAction.isEnabled()) {
+        if (listIssuesAction.isEnabled()) {
             listIssuesAction.actionPerformed(new ActionEvent(tableSummary, Event.ACTION_EVENT, "List Issues"));
         }
     }//GEN-LAST:event_tableSummaryMouseClicked
 
-    private void actionPlansComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_actionPlansComboActionPerformed
-        List<IssueFilter> filters = new LinkedList<>();
-        if (actionPlansCombo.getSelectedItem() instanceof ActionPlan) {
-            filters.add(new ActionPlanFilter((ActionPlan) actionPlansCombo.getSelectedItem()));
-        }
-        TaskExecutor.execute(new SummaryTask(issuesContainer, projectContext, filters.toArray(new IssueFilter[0])));
-    }//GEN-LAST:event_actionPlansComboActionPerformed
-
     private void tableSummaryMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableSummaryMousePressed
-        if(evt.isPopupTrigger()) {
+        if (evt.isPopupTrigger()) {
             triggerPopupMenu(evt);
         }
     }//GEN-LAST:event_tableSummaryMousePressed
 
     private void tableSummaryMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableSummaryMouseReleased
-        if(evt.isPopupTrigger()) {
+        if (evt.isPopupTrigger()) {
             triggerPopupMenu(evt);
         }
     }//GEN-LAST:event_tableSummaryMouseReleased
 
     private void tableSummaryValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_tableSummaryValueChanged
         int row = tableSummary.getSelectedRow();
-        if(row != -1) {
+        if (row != -1) {
             Object selectedNode = tableSummary.getPathForRow(row).getLastPathComponent();
             ruleInfoMenuItem.setVisible(selectedNode instanceof Rule);
             showRuleInfoAction.setEnabled(selectedNode instanceof Rule);
-            Summary summary = ((SummaryModel)tableSummary.getTreeTableModel()).getSummary();
+            Summary summary = ((SummaryModel) tableSummary.getTreeTableModel()).getSummary();
             int count;
-            if(selectedNode instanceof Summary) {
-                count=summary.getCount();
-            }else if(selectedNode instanceof Severity) {
-                count=summary.getCount((Severity)selectedNode);
-            }else if(selectedNode instanceof Rule) {
-                count=summary.getCount((Rule)selectedNode);
-            }else{
-                count=0;
+            if (selectedNode instanceof Summary) {
+                count = summary.getCount();
+            } else if (selectedNode instanceof Severity) {
+                count = summary.getCount((Severity) selectedNode);
+            } else if (selectedNode instanceof Rule) {
+                count = summary.getCount((Rule) selectedNode);
+            } else {
+                count = 0;
             }
             listIssuesAction.setEnabled(count > 0);
-        }else{
+        } else {
             listIssuesAction.setEnabled(false);
             ruleInfoMenuItem.setVisible(false);
             showRuleInfoAction.setEnabled(false);
@@ -611,9 +595,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }//GEN-LAST:event_tableSummaryValueChanged
 
     private void issuesTableMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMousePressed
-        if(evt.isPopupTrigger()) {
+        if (evt.isPopupTrigger()) {
             int row = issuesTable.rowAtPoint(evt.getPoint());
-            if(row != -1) {
+            if (row != -1) {
                 issuesTable.changeSelection(row, row, false, false);
                 issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
             }
@@ -621,9 +605,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }//GEN-LAST:event_issuesTableMousePressed
 
     private void issuesTableMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMouseReleased
-        if(evt.isPopupTrigger()) {
+        if (evt.isPopupTrigger()) {
             int row = issuesTable.rowAtPoint(evt.getPoint());
-            if(row != -1) {
+            if (row != -1) {
                 issuesTable.changeSelection(row, row, false, false);
                 issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
             }
@@ -631,26 +615,22 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }//GEN-LAST:event_issuesTableMouseReleased
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox actionPlansCombo;
-    private javax.swing.JPanel actionPlansPanel;
+    private javax.swing.ButtonGroup actionPlanGroup;
     private javax.swing.JButton buttonListIssues;
     private javax.swing.JButton buttonRuleInfo;
     private javax.swing.JTextField filterText;
     private javax.swing.JPanel issuesPanel;
     private javax.swing.JPopupMenu issuesPopupMenu;
     private org.jdesktop.swingx.JXTable issuesTable;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
-    private javax.swing.JPanel jPanel2;
     private javax.swing.JPopupMenu jPopupMenu1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JPanel panelTop;
     private javax.swing.JMenuItem ruleInfoMenuItem;
     private javax.swing.JToggleButton showEmptySeverity;
     private javax.swing.JTextField shownCount;
@@ -661,7 +641,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private org.jdesktop.swingx.JXTreeTable tableSummary;
     private javax.swing.JLabel title;
     // End of variables declaration//GEN-END:variables
-
 
     void writeProperties(java.util.Properties p) {
         // better to version settings since initial version as advocated at
@@ -737,11 +716,11 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
             @Override
             public void valueChanged(ListSelectionEvent lse) {
-                int row=issuesTable.getSelectedRow();
+                int row = issuesTable.getSelectedRow();
                 gotoIssueAction.setEnabled(row != -1);
                 showRuleInfoForIssueAction.setEnabled(row != -1);
             }
-            
+
         });
         showIssuesCount();
         filterText.setText("");
@@ -752,7 +731,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         shownCount.setText(format.format(issuesTable.getRowSorter().getViewRowCount()));
     }
 
-    static  String removeBranchPart(String componentKey) {
+    static String removeBranchPart(String componentKey) {
         String[] tokens = componentKey.split(":");
         assert tokens.length >= 2;
         return tokens[0] + ":" + tokens[1];
@@ -760,7 +739,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     public void showIssues(IssueFilter[] filters, RadarIssue... issues) {
         setIssues(filters, issues);
-        if(tabbedPane.getTabCount() == 1){
+        if (tabbedPane.getTabCount() == 1) {
             tabbedPane.add("Issues", issuesPanel);
         }
         tabbedPane.setSelectedIndex(1);
@@ -770,7 +749,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     public void showSummary(Summary summary) {
         setSummary(summary);
-        if(tabbedPane.getTabCount() == 2){
+        if (tabbedPane.getTabCount() == 2) {
             tabbedPane.removeTabAt(1);
         }
         tabbedPane.setSelectedIndex(0);
@@ -778,7 +757,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private void triggerPopupMenu(MouseEvent evt) {
         int row = tableSummary.rowAtPoint(evt.getPoint());
-        if(row != -1) {
+        if (row != -1) {
             tableSummary.changeSelection(row, row, false, false);
             summaryPopupMenu.show(tableSummary, evt.getX(), evt.getY());
         }
