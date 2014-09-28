@@ -29,6 +29,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -235,6 +236,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     public void setProjectContext(ProjectContext projectContext) {
         this.projectContext = projectContext;
+        setName(String.format("SonarQube - %s", ProjectUtils.getInformation(projectContext.getProject()).getDisplayName()));
     }
     
     public void setSummary(Summary summary) {
@@ -294,12 +296,14 @@ public final class SonarIssuesTopComponent extends TopComponent {
         issuesPopupMenu = new javax.swing.JPopupMenu();
         jMenuItem2 = new javax.swing.JMenuItem();
         jMenuItem3 = new javax.swing.JMenuItem();
+        jPopupMenu1 = new javax.swing.JPopupMenu();
         tabbedPane = new javax.swing.JTabbedPane();
         summaryPanel = new javax.swing.JPanel();
-        jPanel1 = new javax.swing.JPanel();
+        sidebar = new javax.swing.JPanel();
         buttonListIssues = new javax.swing.JButton();
         buttonRuleInfo = new javax.swing.JButton();
         showEmptySeverity = new javax.swing.JToggleButton();
+        jSeparator1 = new javax.swing.JSeparator();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tableSummary = new org.jdesktop.swingx.JXTreeTable();
@@ -393,7 +397,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         summaryPanel.setLayout(new java.awt.BorderLayout());
 
-        jPanel1.setLayout(new javax.swing.BoxLayout(jPanel1, javax.swing.BoxLayout.PAGE_AXIS));
+        sidebar.setLayout(new javax.swing.BoxLayout(sidebar, javax.swing.BoxLayout.PAGE_AXIS));
 
         buttonListIssues.setAction(listIssuesAction);
         buttonListIssues.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/application_view_list.png"))); // NOI18N
@@ -401,7 +405,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         buttonListIssues.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
         buttonListIssues.setBorderPainted(false);
         buttonListIssues.setIconTextGap(0);
-        jPanel1.add(buttonListIssues);
+        sidebar.add(buttonListIssues);
 
         buttonRuleInfo.setAction(showRuleInfoAction);
         buttonRuleInfo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"))); // NOI18N
@@ -409,7 +413,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         buttonRuleInfo.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
         buttonRuleInfo.setBorderPainted(false);
         buttonRuleInfo.setIconTextGap(0);
-        jPanel1.add(buttonRuleInfo);
+        sidebar.add(buttonRuleInfo);
 
         showEmptySeverity.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/eye.png"))); // NOI18N
         showEmptySeverity.setSelected(true);
@@ -417,9 +421,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
         showEmptySeverity.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
         showEmptySeverity.setBorderPainted(false);
         showEmptySeverity.setIconTextGap(0);
-        jPanel1.add(showEmptySeverity);
+        sidebar.add(showEmptySeverity);
+        sidebar.add(jSeparator1);
 
-        summaryPanel.add(jPanel1, java.awt.BorderLayout.LINE_START);
+        summaryPanel.add(sidebar, java.awt.BorderLayout.LINE_START);
 
         tableSummary.setRootVisible(true);
         tableSummary.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -640,14 +645,16 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JPopupMenu jPopupMenu1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JPanel panelTop;
     private javax.swing.JMenuItem ruleInfoMenuItem;
     private javax.swing.JToggleButton showEmptySeverity;
     private javax.swing.JTextField shownCount;
+    private javax.swing.JPanel sidebar;
     private javax.swing.JPanel summaryPanel;
     private javax.swing.JPopupMenu summaryPopupMenu;
     private javax.swing.JTabbedPane tabbedPane;
