@@ -25,6 +25,7 @@ import qubexplorer.AuthorizationException;
 import qubexplorer.MvnModelFactory;
 import qubexplorer.MvnModelInputException;
 import qubexplorer.PassEncoder;
+import qubexplorer.server.SonarQube;
 
 /**
  *
@@ -83,8 +84,8 @@ public class SonarRunnerProccess {
         this.analysisMode = analysisMode;
     }
 
-    protected Runner createForProject(UserCredentials userCredentials)throws MvnModelInputException {
-        int sourcesCounter=0;
+    protected Runner createForProject(UserCredentials userCredentials) throws MvnModelInputException {
+        int sourcesCounter = 0;
         ForkedRunner runner = ForkedRunner.create();
         projectHome = project.getProjectDirectory().getPath();
         Model model = mvnModelFactory.createModel(project);
@@ -92,8 +93,12 @@ public class SonarRunnerProccess {
         properties.setProperty("sonar.projectVersion", model.getVersion());
         properties.setProperty("sonar.sourceEncoding", FileEncodingQuery.getEncoding(project.getProjectDirectory()).displayName());
         properties.setProperty("sonar.host.url", sonarUrl);
-        properties.setProperty("sonar.analysis.mode", analysisMode.toString().toLowerCase());
-        properties.setProperty("sonar.dryRun", "true");
+        int version = getMajorVersion(new SonarQube(sonarUrl).getVersion(userCredentials));
+        if (version >= 4) {
+            properties.setProperty("sonar.analysis.mode", analysisMode.toString().toLowerCase());
+        } else {
+            properties.setProperty("sonar.dryRun", "true");
+        }
         properties.setProperty("sonar.projectDir", projectHome);
         properties.setProperty("project.home", projectHome);
         properties.setProperty("sonar.projectBaseDir", projectHome);
@@ -108,12 +113,12 @@ public class SonarRunnerProccess {
             properties.setProperty("sonar.sources", sourceGroups[0].getRootFolder().getPath());
             sourcesCounter++;
             URL[] roots = BinaryForSourceQuery.findBinaryRoots(sourceGroups[0].getRootFolder().toURL()).getRoots();
-            if(roots.length > 0){
+            if (roots.length > 0) {
                 File f = Utilities.toFile(roots[0]);
                 properties.setProperty("sonar.binaries", f.getPath());
             }
         }
-        
+
         SubprojectProvider subprojectProvider = project.getLookup().lookup(SubprojectProvider.class);
         boolean hasSubprojects = false;
         if (subprojectProvider != null) {
@@ -135,14 +140,14 @@ public class SonarRunnerProccess {
                     properties.setProperty(module + ".sonar.sources", srcGroups[0].getRootFolder().getPath());
                     sourcesCounter++;
                     URL[] roots = BinaryForSourceQuery.findBinaryRoots(srcGroups[0].getRootFolder().toURL()).getRoots();
-                    if(roots.length > 0){
+                    if (roots.length > 0) {
                         File f = Utilities.toFile(roots[0]);
                         properties.setProperty(module + ".sonar.binaries", f.getPath());
                     }
                 }
             }
         }
-        if(sourcesCounter == 0){
+        if (sourcesCounter == 0) {
             throw new SourcesNotFoundException();
         }
         if (hasSubprojects) {
@@ -162,7 +167,7 @@ public class SonarRunnerProccess {
         return runner;
     }
 
-    public SonarRunnerResult executeRunner(UserCredentials token) throws MvnModelInputException{
+    public SonarRunnerResult executeRunner(UserCredentials token) throws MvnModelInputException {
         Runner runner = createForProject(token);
         try {
             runner.execute();
@@ -178,6 +183,15 @@ public class SonarRunnerProccess {
             throw new SonarRunnerException();
         } else {
             return new SonarRunnerResult(jsonFile);
+        }
+    }
+
+    protected static int getMajorVersion(String version) {
+        int index = version.indexOf('.');
+        if (index != -1) {
+            return Integer.parseInt(version.substring(0, index));
+        } else {
+            throw new IllegalArgumentException("Problem getting major version in " + version);
         }
     }
 

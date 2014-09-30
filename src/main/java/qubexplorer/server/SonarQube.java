@@ -24,6 +24,7 @@ import org.sonar.wsclient.services.Resource;
 import org.sonar.wsclient.services.ResourceQuery;
 import org.sonar.wsclient.services.Rule;
 import org.sonar.wsclient.services.RuleQuery;
+import org.sonar.wsclient.services.ServerQuery;
 import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
 import qubexplorer.IssuesContainer;
@@ -60,6 +61,17 @@ public class SonarQube implements IssuesContainer{
 
     public String getServerUrl() {
         return serverUrl;
+    }
+    
+    public String getVersion(UserCredentials userCredentials) {
+        Sonar sonar;
+        if(userCredentials == null) {
+            sonar=Sonar.create(serverUrl);
+        }else{
+            sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
+        }
+        ServerQuery serverQuery=new ServerQuery();
+        return sonar.find(serverQuery).getVersion();
     }
     
     public double getRulesCompliance(UserCredentials userCredentials, String resource) {
