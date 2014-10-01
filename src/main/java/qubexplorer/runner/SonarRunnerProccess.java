@@ -10,6 +10,7 @@ import org.apache.maven.model.Model;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
+import org.netbeans.api.java.queries.SourceLevelQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
@@ -93,6 +94,7 @@ public class SonarRunnerProccess {
         properties.setProperty("sonar.projectVersion", model.getVersion());
         properties.setProperty("sonar.sourceEncoding", FileEncodingQuery.getEncoding(project.getProjectDirectory()).displayName());
         properties.setProperty("sonar.host.url", sonarUrl);
+        properties.setProperty("sonar.java.source", SourceLevelQuery.getSourceLevel(project.getProjectDirectory()));
         int version = getMajorVersion(new SonarQube(sonarUrl).getVersion(userCredentials));
         if (version >= 4) {
             properties.setProperty("sonar.analysis.mode", analysisMode.toString().toLowerCase());
