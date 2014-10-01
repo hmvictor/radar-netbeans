@@ -91,6 +91,7 @@ public class SonarRunnerProccess {
         projectHome = project.getProjectDirectory().getPath();
         Model model = mvnModelFactory.createModel(project);
         properties.setProperty("sonar.projectName", model.getName() != null ? model.getName() : model.getArtifactId());
+        properties.setProperty("sonar.projectBaseDir", projectHome);
         properties.setProperty("sonar.projectVersion", model.getVersion());
         properties.setProperty("sonar.sourceEncoding", FileEncodingQuery.getEncoding(project.getProjectDirectory()).displayName());
         properties.setProperty("sonar.host.url", sonarUrl);
@@ -103,22 +104,14 @@ public class SonarRunnerProccess {
         }
         properties.setProperty("sonar.projectDir", projectHome);
         properties.setProperty("project.home", projectHome);
-        properties.setProperty("sonar.projectBaseDir", projectHome);
         properties.setProperty("sonar.working.directory", projectHome + "/./.sonar");
         if (userCredentials != null) {
             properties.setProperty("sonar.login", userCredentials.getUsername());
             properties.setProperty("sonar.password", PassEncoder.decodeAsString(userCredentials.getPassword()));
         }
-        Sources sources = ProjectUtils.getSources(project);
-        SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
-        if (sourceGroups != null && sourceGroups.length != 0) {
-            properties.setProperty("sonar.sources", sourceGroups[0].getRootFolder().getPath());
+        boolean containsSources = configureSourcesAndBinariesProperties(null, project);
+        if(containsSources) {
             sourcesCounter++;
-            URL[] roots = BinaryForSourceQuery.findBinaryRoots(sourceGroups[0].getRootFolder().toURL()).getRoots();
-            if (roots.length > 0) {
-                File f = Utilities.toFile(roots[0]);
-                properties.setProperty("sonar.binaries", f.getPath());
-            }
         }
 
         SubprojectProvider subprojectProvider = project.getLookup().lookup(SubprojectProvider.class);
@@ -132,31 +125,20 @@ public class SonarRunnerProccess {
                     modules.append(',');
                 }
                 modules.append(module);
-                Model submodel = mvnModelFactory.createModel(subproject);
-                properties.setProperty(module + ".sonar.projectKey", submodel.getArtifactId());
-                properties.setProperty(module + ".sonar.projectName", submodel.getName() != null ? submodel.getName() : submodel.getArtifactId());
-                properties.setProperty(module + ".sonar.projectBaseDir", subproject.getProjectDirectory().getPath());
-                Sources src = ProjectUtils.getSources(subproject);
-                SourceGroup[] srcGroups = src.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
-                if (srcGroups != null && srcGroups.length != 0) {
-                    properties.setProperty(module + ".sonar.sources", srcGroups[0].getRootFolder().getPath());
+                boolean moduleContainsSources = addModuleProperties(module, subproject);
+                if (moduleContainsSources) {
                     sourcesCounter++;
-                    URL[] roots = BinaryForSourceQuery.findBinaryRoots(srcGroups[0].getRootFolder().toURL()).getRoots();
-                    if (roots.length > 0) {
-                        File f = Utilities.toFile(roots[0]);
-                        properties.setProperty(module + ".sonar.binaries", f.getPath());
-                    }
                 }
             }
         }
         if (sourcesCounter == 0) {
             throw new SourcesNotFoundException();
         }
-        if (hasSubprojects) {
-            properties.setProperty("sonar.projectKey", model.getGroupId());
-        } else {
-            properties.setProperty("sonar.projectKey", model.getGroupId() + ":" + model.getArtifactId());
+        String projectKey = model.getGroupId();
+        if (!hasSubprojects) {
+            projectKey += ":" + model.getArtifactId();
         }
+        properties.setProperty("sonar.projectKey", projectKey);
         if (modules.length() > 0) {
             properties.setProperty("sonar.modules", modules.toString());
         }
@@ -167,6 +149,42 @@ public class SonarRunnerProccess {
         runner.setStdErr(wrapper);
         runner.addProperties(properties);
         return runner;
+    }
+
+    /**
+     * @param project
+     * @return True if the project contains sources.
+     */
+    private boolean configureSourcesAndBinariesProperties(String module, Project project) {
+        Sources sources = ProjectUtils.getSources(project);
+        SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
+        if (sourceGroups != null && sourceGroups.length != 0) {
+            String sourceProperty = "sonar.sources";
+            if (module != null) {
+                sourceProperty = module + "." + sourceProperty;
+            }
+            properties.setProperty(sourceProperty, sourceGroups[0].getRootFolder().getPath());
+            URL[] roots = BinaryForSourceQuery.findBinaryRoots(sourceGroups[0].getRootFolder().toURL()).getRoots();
+            if (roots.length > 0) {
+                File f = Utilities.toFile(roots[0]);
+                String binariesProperty = "sonar.binaries";
+                if (module != null) {
+                    binariesProperty = module + "." + binariesProperty;
+                }
+                properties.setProperty(binariesProperty, f.getPath());
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean addModuleProperties(String module, Project subproject) throws MvnModelInputException {
+        Model submodel = mvnModelFactory.createModel(subproject);
+        properties.setProperty(module + ".sonar.projectKey", submodel.getArtifactId());
+        properties.setProperty(module + ".sonar.projectName", submodel.getName() != null ? submodel.getName() : submodel.getArtifactId());
+        properties.setProperty(module + ".sonar.projectBaseDir", subproject.getProjectDirectory().getPath());
+        return configureSourcesAndBinariesProperties(module, subproject);
     }
 
     public SonarRunnerResult executeRunner(UserCredentials token) throws MvnModelInputException {
@@ -200,7 +218,7 @@ public class SonarRunnerProccess {
     private static class WrapperConsumer extends PrintStreamConsumer {
 
         private boolean unauthorized;
-        private PrintStreamConsumer wrapee;
+        private final PrintStreamConsumer wrapee;
 
         public WrapperConsumer(PrintStreamConsumer consumer) {
             super(null);
