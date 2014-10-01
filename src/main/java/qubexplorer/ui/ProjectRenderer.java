@@ -17,7 +17,7 @@ public class ProjectRenderer extends DefaultListCellRenderer{
         JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, hasFocus);
         if (value instanceof SonarProject) {
             SonarProject project=(SonarProject) value;
-            label.setText(String.format("<html><strong>%s</strong> (key=%s)</html>", project.getName(), project.getKey()));
+            label.setText(String.format("%s (%s)", project.getName(), project.getKey()));
         }
         return label;
     }
