@@ -151,8 +151,8 @@ public class IssueLocation {
     
     private static class BasicPomInfo {
 
-        private String groupId;
-        private String artifactId;
+        private final String groupId;
+        private final String artifactId;
 
         public BasicPomInfo(String groupId, String artifactId) {
             this.groupId = groupId;
@@ -169,7 +169,6 @@ public class IssueLocation {
     }
     
     public static class IssueLocationComparator implements Comparator<IssueLocation>{
-        
         
         @Override
         public int compare(IssueLocation t, IssueLocation t1) {

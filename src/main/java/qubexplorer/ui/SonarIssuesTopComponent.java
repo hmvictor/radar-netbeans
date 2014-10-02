@@ -19,11 +19,9 @@ import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
@@ -42,6 +40,7 @@ import org.openide.NotifyDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.DropDownButtonFactory;
+import org.openide.cookies.EditorCookie;
 import org.openide.cookies.LineCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -129,7 +128,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
             if (row != -1) {
                 Object selectedNode = tableSummary.getPathForRow(row).getLastPathComponent();
                 List<IssueFilter> filters = new LinkedList<>();
-                if(getSelectedActionPlan() != null) {
+                if (getSelectedActionPlan() != null) {
                     filters.add(new ActionPlanFilter(getSelectedActionPlan()));
                 }
                 if (selectedNode instanceof Severity) {
@@ -152,13 +151,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
             if (row != -1) {
                 row = issuesTable.getRowSorter().convertRowIndexToModel(row);
                 try {
-                    IssueLocation issueLocation = model.getIssueLocation(row);
-                    File file = issueLocation.getFile(projectContext.getProject());
-                    if (issueLocation.getLineNumber() <= 0) {
-                        openFile(file, 1);
-                    } else {
-                        openFile(file, issueLocation.getLineNumber());
-                    }
+                    openIssueLocation(model.getIssueLocation(row));
                 } catch (MvnModelInputException ex) {
                     Exceptions.printStackTrace(ex);
                 } catch (ProjectNotFoundException ex) {
@@ -201,7 +194,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         @Override
         public void actionPerformed(ActionEvent ae) {
             List<IssueFilter> filters = new LinkedList<>();
-            if(getSelectedActionPlan() != null) {
+            if (getSelectedActionPlan() != null) {
                 filters.add(new ActionPlanFilter(getSelectedActionPlan()));
             }
             TaskExecutor.execute(new SummaryTask(issuesContainer, projectContext, filters.toArray(new IssueFilter[0])));
@@ -267,8 +260,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
         listIssuesAction.setEnabled(false);
         showRuleInfoAction.setEnabled(false);
     }
-    
-    public ActionPlan getSelectedActionPlan(){
+
+    public ActionPlan getSelectedActionPlan() {
         Enumeration<AbstractButton> elements = actionPlanGroup.getElements();
         while (elements.hasMoreElements()) {
             JRadioButtonMenuItem item = (JRadioButtonMenuItem) elements.nextElement();
@@ -651,7 +644,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
     void readProperties(java.util.Properties p) {
     }
 
-    private void openFile(File file, int line) {
+    private void openIssueLocation(IssueLocation issueLocation) throws MvnModelInputException {
+        int lineNumber = issueLocation.getLineNumber() <= 0 ? 1 : issueLocation.getLineNumber();
+        File file = issueLocation.getFile(projectContext.getProject());
         FileObject fobj = FileUtil.toFileObject(file);
         if (fobj == null) {
             String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
@@ -666,13 +661,18 @@ public final class SonarIssuesTopComponent extends TopComponent {
             Exceptions.printStackTrace(ex);
         }
         if (dobj != null) {
-            LineCookie lc = (LineCookie) dobj.getCookie(LineCookie.class);
-            if (lc == null) {
-                /* cannot do it */
-                return;
+            EditorCookie ec = (EditorCookie) dobj.getLookup().lookup(EditorCookie.class);
+            if (ec != null) {
+                ec.open();
+                Line.Set lineSet = ec.getLineSet();
+                int index = lineNumber-1;
+                assert !lineSet.getLines().isEmpty();
+                /* Go to last line of file if issue line does not exist */
+                if(lineSet.getLines().size() <= index) {
+                    index=lineSet.getLines().size()-1;
+                }
+                lineSet.getCurrent(index).show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
             }
-            Line l = lc.getLineSet().getOriginal(line - 1);
-            l.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
         }
     }
 
