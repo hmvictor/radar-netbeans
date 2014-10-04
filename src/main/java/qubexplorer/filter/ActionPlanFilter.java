@@ -10,7 +10,7 @@ import org.sonar.wsclient.issue.IssueQuery;
  * @author Victor
  */
 public class ActionPlanFilter implements IssueFilter{
-    private ActionPlan actionPlan;
+    private final ActionPlan actionPlan;
 
     public ActionPlanFilter(ActionPlan actionPlan) {
         Objects.requireNonNull(actionPlan, "actionPlan is null");

@@ -3,12 +3,10 @@ package qubexplorer.server;
 import qubexplorer.filter.SeverityFilter;
 import qubexplorer.filter.IssueFilter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import org.apache.maven.model.Model;
 import org.netbeans.api.project.Project;
 import org.sonar.wsclient.Sonar;
@@ -130,6 +128,9 @@ public class SonarQube implements IssuesContainer{
                     Rule rule = rulesCache.get(issue.ruleKey());
                     if(rule == null) {
                         rule=getRule(userCredentials, issue.ruleKey());
+                        if(rule == null){
+                            throw new IllegalStateException("No such rule in server: "+issue.ruleKey());
+                        }
                         rulesCache.put(issue.ruleKey(), rule);
                     }
                     issues.add(new RadarIssue(issue, rule));
@@ -166,28 +167,27 @@ public class SonarQube implements IssuesContainer{
     
     public Rule getRule(UserCredentials userCredentials, String ruleKey) {
         try{
-            RuleQuery ruleQuery=new RuleQuery("java");
-            String[] tokens=ruleKey.split(":");
-            ruleQuery.setSearchText(tokens.length == 2? tokens[1]: ruleKey);
-            Sonar sonar;
-            if(userCredentials == null) {
-                sonar=Sonar.create(serverUrl);
-            }else {
-                sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
-            }
-            List<Rule> rules = sonar.findAll(ruleQuery);
-            for(Rule rule:rules) {
-                if(rule.getKey().equals(ruleKey)) {
-                    return rule;
+            return new RuleSearchClient(serverUrl).getRule(userCredentials, ruleKey);
+        }catch(HttpException ex){
+            if(ex.getMessage().contains("Error 404")){
+                RuleQuery ruleQuery=new RuleQuery("java");
+                String[] tokens=ruleKey.split(":");
+                ruleQuery.setSearchText(tokens.length == 2? tokens[1]: ruleKey);
+                Sonar sonar;
+                if(userCredentials == null) {
+                    sonar=Sonar.create(serverUrl);
+                }else {
+                    sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
                 }
+                List<Rule> rules = sonar.findAll(ruleQuery);
+                for(Rule rule:rules) {
+                    if(rule.getKey().equals(ruleKey)) {
+                        return rule;
+                    }
+                }
+                return null;
             }
-            return null;
-        }catch(ConnectionException ex) {
-            if(isError401(ex)){
-                throw new AuthorizationException(ex);
-            }else{
-                throw ex;
-            }
+            throw ex;
         }
     }
     
@@ -201,14 +201,7 @@ public class SonarQube implements IssuesContainer{
             tempFilters[0]=new SeverityFilter(severity);
             System.arraycopy(filters, 0, tempFilters, 1, filters.length);
             List<RadarIssue> issues = getIssues(auth, resource, tempFilters);
-            Map<Rule, Integer> counts=new TreeMap<>(new Comparator<Rule>(){
-
-                @Override
-                public int compare(Rule t, Rule t1) {
-                    return t.getTitle().compareTo(t1.getTitle());
-                }
-                
-            });
+            Map<Rule, Integer> counts=new HashMap<>();
             for(RadarIssue issue: issues){
                 Integer counter = counts.get(issue.rule());
                 if(counter == null) {

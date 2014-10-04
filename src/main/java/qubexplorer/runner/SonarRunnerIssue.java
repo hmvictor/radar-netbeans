@@ -157,5 +157,5 @@ public class SonarRunnerIssue implements Issue{
     public List<IssueComment> comments() {
         return Collections.emptyList();
     }
-    
+
 }

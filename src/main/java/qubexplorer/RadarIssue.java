@@ -13,8 +13,8 @@ import org.sonar.wsclient.services.Rule;
  * @author Victor
  */
 public class RadarIssue implements Issue{
-    private Issue issue;
-    private Rule rule;
+    private final Issue issue;
+    private final Rule rule;
 
     public RadarIssue(Issue issue, Rule rule) {
         Objects.requireNonNull(issue, "issue is null");
@@ -130,5 +130,5 @@ public class RadarIssue implements Issue{
     public List<IssueComment> comments() {
         return issue.comments();
     }
-    
+
 }
