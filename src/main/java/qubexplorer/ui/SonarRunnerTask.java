@@ -19,8 +19,6 @@ import qubexplorer.runner.SonarRunnerCancelledException;
 import qubexplorer.runner.SonarRunnerProccess;
 import qubexplorer.runner.SonarRunnerResult;
 import qubexplorer.runner.SourcesNotFoundException;
-import qubexplorer.ui.ProjectContext;
-import qubexplorer.ui.SonarIssuesTopComponent;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
 import qubexplorer.ui.task.Task;
 
@@ -47,7 +45,10 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
     
     @Override
     protected void init() {
-        io = IOProvider.getDefault().getIO("Sonar-runner", false, new Action[]{stopAction}, IOContainer.getDefault());
+        stopAction.setEnabled(true);
+        if(io == null) {
+            io = IOProvider.getDefault().getIO("Sonar-runner", true, new Action[]{stopAction}, IOContainer.getDefault());
+        }
         try {
             io.getOut().reset();
             io.getErr().reset();
@@ -116,6 +117,7 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
 
     @Override
     protected void destroy() {
+        stopAction.setEnabled(true);
         io.getOut().close();
         io.getErr().close();
     }
