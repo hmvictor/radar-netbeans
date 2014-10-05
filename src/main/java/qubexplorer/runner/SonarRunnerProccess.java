@@ -20,6 +20,7 @@ import org.netbeans.spi.project.SubprojectProvider;
 import org.openide.util.Utilities;
 import org.sonar.runner.api.ForkedRunner;
 import org.sonar.runner.api.PrintStreamConsumer;
+import org.sonar.runner.api.ProcessMonitor;
 import org.sonar.runner.api.Runner;
 import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
@@ -85,9 +86,9 @@ public class SonarRunnerProccess {
         this.analysisMode = analysisMode;
     }
 
-    protected Runner createForProject(UserCredentials userCredentials) throws MvnModelInputException {
+    protected Runner createForProject(UserCredentials userCredentials, ProcessMonitor processMonitor) throws MvnModelInputException {
         int sourcesCounter = 0;
-        ForkedRunner runner = ForkedRunner.create();
+        ForkedRunner runner = ForkedRunner.create(processMonitor);
         projectHome = project.getProjectDirectory().getPath();
         Model model = mvnModelFactory.createModel(project);
         properties.setProperty("sonar.projectName", model.getName() != null ? model.getName() : model.getArtifactId());
@@ -187,8 +188,8 @@ public class SonarRunnerProccess {
         return configureSourcesAndBinariesProperties(module, subproject);
     }
 
-    public SonarRunnerResult executeRunner(UserCredentials token) throws MvnModelInputException {
-        Runner runner = createForProject(token);
+    public SonarRunnerResult executeRunner(UserCredentials token, ProcessMonitor processMonitor) throws MvnModelInputException {
+        Runner runner = createForProject(token, processMonitor);
         try {
             runner.execute();
         } catch (Exception ex) {
@@ -198,11 +199,15 @@ public class SonarRunnerProccess {
                 throw new SonarRunnerException(ex);
             }
         }
-        File jsonFile = new File(properties.getProperty("sonar.working.directory"), "sonar-report.json");
-        if (!jsonFile.exists()) {
-            throw new SonarRunnerException();
-        } else {
-            return new SonarRunnerResult(jsonFile);
+        if(processMonitor.stop()) {
+            throw new SonarRunnerCancelledException();
+        }else{
+            File jsonFile = new File(properties.getProperty("sonar.working.directory"), "sonar-report.json");
+            if (!jsonFile.exists()) {
+                throw new SonarRunnerException();
+            } else {
+                return new SonarRunnerResult(jsonFile);
+            }
         }
     }
 
