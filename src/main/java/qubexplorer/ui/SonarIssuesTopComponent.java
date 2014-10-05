@@ -41,7 +41,6 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.DropDownButtonFactory;
 import org.openide.cookies.EditorCookie;
-import org.openide.cookies.LineCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
@@ -106,7 +105,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     });
 
-    private final Action showRuleInfoAction = new AbstractAction("Show Rule Info") {
+    private final Action showRuleInfoAction = new AbstractAction("Show Rule Info", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"))) {
 
         @Override
         public void actionPerformed(ActionEvent ae) {
@@ -566,7 +565,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
         int row = tableSummary.getSelectedRow();
         if (row != -1) {
             Object selectedNode = tableSummary.getPathForRow(row).getLastPathComponent();
-            ruleInfoMenuItem.setVisible(selectedNode instanceof Rule);
             showRuleInfoAction.setEnabled(selectedNode instanceof Rule);
             Summary summary = ((SummaryModel) tableSummary.getTreeTableModel()).getSummary();
             int count;
@@ -582,7 +580,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
             listIssuesAction.setEnabled(count > 0);
         } else {
             listIssuesAction.setEnabled(false);
-            ruleInfoMenuItem.setVisible(false);
             showRuleInfoAction.setEnabled(false);
         }
     }//GEN-LAST:event_tableSummaryValueChanged

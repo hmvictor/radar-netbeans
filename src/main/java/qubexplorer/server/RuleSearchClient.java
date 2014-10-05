@@ -44,11 +44,4 @@ public class RuleSearchClient {
         }
     }
     
-    public static void main(String[] args) {
-        Rule rule = new RuleSearchClient("http://localhost:9000").getRule(new UserCredentials("admin", PassEncoder.encode("admin".toCharArray())), "squid:MethodCyclomaticComplexity");
-        System.out.println(rule.getKey());
-        System.out.println(rule.getTitle());
-        System.out.println(rule.getDescription());
-    }
-    
 }
