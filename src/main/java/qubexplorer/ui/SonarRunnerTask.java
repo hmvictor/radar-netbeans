@@ -117,7 +117,7 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
 
     @Override
     protected void destroy() {
-        stopAction.setEnabled(true);
+        stopAction.setEnabled(false);
         io.getOut().close();
         io.getErr().close();
     }
