@@ -20,6 +20,7 @@ import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.DefaultRowSorter;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -91,10 +92,13 @@ import qubexplorer.ui.task.TaskExecutor;
     "HINT_SonarIssuesTopComponent=This is a Sonar Qube Window"
 })
 public final class SonarIssuesTopComponent extends TopComponent {
+    private static final String ACTION_PLAN_PROPERTY = "actionPlan";
 
     private IssuesContainer issuesContainer;
     private ProjectContext projectContext;
     private JPopupMenu dropDownMenu;
+    
+    private Icon informationIcon=new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"));
 
     private final Comparator<Severity> severityComparator = Collections.reverseOrder(new Comparator<Severity>() {
 
@@ -105,7 +109,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     });
 
-    private final Action showRuleInfoAction = new AbstractAction("Show Rule Info", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"))) {
+    private final Action showRuleInfoAction = new AbstractAction("Show Rule Info", informationIcon) {
 
         @Override
         public void actionPerformed(ActionEvent ae) {
@@ -162,7 +166,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     };
 
-    private final Action showRuleInfoForIssueAction = new AbstractAction("Show Rule Info about Issue", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"))) {
+    private final Action showRuleInfoForIssueAction = new AbstractAction("Show Rule Info about Issue", informationIcon) {
 
         @Override
         public void actionPerformed(ActionEvent ae) {
@@ -264,8 +268,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
         Enumeration<AbstractButton> elements = actionPlanGroup.getElements();
         while (elements.hasMoreElements()) {
             JRadioButtonMenuItem item = (JRadioButtonMenuItem) elements.nextElement();
-            if (item.isSelected() && item.getClientProperty("actionPlan") instanceof ActionPlan) {
-                return (ActionPlan) item.getClientProperty("actionPlan");
+            if (item.isSelected() && item.getClientProperty(ACTION_PLAN_PROPERTY) instanceof ActionPlan) {
+                return (ActionPlan) item.getClientProperty(ACTION_PLAN_PROPERTY);
             }
         }
         return null;
@@ -283,12 +287,12 @@ public final class SonarIssuesTopComponent extends TopComponent {
         JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem(org.openide.util.NbBundle.getMessage(Bundle.class, "SonarIssuesTopComponent.actionPlansCombo.none"));
         menuItem.setSelected(true);
         menuItem.addActionListener(actionPlanItemListener);
-        menuItem.putClientProperty("actionPlan", null);
+        menuItem.putClientProperty(ACTION_PLAN_PROPERTY, null);
         actionPlanGroup.add(menuItem);
         dropDownMenu.add(menuItem);
         for (ActionPlan plan : plans) {
             menuItem = new JRadioButtonMenuItem(plan.name());
-            menuItem.putClientProperty("actionPlan", plan);
+            menuItem.putClientProperty(ACTION_PLAN_PROPERTY, plan);
             menuItem.addActionListener(actionPlanItemListener);
             actionPlanGroup.add(menuItem);
             dropDownMenu.add(menuItem);
