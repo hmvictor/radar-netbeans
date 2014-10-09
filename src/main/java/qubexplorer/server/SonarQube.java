@@ -186,6 +186,8 @@ public class SonarQube implements IssuesContainer{
                     }
                 }
                 return null;
+            }else if(ex.status() == UNAUTHORIZED_RESPONSE_STATUS){
+                throw new AuthorizationException(ex);
             }
             throw ex;
         }

@@ -82,7 +82,7 @@ import qubexplorer.ui.task.TaskExecutor;
         persistenceType = TopComponent.PERSISTENCE_ALWAYS)
 @TopComponent.Registration(mode = "output", openAtStartup = false)
 @ActionID(category = "Window", id = "qubexplorer.ui.SonarTopComponent")
-@ActionReference(path = "Menu/Window" /*, position = 333 */)
+@ActionReference(path = "Menu/Window")
 @TopComponent.OpenActionRegistration(
         displayName = "#CTL_SonarAction",
         preferredID = "SonarTopComponent")
@@ -96,7 +96,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private IssuesContainer issuesContainer;
     private ProjectContext projectContext;
-    private JPopupMenu dropDownMenu;
+    private JPopupMenu dropDownMenu=new JPopupMenu();
     
     private Icon informationIcon=new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"));
 
@@ -338,7 +338,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         buttonListIssues = new javax.swing.JButton();
         buttonRuleInfo = new javax.swing.JButton();
         showEmptySeverity = new javax.swing.JToggleButton();
-        jButton1 = DropDownButtonFactory.createDropDownButton(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/page_gear.png")), dropDownMenu=new JPopupMenu());
+        jButton1 = DropDownButtonFactory.createDropDownButton(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/page_gear.png")), dropDownMenu);
         jScrollPane1 = new javax.swing.JScrollPane();
         tableSummary = new org.jdesktop.swingx.JXTreeTable();
         tableSummary.getTableHeader().setReorderingAllowed(false);
@@ -350,7 +350,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
         summaryPopupMenu.add(jMenuItem1);
 
         ruleInfoMenuItem.setAction(showRuleInfoAction);
-        org.openide.awt.Mnemonics.setLocalizedText(ruleInfoMenuItem, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.ruleInfoMenuItem.text")); // NOI18N
         summaryPopupMenu.add(ruleInfoMenuItem);
 
         title.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -643,6 +642,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }
 
     void readProperties(java.util.Properties p) {
+        //Do nothing, required method
     }
 
     private void openIssueLocation(IssueLocation issueLocation) throws MvnModelInputException {

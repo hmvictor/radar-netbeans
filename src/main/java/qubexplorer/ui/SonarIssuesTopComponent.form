@@ -317,7 +317,7 @@
                     <Property name="borderPainted" type="boolean" value="false"/>
                   </Properties>
                   <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="DropDownButtonFactory.createDropDownButton(new javax.swing.ImageIcon(getClass().getResource(&quot;/qubexplorer/ui/images/page_gear.png&quot;)), dropDownMenu=new JPopupMenu());"/>
+                    <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="DropDownButtonFactory.createDropDownButton(new javax.swing.ImageIcon(getClass().getResource(&quot;/qubexplorer/ui/images/page_gear.png&quot;)), dropDownMenu);"/>
                   </AuxValues>
                 </Component>
               </SubComponents>
