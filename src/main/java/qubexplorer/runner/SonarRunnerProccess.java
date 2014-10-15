@@ -120,12 +120,12 @@ public class SonarRunnerProccess {
             hasSubprojects = !subprojects.isEmpty();
             for (Project subproject : subprojects) {
                 String module = subproject.getProjectDirectory().getNameExt();
-                if (modules.length() > 0) {
-                    modules.append(',');
-                }
-                modules.append(module);
                 boolean moduleContainsSources = addModuleProperties(module, subproject);
                 if (moduleContainsSources) {
+                    if (modules.length() > 0) {
+                        modules.append(',');
+                    }
+                    modules.append(module);
                     sourcesCounter++;
                 }
             }
@@ -178,12 +178,15 @@ public class SonarRunnerProccess {
         }
     }
 
-    private boolean addModuleProperties(String module, Project subproject) throws MvnModelInputException {
-        Model submodel = mvnModelFactory.createModel(subproject);
-        properties.setProperty(module + ".sonar.projectKey", submodel.getArtifactId());
-        properties.setProperty(module + ".sonar.projectName", submodel.getName() != null ? submodel.getName() : submodel.getArtifactId());
-        properties.setProperty(module + ".sonar.projectBaseDir", subproject.getProjectDirectory().getPath());
-        return configureSourcesAndBinariesProperties(module, subproject);
+    private boolean addModuleProperties(String module, Project moduleProject) throws MvnModelInputException {
+        Model submodel = mvnModelFactory.createModel(moduleProject);
+        boolean containsSources = configureSourcesAndBinariesProperties(module, moduleProject);
+        if(containsSources){
+            properties.setProperty(module + ".sonar.projectKey", submodel.getArtifactId());
+            properties.setProperty(module + ".sonar.projectName", submodel.getName() != null ? submodel.getName() : submodel.getArtifactId());
+            properties.setProperty(module + ".sonar.projectBaseDir", moduleProject.getProjectDirectory().getPath());
+        }
+        return containsSources;
     }
 
     public SonarRunnerResult executeRunner(UserCredentials token, ProcessMonitor processMonitor) throws MvnModelInputException {
