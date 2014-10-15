@@ -1,13 +1,11 @@
 package qubexplorer.runner;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import org.apache.maven.model.Model;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
 import org.netbeans.api.java.queries.SourceLevelQuery;

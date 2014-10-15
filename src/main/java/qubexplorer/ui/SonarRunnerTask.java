@@ -29,7 +29,11 @@ import qubexplorer.ui.task.Task;
 public class SonarRunnerTask extends Task<SonarRunnerResult>{
     private InputOutput io;
     private boolean stopped=false;
-    private final Action stopAction=new AbstractAction("Stop", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/stop.png"))) {
+    private final Action stopAction=new AbstractAction("Stop Sonar-runner", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/stop.png"))) {
+        
+        {
+            putValue(Action.SHORT_DESCRIPTION, "Stops sonar-runner");
+        }
         
         @Override
         public void actionPerformed(ActionEvent ae) {

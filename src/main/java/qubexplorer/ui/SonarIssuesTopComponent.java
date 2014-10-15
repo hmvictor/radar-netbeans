@@ -110,6 +110,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
     });
 
     private final Action showRuleInfoAction = new AbstractAction("Show Rule Info", informationIcon) {
+        
+        {
+            putValue(Action.SHORT_DESCRIPTION, "Shows information about SonarQube rule");
+        }
 
         @Override
         public void actionPerformed(ActionEvent ae) {
@@ -124,6 +128,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
     };
 
     private final Action listIssuesAction = new AbstractAction("List Issues", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/application_view_list.png"))) {
+        
+        {
+            putValue(Action.SHORT_DESCRIPTION, "Displays SonarQube issues");
+        }
 
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -146,6 +154,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
     };
 
     private final Action gotoIssueAction = new AbstractAction("Go to Source") {
+        
+        {
+            putValue(Action.SHORT_DESCRIPTION, "Opens the location of this issue in the source code");
+        }
 
         @Override
         public void actionPerformed(ActionEvent ae) {
@@ -167,6 +179,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
     };
 
     private final Action showRuleInfoForIssueAction = new AbstractAction("Show Rule Info about Issue", informationIcon) {
+        
+        {
+            putValue(Action.SHORT_DESCRIPTION, "Shows information about the SonarQube rule for the issue");
+        }
 
         @Override
         public void actionPerformed(ActionEvent ae) {
@@ -207,6 +223,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     public SonarIssuesTopComponent() {
         initComponents();
+        dropDownMenu.setToolTipText("Action Plans");
         showEmptySeverity.addItemListener(skipEmptySeverities);
         issuesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         issuesTable.getColumn("").setResizable(false);
@@ -442,12 +459,14 @@ public final class SonarIssuesTopComponent extends TopComponent {
         showEmptySeverity.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/eye.png"))); // NOI18N
         showEmptySeverity.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(showEmptySeverity, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.showEmptySeverity.text")); // NOI18N
+        showEmptySeverity.setToolTipText(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.showEmptySeverity.toolTipText")); // NOI18N
         showEmptySeverity.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         showEmptySeverity.setBorderPainted(false);
         showEmptySeverity.setIconTextGap(0);
 
         jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/page_gear.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jButton1.text")); // NOI18N
+        jButton1.setToolTipText(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jButton1.toolTipText")); // NOI18N
         jButton1.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         jButton1.setBorderPainted(false);
 
