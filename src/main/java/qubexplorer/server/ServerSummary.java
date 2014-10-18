@@ -12,10 +12,10 @@ import qubexplorer.Summary;
  *
  * @author Victor
  */
-public class Counting implements Summary{
-    private Map<Severity, Map<Rule, Integer>> severityCounts=new HashMap<>();
-    private double rulesCompliance;
+public class ServerSummary implements Summary{
+    private final Map<Severity, Map<Rule, Integer>> severityCounts=new HashMap<>();
     
+    @Override
     public int getCount(Severity severity) {
         Map<Rule, Integer> map = severityCounts.get(severity);
         if(map == null) {
@@ -29,14 +29,6 @@ public class Counting implements Summary{
         }
     }
 
-    public double getRulesCompliance() {
-        return rulesCompliance;
-    }
-
-    public void setRulesCompliance(double rulesCompliance) {
-        this.rulesCompliance = rulesCompliance;
-    }
-    
     public Map<Rule, Integer> getRuleCounts(Severity severity) {
         if(severityCounts.containsKey(severity)) {
             return severityCounts.get(severity);

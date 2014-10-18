@@ -193,32 +193,6 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
-    public Counting getCounting(UserCredentials auth, String resource, IssueFilter... filters) {
-        if(!existsProject(auth, resource)) {
-            throw new NoSuchProjectException(resource);
-        }
-        Counting counting=new Counting();
-        for(Severity severity: Severity.values()) {
-            IssueFilter[] tempFilters=new IssueFilter[filters.length+1];
-            tempFilters[0]=new SeverityFilter(severity);
-            System.arraycopy(filters, 0, tempFilters, 1, filters.length);
-            List<RadarIssue> issues = getIssues(auth, resource, tempFilters);
-            Map<Rule, Integer> counts=new HashMap<>();
-            for(RadarIssue issue: issues){
-                Integer counter = counts.get(issue.rule());
-                if(counter == null) {
-                    counter=1;
-                }else{
-                    counter=counter+1;
-                }
-                counts.put(issue.rule(), counter);
-            }
-            counting.setRuleCounts(severity, counts);
-        }
-        counting.setRulesCompliance(getRulesCompliance(auth, resource));
-        return counting;
-    }
-    
     public List<String> getProjectsKeys(UserCredentials userCredentials) {
         try{
             Sonar sonar;
@@ -284,8 +258,29 @@ public class SonarQube implements IssuesContainer{
     }
 
     @Override
-    public Summary getSummary(UserCredentials authentication, String projectKey, IssueFilter[] filters) {
-        return getCounting(authentication, projectKey, filters);
+    public Summary getSummary(UserCredentials auth, String resource, IssueFilter[] filters) {
+        if(!existsProject(auth, resource)) {
+            throw new NoSuchProjectException(resource);
+        }
+        ServerSummary counting=new ServerSummary();
+        for(Severity severity: Severity.values()) {
+            IssueFilter[] tempFilters=new IssueFilter[filters.length+1];
+            tempFilters[0]=new SeverityFilter(severity);
+            System.arraycopy(filters, 0, tempFilters, 1, filters.length);
+            List<RadarIssue> issues = getIssues(auth, resource, tempFilters);
+            Map<Rule, Integer> counts=new HashMap<>();
+            for(RadarIssue issue: issues){
+                Integer counter = counts.get(issue.rule());
+                if(counter == null) {
+                    counter=1;
+                }else{
+                    counter=counter+1;
+                }
+                counts.put(issue.rule(), counter);
+            }
+            counting.setRuleCounts(severity, counts);
+        }
+        return counting;
     }
 
 }
