@@ -2,6 +2,7 @@ package qubexplorer.ui;
 
 import java.awt.event.ActionEvent;
 import java.io.IOException;
+import java.util.Arrays;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -84,6 +85,8 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
         };
         SonarRunnerProccess sonarRunnerProccess = new SonarRunnerProccess(getServerUrl(), getProjectContext().getProject());
         sonarRunnerProccess.setAnalysisMode(SonarRunnerProccess.AnalysisMode.valueOf(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.analysisMode", "Preview").toUpperCase()));
+        String jvmArguments = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.jvmArguments", "");
+        sonarRunnerProccess.setJvmArguments(Arrays.asList(jvmArguments.split(" +")));
         sonarRunnerProccess.setOutConsumer(out);
         sonarRunnerProccess.setErrConsumer(err);
         return sonarRunnerProccess.executeRunner(getUserCredentials(), new ProcessMonitor() {

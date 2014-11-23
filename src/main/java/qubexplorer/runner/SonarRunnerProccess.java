@@ -2,6 +2,8 @@ package qubexplorer.runner;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
@@ -39,6 +41,7 @@ public class SonarRunnerProccess {
     private PrintStreamConsumer outConsumer;
     private PrintStreamConsumer errConsumer;
     private WrapperConsumer wrapper;
+    private List<String> jvmArguments=Collections.emptyList();
 
     public enum AnalysisMode {
 
@@ -84,6 +87,15 @@ public class SonarRunnerProccess {
         this.analysisMode = analysisMode;
     }
 
+    public List<String> getJvmArguments() {
+        return jvmArguments;
+    }
+
+    public void setJvmArguments(List<String> jvmArguments) {
+        Objects.requireNonNull(jvmArguments, "argument list is null");
+        this.jvmArguments = jvmArguments;
+    }
+    
     protected Runner createForProject(UserCredentials userCredentials, ProcessMonitor processMonitor) throws MvnModelInputException {
         int sourcesCounter = 0;
         ForkedRunner runner = ForkedRunner.create(processMonitor);
@@ -146,6 +158,7 @@ public class SonarRunnerProccess {
         }
         wrapper = new WrapperConsumer(errConsumer);
         runner.setStdErr(wrapper);
+        runner.addJvmArguments(jvmArguments);
         runner.addProperties(properties);
         return runner;
     }
