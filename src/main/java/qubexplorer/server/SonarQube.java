@@ -167,6 +167,7 @@ public class SonarQube implements IssuesContainer{
     
     public Rule getRule(UserCredentials userCredentials, String ruleKey) {
         try{
+            //try Rule Search API
             return new RuleSearchClient(serverUrl).getRule(userCredentials, ruleKey);
         }catch(HttpException ex){
             if(ex.getMessage().contains("Error 404")){

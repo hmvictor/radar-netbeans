@@ -33,12 +33,16 @@ public class RuleSearchClient {
         String jsonRule = httpRequestFactory.get("/api/rules/show", params);
         try{
             JsonElement jsonElement = new JsonParser().parse(new StringReader(jsonRule));
-            JsonObject rule = (JsonObject) ((JsonObject)jsonElement).get("rule");
-            Rule rule1 = new Rule();
-            rule1.setKey(rule.get("key").getAsString());
-            rule1.setTitle(rule.get("name").getAsString());
-            rule1.setDescription(rule.get("htmlDesc").getAsString());
-            return rule1;
+            JsonObject jsonObject = (JsonObject) ((JsonObject)jsonElement).get("rule");
+            Rule rule = new Rule();
+            rule.setKey(jsonObject.get("key").getAsString());
+            rule.setTitle(jsonObject.get("name").getAsString());
+            JsonElement description = jsonObject.get("htmlDesc");
+            if(description == null){
+                description=jsonObject.get("description");
+            }
+            rule.setDescription(description.getAsString());
+            return rule;
         }catch(JsonSyntaxException ex) {
             return null;
         }
