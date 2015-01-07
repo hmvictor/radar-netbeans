@@ -7,9 +7,8 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
-import qubexplorer.MvnModelInputException;
+import qubexplorer.SonarQubeProjectInfoBuilder;
 import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
@@ -34,21 +33,17 @@ public final class ServerIssuesAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent ev) {
-        try {
-            final ProjectContext projectContext = new ProjectContext(context, SonarQube.toResource(context));
-            final SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
-            TaskExecutor.execute(new SummaryTask(sonarQube, projectContext, new IssueFilter[0]){
+        final ProjectContext projectContext = new ProjectContext(context, SonarQubeProjectInfoBuilder.create(context).getKey().toString());
+        final SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
+        TaskExecutor.execute(new SummaryTask(sonarQube, projectContext, new IssueFilter[0]) {
 
-                @Override
-                protected void success(Summary summary) {
-                    super.success(summary);
-                    TaskExecutor.execute(new ActionPlansTask(sonarQube, projectContext));
-                }
-                
-            });
-        } catch (MvnModelInputException ex) {
-            Exceptions.printStackTrace(ex);
-        }
+            @Override
+            protected void success(Summary summary) {
+                super.success(summary);
+                TaskExecutor.execute(new ActionPlansTask(sonarQube, projectContext));
+            }
+
+        });
     }
 
 }

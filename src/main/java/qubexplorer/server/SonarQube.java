@@ -253,11 +253,6 @@ public class SonarQube implements IssuesContainer{
         return false;
     }
 
-    public static String toResource(Project project) throws MvnModelInputException {
-        Model model = new MvnModelFactory().createModel(project);
-        return model.getGroupId()+":"+model.getArtifactId();
-    }
-
     @Override
     public Summary getSummary(UserCredentials auth, String resource, IssueFilter[] filters) {
         if(!existsProject(auth, resource)) {
@@ -283,5 +278,10 @@ public class SonarQube implements IssuesContainer{
         }
         return counting;
     }
+    
+//    public static String toResource(Project project) throws MvnModelInputException {
+//        Model model = new MvnModelFactory().createModel(project);
+//        return model.getGroupId()+":"+model.getArtifactId();
+//    }
 
 }

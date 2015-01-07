@@ -2,26 +2,31 @@ package qubexplorer.ui;
 
 import java.io.File;
 import java.util.Comparator;
-import org.apache.maven.model.Model;
+import java.util.Set;
+//import org.apache.maven.model.Model;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
+import org.netbeans.spi.project.SubprojectProvider;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import qubexplorer.MvnModelFactory;
 import qubexplorer.MvnModelInputException;
+import qubexplorer.SonarQubeProjectInfo;
+import qubexplorer.SonarQubeProjectInfoBuilder;
 
 /**
  *
  * @author Victor
  */
 public class IssueLocation {
+
     private final String componentKey;
     private final int lineNumber;
-    private static final String DEFAULT_EXTENSION=".java";
+    private static final String DEFAULT_EXTENSION = ".java";
 
     public IssueLocation(String componentKey, int lineNumber) {
         this.componentKey = componentKey;
@@ -31,7 +36,7 @@ public class IssueLocation {
     public IssueLocation(String componentKey) {
         this(componentKey, 0);
     }
-    
+
     public String getPath() {
         String path = componentKey;
         int index = path.lastIndexOf(':');
@@ -40,32 +45,32 @@ public class IssueLocation {
         }
         return path;
     }
-    
+
     public String getName() {
-        String extension="";
+        String extension = "";
         char separator;
-        if(componentKey.contains("/")) {
-            separator='/';
-        }else{
-            extension=DEFAULT_EXTENSION;
-            separator='.';
+        if (componentKey.contains("/")) {
+            separator = '/';
+        } else {
+            extension = DEFAULT_EXTENSION;
+            separator = '.';
         }
-        int index=componentKey.lastIndexOf(separator);
-        if(index < componentKey.length() -1) {
-            return componentKey.substring(index+1)+extension;
-        }else{
+        int index = componentKey.lastIndexOf(separator);
+        if (index < componentKey.length() - 1) {
+            return componentKey.substring(index + 1) + extension;
+        } else {
             return "";
         }
     }
-    
+
     public String getComponentKey() {
         return componentKey;
     }
-    
+
     public Integer getLineNumber() {
         return lineNumber;
     }
-    
+
     public String getProjectKey() {
         String path = componentKey;
         int index = path.lastIndexOf(':');
@@ -74,41 +79,45 @@ public class IssueLocation {
         }
         return path;
     }
-    
+
     public String getShortProjectKey() {
         String[] tokens = componentKey.split(":");
         assert tokens.length >= 2;
         return tokens[0] + ":" + tokens[1];
     }
-    
-    public Project getProjectOwner(Project parentProject)throws MvnModelInputException {
-        BasicPomInfo basicPomInfo = getBasicPomInfo(getShortProjectKey());
-        Model model = new MvnModelFactory().createModel(parentProject);
-        if (model.getGroupId().equals(basicPomInfo.getGroupId()) && model.getArtifactId().equals(basicPomInfo.getArtifactId())) {
-            return parentProject;
-        }
-        FileObject mavenDir = findMvnDir(model, basicPomInfo, model.getGroupId());
-        if (mavenDir != null) {
-            return FileOwnerQuery.getOwner(mavenDir);
+
+    public Project getProjectOwner(Project parentProject) throws MvnModelInputException {
+        SonarQubeProjectInfo projectInfo = SonarQubeProjectInfoBuilder.create(parentProject);
+//        BasicPomInfo basicPomInfo = getBasicPomInfo(getShortProjectKey());
+//        Model model = new MvnModelFactory().createModel(parentProject);
+//        if (model.getGroupId().equals(basicPomInfo.getGroupId()) && model.getArtifactId().equals(basicPomInfo.getArtifactId())) {
+//            return parentProject;
+//        }
+//        if (projectInfo.getKey().equals(getShortProjectKey())) {
+//            return parentProject;
+//        }
+//        FileObject projectDir = findMvnDir(model, basicPomInfo, model.getGroupId());
+        FileObject projectDir = findProjectDir(parentProject, getShortProjectKey());
+        if (projectDir != null) {
+            return FileOwnerQuery.getOwner(projectDir);
         } else {
             return null;
         }
     }
-    
 
     public File getFile(Project parentProject) throws MvnModelInputException {
         Project projectOwner = getProjectOwner(parentProject);
-        if(projectOwner == null) {
+        if (projectOwner == null) {
             throw new ProjectNotFoundException(getShortProjectKey());
         }
         File file;
         String path = getPath();
-        if(path.contains("/")) {
+        if (path.contains("/")) {
             /* It's a relative file path*/
             file = new File(projectOwner.getProjectDirectory().getPath(), path);
-        }else{
+        } else {
             /* It's an element name. Assume is a java file */
-            String filePath=path.replace(".", "/")+DEFAULT_EXTENSION;
+            String filePath = path.replace(".", "/") + DEFAULT_EXTENSION;
             Sources sources = ProjectUtils.getSources(projectOwner);
             SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
             file = new File(sourceGroups[0].getRootFolder().getPath(), filePath);
@@ -124,31 +133,31 @@ public class IssueLocation {
             return componentKey + " [" + lineNumber + "]";
         }
     }
-    
+
     static BasicPomInfo getBasicPomInfo(String componentKey) {
         String[] tokens = componentKey.split(":");
         assert tokens.length >= 2;
         return new BasicPomInfo(tokens[0], tokens[1]);
     }
-    
-    private static FileObject findMvnDir(Model model, BasicPomInfo basicPomInfo, String groupId)throws MvnModelInputException {
-        MvnModelFactory factory = new MvnModelFactory();
-        for (String module : model.getModules()) {
-            FileObject moduleFile = FileUtil.toFileObject(new File(model.getProjectDirectory(), module));
-            Model m = factory.createModel(moduleFile);
-            String tmpGroupId = m.getGroupId() == null ? groupId : m.getGroupId();
-            if (tmpGroupId.equals(basicPomInfo.getGroupId()) && m.getArtifactId().equals(basicPomInfo.getArtifactId())) {
-                return moduleFile;
-            } else {
-                FileObject o = findMvnDir(m, basicPomInfo, tmpGroupId);
-                if (o != null) {
-                    return o;
+
+    private static FileObject findProjectDir(Project project, String key) throws MvnModelInputException {
+        SubprojectProvider subprojectProvider = project.getLookup().lookup(SubprojectProvider.class);
+        SonarQubeProjectInfo projectInfo=SonarQubeProjectInfoBuilder.create(project);
+        if(projectInfo.getKey().toString().equals(key)) {
+            return project.getProjectDirectory();
+        }
+        if (subprojectProvider != null) {
+            Set<? extends Project> subprojects = subprojectProvider.getSubprojects();
+            for (Project subproject : subprojects) {
+                SonarQubeProjectInfo subprojectInfo = projectInfo.createSubprojectInfo(subproject);
+                if (subprojectInfo.getKey().toString().equals(key)) {
+                    return subproject.getProjectDirectory();
                 }
             }
         }
         return null;
     }
-    
+
     private static class BasicPomInfo {
 
         private final String groupId;
@@ -167,9 +176,9 @@ public class IssueLocation {
             return artifactId;
         }
     }
-    
-    public static class IssueLocationComparator implements Comparator<IssueLocation>{
-        
+
+    public static class IssueLocationComparator implements Comparator<IssueLocation> {
+
         @Override
         public int compare(IssueLocation t, IssueLocation t1) {
             int result = t.getPath().compareTo(t1.getPath());
@@ -179,7 +188,7 @@ public class IssueLocation {
                 return Integer.compare(t.getLineNumber(), t1.getLineNumber());
             }
         }
-        
+
     }
 
 }

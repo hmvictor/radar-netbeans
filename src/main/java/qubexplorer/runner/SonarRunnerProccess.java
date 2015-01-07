@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
-import org.apache.maven.model.Model;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
 import org.netbeans.api.java.queries.SourceLevelQuery;
@@ -27,6 +26,8 @@ import qubexplorer.AuthorizationException;
 import qubexplorer.MvnModelFactory;
 import qubexplorer.MvnModelInputException;
 import qubexplorer.PassEncoder;
+import qubexplorer.SonarQubeProjectInfo;
+import qubexplorer.SonarQubeProjectInfoBuilder;
 import qubexplorer.server.SonarQube;
 
 /**
@@ -100,10 +101,10 @@ public class SonarRunnerProccess {
         int sourcesCounter = 0;
         ForkedRunner runner = ForkedRunner.create(processMonitor);
         projectHome = project.getProjectDirectory().getPath();
-        Model model = mvnModelFactory.createModel(project);
-        properties.setProperty("sonar.projectName", model.getName() != null ? model.getName() : model.getArtifactId());
+        SonarQubeProjectInfo projectInfo=SonarQubeProjectInfoBuilder.create(project);
+        properties.setProperty("sonar.projectName", projectInfo.getName());
         properties.setProperty("sonar.projectBaseDir", projectHome);
-        properties.setProperty("sonar.projectVersion", model.getVersion());
+        properties.setProperty("sonar.projectVersion", projectInfo.getVersion());
         properties.setProperty("sonar.sourceEncoding", FileEncodingQuery.getEncoding(project.getProjectDirectory()).displayName());
         properties.setProperty("sonar.host.url", sonarUrl);
         properties.setProperty("sonar.java.source", SourceLevelQuery.getSourceLevel(project.getProjectDirectory()));
@@ -132,7 +133,7 @@ public class SonarRunnerProccess {
             hasSubprojects = !subprojects.isEmpty();
             for (Project subproject : subprojects) {
                 String module = subproject.getProjectDirectory().getNameExt();
-                boolean moduleContainsSources = addModuleProperties(module, subproject);
+                boolean moduleContainsSources = addModuleProperties(module, subproject, projectInfo);
                 if (moduleContainsSources) {
                     if (modules.length() > 0) {
                         modules.append(',');
@@ -145,11 +146,8 @@ public class SonarRunnerProccess {
         if (sourcesCounter == 0) {
             throw new SourcesNotFoundException();
         }
-        String projectKey = model.getGroupId();
-        if (!hasSubprojects) {
-            projectKey += ":" + model.getArtifactId();
-        }
-        properties.setProperty("sonar.projectKey", projectKey);
+        assert projectInfo.getKey().getPartsCount() == 2;
+        properties.setProperty("sonar.projectKey", hasSubprojects ? projectInfo.getKey().getPart(0): projectInfo.getKey().toString());
         if (modules.length() > 0) {
             properties.setProperty("sonar.modules", modules.toString());
         }
@@ -191,12 +189,13 @@ public class SonarRunnerProccess {
         }
     }
 
-    private boolean addModuleProperties(String module, Project moduleProject) throws MvnModelInputException {
-        Model submodel = mvnModelFactory.createModel(moduleProject);
+    private boolean addModuleProperties(String module, Project moduleProject, SonarQubeProjectInfo projectInfo) throws MvnModelInputException {
+        SonarQubeProjectInfo subprojectInfo=projectInfo.createSubprojectInfo(moduleProject);
         boolean containsSources = configureSourcesAndBinariesProperties(module, moduleProject);
         if(containsSources){
-            properties.setProperty(module + ".sonar.projectKey", submodel.getArtifactId());
-            properties.setProperty(module + ".sonar.projectName", submodel.getName() != null ? submodel.getName() : submodel.getArtifactId());
+            properties.setProperty(module + ".sonar.projectName", subprojectInfo.getName());
+            assert subprojectInfo.getKey().getPartsCount() == 2;
+            properties.setProperty(module + ".sonar.projectKey", subprojectInfo.getKey().getPart(1));
             properties.setProperty(module + ".sonar.projectBaseDir", moduleProject.getProjectDirectory().getPath());
         }
         return containsSources;
