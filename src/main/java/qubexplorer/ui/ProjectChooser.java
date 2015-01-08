@@ -70,9 +70,9 @@ public class ProjectChooser extends javax.swing.JDialog {
     public String getSelectedUrl() {
         return url.getText();
     }
-
-    public String getSelectedProjectKey() {
-        return resourceCombox.getSelectedItem() == null ? null : ((SonarProject)resourceCombox.getSelectedItem()).getKey();
+    
+    public SonarProject getSelectedProject() {
+        return resourceCombox.getSelectedItem() == null ? null : ((SonarProject)resourceCombox.getSelectedItem());
     }
 
     public void validateDialog() {

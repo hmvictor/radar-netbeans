@@ -33,7 +33,7 @@ public final class ServerIssuesAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent ev) {
-        final ProjectContext projectContext = new ProjectContext(context, SonarQubeProjectInfoBuilder.create(context).getKey().toString());
+        final ProjectContext projectContext = new ProjectContext(context, SonarQubeProjectInfoBuilder.create(context).getKey());
         final SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
         TaskExecutor.execute(new SummaryTask(sonarQube, projectContext, new IssueFilter[0]) {
 

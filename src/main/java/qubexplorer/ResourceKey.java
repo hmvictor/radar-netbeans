@@ -7,6 +7,7 @@ import java.util.Arrays;
  * @author Victor
  */
 public class ResourceKey {
+
     private final String[] parts;
     
     public ResourceKey(String... parts){
@@ -45,6 +46,10 @@ public class ResourceKey {
         }
         ResourceKey anotherKey=(ResourceKey) obj;
         return Arrays.equals(parts, anotherKey.parts);
+    }
+    
+    public static ResourceKey valueOf(String key) {
+        return new ResourceKey(key.split(":"));
     }
     
 }

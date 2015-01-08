@@ -1,24 +1,27 @@
 package qubexplorer.server;
 
+import qubexplorer.ResourceKey;
+
 /**
  *
  * @author Victor
  */
 public class SonarProject {
-    private final String key;
     private final String name;
+    private final ResourceKey key;
 
-    public SonarProject(String key, String name) {
-        this.key = key;
+    public SonarProject(String name, ResourceKey key) {
         this.name = name;
+        this.key = key;
     }
-
-    public String getKey() {
-        return key;
-    }
+    
 
     public String getName() {
         return name;
+    }
+
+    public ResourceKey getKey() {
+        return key;
     }
     
 }

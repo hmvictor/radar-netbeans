@@ -11,9 +11,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openide.util.Exceptions;
 import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
+import qubexplorer.ResourceKey;
 import qubexplorer.ui.AuthenticationRepository;
 import qubexplorer.ui.ProjectContext;
 
@@ -25,7 +25,7 @@ import qubexplorer.ui.ProjectContext;
 public class TaskExecutorTest {
 
     @Spy
-    private TaskImpl<Boolean> task = new TaskImpl<>(new ProjectContext(null), "http://testhost:9000");
+    private TaskImpl<Boolean> task = new TaskImpl<>(new ProjectContext(null, ResourceKey.valueOf("part1:part2")), "http://testhost:9000");
 
     @Mock
     private AuthenticationRepository repository;
@@ -75,7 +75,7 @@ public class TaskExecutorTest {
         verify(task).fail(isA(IllegalArgumentException.class));
     }
 
-    @Test(timeout = 5000)
+    @Test
     public void shouldCallReset() throws Exception {
         when(task.execute())
                 .thenThrow(new AuthorizationException())

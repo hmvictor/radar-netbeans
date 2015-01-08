@@ -1,6 +1,5 @@
 package qubexplorer.ui.task;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.ExecutionException;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -72,7 +71,7 @@ public final class TaskExecutor {
                 handle = null;
                 if (task.getUserCredentials() != null) {
                     assert task.getServerUrl() != null;
-                    authenticationRepository.saveAuthentication(task.getServerUrl(), task.getProjectContext().getProjectKey(), task.getUserCredentials());
+                    authenticationRepository.saveAuthentication(task.getServerUrl(), task.getProjectContext().getProjectKey().toString(), task.getUserCredentials());
                 }
             } catch (ExecutionException ex) {
                 handle.finish();
@@ -82,7 +81,7 @@ public final class TaskExecutor {
                     assert task.getServerUrl() != null;
                     String resourceKey = null;
                     if (task.getProjectContext() != null) {
-                        resourceKey = task.getProjectContext().getProjectKey();
+                        resourceKey = task.getProjectContext().getProjectKey().toString();
                     }
                     UserCredentials auth = authenticationRepository.getAuthentication(task.getServerUrl(), resourceKey);
                     if (auth == null) {

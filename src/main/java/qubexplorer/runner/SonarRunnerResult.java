@@ -19,6 +19,7 @@ import org.sonar.wsclient.services.Rule;
 import qubexplorer.UserCredentials;
 import qubexplorer.IssuesContainer;
 import qubexplorer.RadarIssue;
+import qubexplorer.ResourceKey;
 import qubexplorer.Severity;
 import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
@@ -110,7 +111,7 @@ public class SonarRunnerResult implements IssuesContainer {
     }
 
     @Override
-    public List<RadarIssue> getIssues(UserCredentials auth, String resource, IssueFilter... filters) {
+    public List<RadarIssue> getIssues(UserCredentials auth, ResourceKey resourceKey, IssueFilter... filters) {
         try (JsonReader reader = new JsonReader(new FileReader(file))) {
             List<Issue> issues = null;
             reader.beginObject();
@@ -234,7 +235,7 @@ public class SonarRunnerResult implements IssuesContainer {
     }
 
     @Override
-    public Summary getSummary(UserCredentials authentication, String resourceKey, IssueFilter[] filters) {
+    public Summary getSummary(UserCredentials authentication, ResourceKey resourceKey, IssueFilter[] filters) {
         return getSummary();
     }
 

@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import org.apache.maven.model.Model;
-import org.netbeans.api.project.Project;
 import org.sonar.wsclient.Sonar;
 import org.sonar.wsclient.SonarClient;
 import org.sonar.wsclient.base.HttpException;
@@ -26,11 +24,10 @@ import org.sonar.wsclient.services.ServerQuery;
 import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
 import qubexplorer.IssuesContainer;
-import qubexplorer.MvnModelFactory;
-import qubexplorer.MvnModelInputException;
 import qubexplorer.NoSuchProjectException;
 import qubexplorer.PassEncoder;
 import qubexplorer.RadarIssue;
+import qubexplorer.ResourceKey;
 import qubexplorer.Severity;
 import qubexplorer.Summary;
 
@@ -72,10 +69,10 @@ public class SonarQube implements IssuesContainer{
         return sonar.find(serverQuery).getVersion();
     }
     
-    public double getRulesCompliance(UserCredentials userCredentials, String resource) {
+    public double getRulesCompliance(UserCredentials userCredentials, ResourceKey resourceKey) {
         try{
-            if(!existsProject(userCredentials, resource)) {
-                throw new NoSuchProjectException(resource);
+            if(!existsProject(userCredentials, resourceKey)) {
+                throw new NoSuchProjectException(resourceKey);
             }
             Sonar sonar;
             if(userCredentials == null) {
@@ -83,7 +80,7 @@ public class SonarQube implements IssuesContainer{
             }else{
                 sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
             }
-            ResourceQuery query=new ResourceQuery(resource);
+            ResourceQuery query=new ResourceQuery(resourceKey.toString());
             query.setMetrics(VIOLATIONS_DENSITY_METRICS);
             Resource r = sonar.find(query);
             return r.getMeasure(VIOLATIONS_DENSITY_METRICS).getValue();
@@ -97,11 +94,11 @@ public class SonarQube implements IssuesContainer{
     }
     
     @Override
-    public List<RadarIssue> getIssues(UserCredentials auth, String projectKey, IssueFilter... filters) {
+    public List<RadarIssue> getIssues(UserCredentials auth, ResourceKey projectKey, IssueFilter... filters) {
         if(!existsProject(auth, projectKey)) {
             throw new NoSuchProjectException(projectKey);
         }
-        IssueQuery query = IssueQuery.create().componentRoots(projectKey).pageSize(PAGE_SIZE).statuses("OPEN");
+        IssueQuery query = IssueQuery.create().componentRoots(projectKey.toString()).pageSize(PAGE_SIZE).statuses("OPEN");
         for(IssueFilter filter:filters) {
             filter.apply(query);
         }
@@ -147,7 +144,7 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
-    public List<ActionPlan> getActionPlans(UserCredentials userCredentials, String resource){ 
+    public List<ActionPlan> getActionPlans(UserCredentials userCredentials, ResourceKey resourceKey){ 
         try{
             SonarClient client;
             if(userCredentials == null) {
@@ -155,7 +152,7 @@ public class SonarQube implements IssuesContainer{
             }else{
                 client=SonarClient.builder().url(serverUrl).login(userCredentials.getUsername()).password(PassEncoder.decodeAsString(userCredentials.getPassword())).build();
             }
-            return client.actionPlanClient().find(resource);
+            return client.actionPlanClient().find(resourceKey.toString());
         }catch(HttpException ex) {
             if(ex.status() == UNAUTHORIZED_RESPONSE_STATUS){
                 throw new AuthorizationException(ex);
@@ -194,7 +191,7 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
-    public List<String> getProjectsKeys(UserCredentials userCredentials) {
+    public List<ResourceKey> getProjectsKeys(UserCredentials userCredentials) {
         try{
             Sonar sonar;
             if(userCredentials == null) {
@@ -203,9 +200,9 @@ public class SonarQube implements IssuesContainer{
                 sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
             }
             List<Resource> resources = sonar.findAll(new ResourceQuery());
-            List<String> keys=new ArrayList<>(resources.size());
+            List<ResourceKey> keys=new ArrayList<>(resources.size());
             for(Resource r:resources) {
-                keys.add(r.getKey());
+                keys.add(ResourceKey.valueOf(r.getKey()));
             }
             return keys;
         }catch(ConnectionException ex) {
@@ -232,7 +229,7 @@ public class SonarQube implements IssuesContainer{
             List<Resource> resources = sonar.findAll(new ResourceQuery());
             List<SonarProject> projects=new ArrayList<>(resources.size());
             for(Resource r:resources) {
-                projects.add(new SonarProject(r.getKey(), r.getName()));
+                projects.add(new SonarProject(r.getKey(), ResourceKey.valueOf(r.getName())));
             }
             return projects;
         }catch(ConnectionException ex) {
@@ -244,8 +241,8 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
-    public boolean existsProject(UserCredentials auth, String projectKey){
-        for(String tmp: getProjectsKeys(auth) ){
+    public boolean existsProject(UserCredentials auth, ResourceKey projectKey){
+        for(ResourceKey tmp: getProjectsKeys(auth) ){
             if(tmp.equals(projectKey)) {
                 return true;
             }
@@ -254,16 +251,16 @@ public class SonarQube implements IssuesContainer{
     }
 
     @Override
-    public Summary getSummary(UserCredentials auth, String resource, IssueFilter[] filters) {
-        if(!existsProject(auth, resource)) {
-            throw new NoSuchProjectException(resource);
+    public Summary getSummary(UserCredentials auth, ResourceKey resourceKey, IssueFilter[] filters) {
+        if(!existsProject(auth, resourceKey)) {
+            throw new NoSuchProjectException(resourceKey);
         }
         ServerSummary counting=new ServerSummary();
         for(Severity severity: Severity.values()) {
             IssueFilter[] tempFilters=new IssueFilter[filters.length+1];
             tempFilters[0]=new SeverityFilter(severity);
             System.arraycopy(filters, 0, tempFilters, 1, filters.length);
-            List<RadarIssue> issues = getIssues(auth, resource, tempFilters);
+            List<RadarIssue> issues = getIssues(auth, resourceKey, tempFilters);
             Map<Rule, Integer> counts=new HashMap<>();
             for(RadarIssue issue: issues){
                 Integer counter = counts.get(issue.rule());
@@ -279,9 +276,4 @@ public class SonarQube implements IssuesContainer{
         return counting;
     }
     
-//    public static String toResource(Project project) throws MvnModelInputException {
-//        Model model = new MvnModelFactory().createModel(project);
-//        return model.getGroupId()+":"+model.getArtifactId();
-//    }
-
 }

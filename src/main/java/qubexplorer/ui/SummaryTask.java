@@ -51,7 +51,7 @@ public class SummaryTask extends Task<Summary>{
             chooser.setServerUrlEnabled(false);
             chooser.loadProjectKeys();
             if(chooser.showDialog() == ProjectChooser.Option.ACCEPT) {
-                ProjectContext newProjectContext = new ProjectContext(getProjectContext().getProject(), chooser.getSelectedProjectKey());
+                ProjectContext newProjectContext = new ProjectContext(getProjectContext().getProject(), chooser.getSelectedProject().getKey());
                 TaskExecutor.execute(new SummaryTask(issuesContainer, newProjectContext, filters));
             }
         }else{
