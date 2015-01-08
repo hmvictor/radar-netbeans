@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.Set;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
 import org.netbeans.api.java.queries.SourceLevelQuery;
@@ -15,7 +14,7 @@ import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.api.queries.FileEncodingQuery;
-import org.netbeans.spi.project.SubprojectProvider;
+import org.netbeans.spi.project.ProjectContainerProvider;
 import org.openide.util.Utilities;
 import org.sonar.runner.api.ForkedRunner;
 import org.sonar.runner.api.PrintStreamConsumer;
@@ -126,12 +125,12 @@ public class SonarRunnerProccess {
             sourcesCounter++;
         }
 
-        SubprojectProvider subprojectProvider = project.getLookup().lookup(SubprojectProvider.class);
+        ProjectContainerProvider projectContainerProvider=project.getLookup().lookup(ProjectContainerProvider.class);
         boolean hasSubprojects = false;
-        if (subprojectProvider != null) {
-            Set<? extends Project> subprojects = subprojectProvider.getSubprojects();
-            hasSubprojects = !subprojects.isEmpty();
-            for (Project subproject : subprojects) {
+        if (projectContainerProvider != null) {
+            ProjectContainerProvider.Result result = projectContainerProvider.getContainedProjects();
+            hasSubprojects = !result.getProjects().isEmpty();
+            for (Project subproject : result.getProjects()) {
                 String module = subproject.getProjectDirectory().getNameExt();
                 boolean moduleContainsSources = addModuleProperties(module, subproject, projectInfo);
                 if (moduleContainsSources) {

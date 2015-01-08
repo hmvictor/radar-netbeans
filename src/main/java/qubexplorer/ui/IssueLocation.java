@@ -10,6 +10,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
+import org.netbeans.spi.project.ProjectContainerProvider;
 import org.netbeans.spi.project.SubprojectProvider;
 import org.openide.filesystems.FileObject;
 import qubexplorer.MvnModelInputException;
@@ -139,14 +140,14 @@ public class IssueLocation {
     }
 
     private static FileObject findProjectDir(Project project, String key) throws MvnModelInputException {
-        SubprojectProvider subprojectProvider = project.getLookup().lookup(SubprojectProvider.class);
         SonarQubeProject projectInfo=SonarQubeProjectBuilder.create(project);
         if(projectInfo.getKey().toString().equals(key)) {
             return project.getProjectDirectory();
         }
-        if (subprojectProvider != null) {
-            Set<? extends Project> subprojects = subprojectProvider.getSubprojects();
-            for (Project subproject : subprojects) {
+        ProjectContainerProvider projectContainerProvider=project.getLookup().lookup(ProjectContainerProvider.class);
+        if (projectContainerProvider != null) {
+            ProjectContainerProvider.Result result = projectContainerProvider.getContainedProjects();
+            for (Project subproject : result.getProjects()) {
                 SonarQubeProject subprojectInfo = projectInfo.createSubprojectInfo(subproject);
                 if (subprojectInfo.getKey().toString().equals(key)) {
                     return subproject.getProjectDirectory();
