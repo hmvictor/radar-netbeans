@@ -14,7 +14,7 @@ import org.openide.filesystems.FileObject;
  *
  * @author Victor
  */
-public class SonarMvnProject implements SonarQubeProjectInfo {
+public class SonarMvnProject implements SonarQubeProject {
     private final Model model;
 
     public SonarMvnProject(Project project) throws MvnModelInputException {

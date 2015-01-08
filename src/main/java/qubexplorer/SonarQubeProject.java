@@ -6,7 +6,7 @@ import org.netbeans.api.project.Project;
  *
  * @author Victor
  */
-public interface SonarQubeProjectInfo {
+public interface SonarQubeProject {
     
     String getName();
     
@@ -14,6 +14,6 @@ public interface SonarQubeProjectInfo {
     
     String getVersion();
     
-    SonarQubeProjectInfo createSubprojectInfo(Project project) throws SonarQubeProjectException;
+    SonarQubeProject createSubprojectInfo(Project project) throws SonarQubeProjectException;
     
 }

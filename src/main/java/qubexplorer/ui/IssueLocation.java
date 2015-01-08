@@ -12,11 +12,9 @@ import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.spi.project.SubprojectProvider;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
-import qubexplorer.MvnModelFactory;
 import qubexplorer.MvnModelInputException;
-import qubexplorer.SonarQubeProjectInfo;
-import qubexplorer.SonarQubeProjectInfoBuilder;
+import qubexplorer.SonarQubeProject;
+import qubexplorer.SonarQubeProjectBuilder;
 
 /**
  *
@@ -87,7 +85,7 @@ public class IssueLocation {
     }
 
     public Project getProjectOwner(Project parentProject) throws MvnModelInputException {
-        SonarQubeProjectInfo projectInfo = SonarQubeProjectInfoBuilder.create(parentProject);
+        SonarQubeProject projectInfo = SonarQubeProjectBuilder.create(parentProject);
 //        BasicPomInfo basicPomInfo = getBasicPomInfo(getShortProjectKey());
 //        Model model = new MvnModelFactory().createModel(parentProject);
 //        if (model.getGroupId().equals(basicPomInfo.getGroupId()) && model.getArtifactId().equals(basicPomInfo.getArtifactId())) {
@@ -142,14 +140,14 @@ public class IssueLocation {
 
     private static FileObject findProjectDir(Project project, String key) throws MvnModelInputException {
         SubprojectProvider subprojectProvider = project.getLookup().lookup(SubprojectProvider.class);
-        SonarQubeProjectInfo projectInfo=SonarQubeProjectInfoBuilder.create(project);
+        SonarQubeProject projectInfo=SonarQubeProjectBuilder.create(project);
         if(projectInfo.getKey().toString().equals(key)) {
             return project.getProjectDirectory();
         }
         if (subprojectProvider != null) {
             Set<? extends Project> subprojects = subprojectProvider.getSubprojects();
             for (Project subproject : subprojects) {
-                SonarQubeProjectInfo subprojectInfo = projectInfo.createSubprojectInfo(subproject);
+                SonarQubeProject subprojectInfo = projectInfo.createSubprojectInfo(subproject);
                 if (subprojectInfo.getKey().toString().equals(key)) {
                     return subproject.getProjectDirectory();
                 }

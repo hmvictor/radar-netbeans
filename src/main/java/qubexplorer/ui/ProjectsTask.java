@@ -1,16 +1,15 @@
 package qubexplorer.ui;
 
 import java.util.List;
-import qubexplorer.server.SonarProject;
+import qubexplorer.SonarQubeProject;
 import qubexplorer.server.SonarQube;
-import qubexplorer.ui.ProjectContext;
 import qubexplorer.ui.task.Task;
 
 /**
  *
  * @author Victor
  */
-public class ProjectsTask extends Task<List<SonarProject>>{
+public class ProjectsTask extends Task<List<SonarQubeProject>>{
     private final SonarQube sonarQube;
 
     public ProjectsTask(SonarQube sonarQube, ProjectContext projectContext) {
@@ -19,7 +18,7 @@ public class ProjectsTask extends Task<List<SonarProject>>{
     }
 
     @Override
-    public List<SonarProject> execute() throws Exception {
+    public List<SonarQubeProject> execute() throws Exception {
         return sonarQube.getProjects(getUserCredentials());
     }
     

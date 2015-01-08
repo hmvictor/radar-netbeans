@@ -26,8 +26,8 @@ import qubexplorer.AuthorizationException;
 import qubexplorer.MvnModelFactory;
 import qubexplorer.MvnModelInputException;
 import qubexplorer.PassEncoder;
-import qubexplorer.SonarQubeProjectInfo;
-import qubexplorer.SonarQubeProjectInfoBuilder;
+import qubexplorer.SonarQubeProject;
+import qubexplorer.SonarQubeProjectBuilder;
 import qubexplorer.server.SonarQube;
 
 /**
@@ -101,7 +101,7 @@ public class SonarRunnerProccess {
         int sourcesCounter = 0;
         ForkedRunner runner = ForkedRunner.create(processMonitor);
         projectHome = project.getProjectDirectory().getPath();
-        SonarQubeProjectInfo projectInfo=SonarQubeProjectInfoBuilder.create(project);
+        SonarQubeProject projectInfo=SonarQubeProjectBuilder.create(project);
         properties.setProperty("sonar.projectName", projectInfo.getName());
         properties.setProperty("sonar.projectBaseDir", projectHome);
         properties.setProperty("sonar.projectVersion", projectInfo.getVersion());
@@ -189,8 +189,8 @@ public class SonarRunnerProccess {
         }
     }
 
-    private boolean addModuleProperties(String module, Project moduleProject, SonarQubeProjectInfo projectInfo) throws MvnModelInputException {
-        SonarQubeProjectInfo subprojectInfo=projectInfo.createSubprojectInfo(moduleProject);
+    private boolean addModuleProperties(String module, Project moduleProject, SonarQubeProject projectInfo) throws MvnModelInputException {
+        SonarQubeProject subprojectInfo=projectInfo.createSubprojectInfo(moduleProject);
         boolean containsSources = configureSourcesAndBinariesProperties(module, moduleProject);
         if(containsSources){
             properties.setProperty(module + ".sonar.projectName", subprojectInfo.getName());

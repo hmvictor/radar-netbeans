@@ -7,7 +7,7 @@ import org.netbeans.api.project.ProjectUtils;
  *
  * @author Victor
  */
-public class SimpleSonarProject implements SonarQubeProjectInfo {
+public class SimpleSonarProject implements SonarQubeProject {
     private final Project project;
 
     public SimpleSonarProject(Project project) {
@@ -31,7 +31,7 @@ public class SimpleSonarProject implements SonarQubeProjectInfo {
     }
 
     @Override
-    public SonarQubeProjectInfo createSubprojectInfo(Project project) {
+    public SonarQubeProject createSubprojectInfo(Project project) {
         return new SimpleSonarProject(project);
     }
     

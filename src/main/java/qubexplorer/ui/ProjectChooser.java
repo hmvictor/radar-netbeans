@@ -6,7 +6,7 @@ import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import qubexplorer.server.SonarProject;
+import qubexplorer.SonarQubeProject;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.task.Task;
 import qubexplorer.ui.task.TaskExecutor;
@@ -71,8 +71,8 @@ public class ProjectChooser extends javax.swing.JDialog {
         return url.getText();
     }
     
-    public SonarProject getSelectedProject() {
-        return resourceCombox.getSelectedItem() == null ? null : ((SonarProject)resourceCombox.getSelectedItem());
+    public SonarQubeProject getSelectedProject() {
+        return resourceCombox.getSelectedItem() == null ? null : ((SonarQubeProject)resourceCombox.getSelectedItem());
     }
 
     public void validateDialog() {
@@ -221,7 +221,7 @@ public class ProjectChooser extends javax.swing.JDialog {
     private javax.swing.JTextField url;
     // End of variables declaration//GEN-END:variables
 
-    public class ProjectsTask extends Task<List<SonarProject>> {
+    public class ProjectsTask extends Task<List<SonarQubeProject>> {
 
         private final SonarQube sonarQube;
 
@@ -232,23 +232,23 @@ public class ProjectChooser extends javax.swing.JDialog {
         }
 
         @Override
-        public List<SonarProject> execute() throws Exception {
+        public List<SonarQubeProject> execute() throws Exception {
             return sonarQube.getProjects(getUserCredentials());
         }
 
         @Override
-        protected void success(List<SonarProject> result) {
+        protected void success(List<SonarQubeProject> result) {
             resourceCombox.removeAllItems();
-            Collections.sort(result, new Comparator<SonarProject>() {
+            Collections.sort(result, new Comparator<SonarQubeProject>() {
 
                 @Override
-                public int compare(SonarProject t, SonarProject t1) {
+                public int compare(SonarQubeProject t, SonarQubeProject t1) {
                     return t.getName().compareToIgnoreCase(t1.getName());
                 }
                 
             });
             DefaultComboBoxModel model = (DefaultComboBoxModel) resourceCombox.getModel();
-            for (SonarProject sonarProject : result) {
+            for (SonarQubeProject sonarProject : result) {
                 model.addElement(sonarProject);
             }
         }
