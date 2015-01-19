@@ -29,7 +29,8 @@ import qubexplorer.PassEncoder;
 import qubexplorer.RadarIssue;
 import qubexplorer.ResourceKey;
 import qubexplorer.Severity;
-import qubexplorer.SonarQubeProject;
+import qubexplorer.SonarQubeProjectConfiguration;
+import qubexplorer.DefaultSonarQubeProjectConfiguration;
 import qubexplorer.Summary;
 
 /**
@@ -219,7 +220,7 @@ public class SonarQube implements IssuesContainer{
         return ex.getMessage().contains("HTTP error: 401");
     }
     
-    public List<SonarQubeProject> getProjects(UserCredentials userCredentials) {
+    public List<SonarQubeProjectConfiguration> getProjects(UserCredentials userCredentials) {
         try{
             Sonar sonar;
             if(userCredentials == null) {
@@ -228,9 +229,9 @@ public class SonarQube implements IssuesContainer{
                 sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
             }
             List<Resource> resources = sonar.findAll(new ResourceQuery());
-            List<SonarQubeProject> projects=new ArrayList<>(resources.size());
+            List<SonarQubeProjectConfiguration> projects=new ArrayList<>(resources.size());
             for(Resource r:resources) {
-                projects.add(new RemoteProject(r.getKey(), ResourceKey.valueOf(r.getName()), r.getVersion()));
+                projects.add(new DefaultSonarQubeProjectConfiguration(r.getName(), ResourceKey.valueOf(r.getKey()), r.getVersion()));
             }
             return projects;
         }catch(ConnectionException ex) {

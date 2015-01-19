@@ -2,8 +2,6 @@ package qubexplorer.ui;
 
 import java.io.File;
 import java.util.Comparator;
-import java.util.Set;
-//import org.apache.maven.model.Model;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
@@ -11,10 +9,9 @@ import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.spi.project.ProjectContainerProvider;
-import org.netbeans.spi.project.SubprojectProvider;
 import org.openide.filesystems.FileObject;
 import qubexplorer.MvnModelInputException;
-import qubexplorer.SonarQubeProject;
+import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.SonarQubeProjectBuilder;
 
 /**
@@ -85,8 +82,8 @@ public class IssueLocation {
         return tokens[0] + ":" + tokens[1];
     }
 
-    public Project getProjectOwner(Project parentProject) throws MvnModelInputException {
-        SonarQubeProject projectInfo = SonarQubeProjectBuilder.create(parentProject);
+    public Project getProjectOwner(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) throws MvnModelInputException {
+//        SonarQubeProjectConfiguration projectInfo = SonarQubeProjectBuilder.getConfiguration(parentProject);
 //        BasicPomInfo basicPomInfo = getBasicPomInfo(getShortProjectKey());
 //        Model model = new MvnModelFactory().createModel(parentProject);
 //        if (model.getGroupId().equals(basicPomInfo.getGroupId()) && model.getArtifactId().equals(basicPomInfo.getArtifactId())) {
@@ -96,7 +93,7 @@ public class IssueLocation {
 //            return parentProject;
 //        }
 //        FileObject projectDir = findMvnDir(model, basicPomInfo, model.getGroupId());
-        FileObject projectDir = findProjectDir(parentProject, getShortProjectKey());
+        FileObject projectDir = findProjectDir(parentProject, projectConfiguration, getShortProjectKey());
         if (projectDir != null) {
             return FileOwnerQuery.getOwner(projectDir);
         } else {
@@ -104,8 +101,8 @@ public class IssueLocation {
         }
     }
 
-    public File getFile(Project parentProject) throws MvnModelInputException {
-        Project projectOwner = getProjectOwner(parentProject);
+    public File getFile(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) throws MvnModelInputException {
+        Project projectOwner = getProjectOwner(parentProject, projectConfiguration);
         if (projectOwner == null) {
             throw new ProjectNotFoundException(getShortProjectKey());
         }
@@ -139,16 +136,15 @@ public class IssueLocation {
         return new BasicPomInfo(tokens[0], tokens[1]);
     }
 
-    private static FileObject findProjectDir(Project project, String key) throws MvnModelInputException {
-        SonarQubeProject projectInfo=SonarQubeProjectBuilder.create(project);
-        if(projectInfo.getKey().toString().equals(key)) {
+    private static FileObject findProjectDir(Project project, SonarQubeProjectConfiguration projectConfiguration, String key) throws MvnModelInputException {
+        if(projectConfiguration.getKey().toString().equals(key)) {
             return project.getProjectDirectory();
         }
         ProjectContainerProvider projectContainerProvider=project.getLookup().lookup(ProjectContainerProvider.class);
         if (projectContainerProvider != null) {
             ProjectContainerProvider.Result result = projectContainerProvider.getContainedProjects();
             for (Project subproject : result.getProjects()) {
-                SonarQubeProject subprojectInfo = projectInfo.createSubprojectInfo(subproject);
+                SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.getSubconfiguration(projectConfiguration, subproject);
                 if (subprojectInfo.getKey().toString().equals(key)) {
                     return subproject.getProjectDirectory();
                 }

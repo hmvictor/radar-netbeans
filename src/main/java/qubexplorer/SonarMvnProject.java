@@ -14,7 +14,7 @@ import org.openide.filesystems.FileObject;
  *
  * @author Victor
  */
-public class SonarMvnProject implements SonarQubeProject {
+public class SonarMvnProject implements SonarQubeProjectConfiguration {
     private final Model model;
 
     public SonarMvnProject(Project project) throws MvnModelInputException {
@@ -42,15 +42,6 @@ public class SonarMvnProject implements SonarQubeProject {
             version=model.getParent().getVersion();
         }
         return version;
-    }
-
-    @Override
-    public SonarMvnProject createSubprojectInfo(Project subproject) {
-        try {
-            return new SonarMvnProject(subproject);
-        } catch (MvnModelInputException ex) {
-            throw new SonarQubeProjectException(ex);
-        }
     }
 
     private static Model createModel(FileObject projectDir) throws MvnModelInputException {

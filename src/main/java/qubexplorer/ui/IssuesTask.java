@@ -6,8 +6,6 @@ import qubexplorer.IssuesContainer;
 import qubexplorer.RadarIssue;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
-import qubexplorer.ui.ProjectContext;
-import qubexplorer.ui.SonarIssuesTopComponent;
 import qubexplorer.ui.task.Task;
 
 /**
@@ -26,7 +24,7 @@ public class IssuesTask extends Task<List<RadarIssue>>{
 
     @Override
     public List<RadarIssue> execute() {
-        return issuesContainer.getIssues(getUserCredentials(), getProjectContext().getProjectKey(), filters);
+        return issuesContainer.getIssues(getUserCredentials(), getProjectContext().getConfiguration().getKey(), filters);
     }
 
     @Override

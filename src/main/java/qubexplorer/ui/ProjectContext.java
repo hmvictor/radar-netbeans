@@ -1,7 +1,7 @@
 package qubexplorer.ui;
 
 import org.netbeans.api.project.Project;
-import qubexplorer.ResourceKey;
+import qubexplorer.SonarQubeProjectConfiguration;
 
 /**
  *
@@ -9,24 +9,32 @@ import qubexplorer.ResourceKey;
  */
 public class ProjectContext {
     private final Project project;
-    private final ResourceKey projectKey;
+    private SonarQubeProjectConfiguration configuration;
 
-    public ProjectContext(Project project, ResourceKey projectKey) {
+//    private final ResourceKey projectKey;
+//    public ProjectContext(Project project, ResourceKey projectKey) {
+//        this.project = project;
+//        this.projectKey = projectKey;
+//    }
+    public ProjectContext(Project project, SonarQubeProjectConfiguration configuration) {
         this.project = project;
-        this.projectKey = projectKey;
+        this.configuration = configuration;
     }
-
+    
     public ProjectContext(Project project) {
         this.project = project;
-        this.projectKey = null;
+//        this.projectKey = null;
     }
     
     public Project getProject() {
         return project;
     }
 
-    public ResourceKey getProjectKey() {
-        return projectKey;
+//    public ResourceKey getProjectKey() {
+//        return projectKey;
+//    }
+    public SonarQubeProjectConfiguration getConfiguration() {
+        return configuration;
     }
     
 }

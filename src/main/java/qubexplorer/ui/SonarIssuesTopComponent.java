@@ -666,7 +666,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private void openIssueLocation(IssueLocation issueLocation) throws MvnModelInputException {
         int lineNumber = issueLocation.getLineNumber() <= 0 ? 1 : issueLocation.getLineNumber();
-        File file = issueLocation.getFile(projectContext.getProject());
+        File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
         FileObject fobj = FileUtil.toFileObject(file);
         if (fobj == null) {
             String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");

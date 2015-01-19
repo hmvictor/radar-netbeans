@@ -20,7 +20,7 @@ public class ActionPlansTask extends Task<List<ActionPlan>>{
 
     @Override
     public List<ActionPlan> execute() {
-        return sonarQube.getActionPlans(getUserCredentials(), getProjectContext().getProjectKey());
+        return sonarQube.getActionPlans(getUserCredentials(), getProjectContext().getConfiguration().getKey());
     }
 
     @Override

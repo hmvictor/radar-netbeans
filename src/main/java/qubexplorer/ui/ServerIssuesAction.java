@@ -9,6 +9,7 @@ import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle.Messages;
 import qubexplorer.SonarQubeProjectBuilder;
+import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
@@ -33,17 +34,20 @@ public final class ServerIssuesAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent ev) {
-        final ProjectContext projectContext = new ProjectContext(context, SonarQubeProjectBuilder.create(context).getKey());
-        final SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
-        TaskExecutor.execute(new SummaryTask(sonarQube, projectContext, new IssueFilter[0]) {
+        SonarQubeProjectConfiguration configuration = SonarQubeProjectBuilder.getDefaultConfiguration(context);
+        if (configuration != null) {
+            final ProjectContext projectContext = new ProjectContext(context, configuration);
+            final SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
+            TaskExecutor.execute(new SummaryTask(sonarQube, projectContext, new IssueFilter[0]) {
 
-            @Override
-            protected void success(Summary summary) {
-                super.success(summary);
-                TaskExecutor.execute(new ActionPlansTask(sonarQube, projectContext));
-            }
+                @Override
+                protected void success(Summary summary) {
+                    super.success(summary);
+                    TaskExecutor.execute(new ActionPlansTask(sonarQube, projectContext));
+                }
 
-        });
+            });
+        }
     }
 
 }

@@ -71,7 +71,7 @@ public final class TaskExecutor {
                 handle = null;
                 if (task.getUserCredentials() != null) {
                     assert task.getServerUrl() != null;
-                    authenticationRepository.saveAuthentication(task.getServerUrl(), task.getProjectContext().getProjectKey().toString(), task.getUserCredentials());
+                    authenticationRepository.saveAuthentication(task.getServerUrl(), task.getProjectContext().getConfiguration().getKey().toString(), task.getUserCredentials());
                 }
             } catch (ExecutionException ex) {
                 handle.finish();
@@ -81,7 +81,7 @@ public final class TaskExecutor {
                     assert task.getServerUrl() != null;
                     String resourceKey = null;
                     if (task.getProjectContext() != null) {
-                        resourceKey = task.getProjectContext().getProjectKey().toString();
+                        resourceKey = task.getProjectContext().getConfiguration().getKey().toString();
                     }
                     UserCredentials auth = authenticationRepository.getAuthentication(task.getServerUrl(), resourceKey);
                     if (auth == null) {

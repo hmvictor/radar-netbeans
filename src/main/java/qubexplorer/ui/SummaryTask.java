@@ -25,7 +25,7 @@ public class SummaryTask extends Task<Summary>{
     
     @Override
     public Summary execute() {
-        return issuesContainer.getSummary(getUserCredentials(), getProjectContext().getProjectKey(), filters);
+        return issuesContainer.getSummary(getUserCredentials(), getProjectContext().getConfiguration().getKey(), filters);
     }
     
     @Override
@@ -51,7 +51,7 @@ public class SummaryTask extends Task<Summary>{
             chooser.setServerUrlEnabled(false);
             chooser.loadProjectKeys();
             if(chooser.showDialog() == ProjectChooser.Option.ACCEPT) {
-                ProjectContext newProjectContext = new ProjectContext(getProjectContext().getProject(), chooser.getSelectedProject().getKey());
+                ProjectContext newProjectContext = new ProjectContext(getProjectContext().getProject(), chooser.getSelectedProject());
                 TaskExecutor.execute(new SummaryTask(issuesContainer, newProjectContext, filters));
             }
         }else{

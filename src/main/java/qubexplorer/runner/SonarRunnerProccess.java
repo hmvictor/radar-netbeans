@@ -25,7 +25,7 @@ import qubexplorer.AuthorizationException;
 import qubexplorer.MvnModelFactory;
 import qubexplorer.MvnModelInputException;
 import qubexplorer.PassEncoder;
-import qubexplorer.SonarQubeProject;
+import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.SonarQubeProjectBuilder;
 import qubexplorer.server.SonarQube;
 
@@ -52,7 +52,6 @@ public class SonarRunnerProccess {
     /**
      * This state is modified while running.
      */
-    private final MvnModelFactory mvnModelFactory = new MvnModelFactory();
     private String projectHome;
     private final StringBuilder modules = new StringBuilder();
     private final Properties properties = new Properties();
@@ -100,7 +99,7 @@ public class SonarRunnerProccess {
         int sourcesCounter = 0;
         ForkedRunner runner = ForkedRunner.create(processMonitor);
         projectHome = project.getProjectDirectory().getPath();
-        SonarQubeProject projectInfo=SonarQubeProjectBuilder.create(project);
+        SonarQubeProjectConfiguration projectInfo=SonarQubeProjectBuilder.getDefaultConfiguration(project);
         properties.setProperty("sonar.projectName", projectInfo.getName());
         properties.setProperty("sonar.projectBaseDir", projectHome);
         properties.setProperty("sonar.projectVersion", projectInfo.getVersion());
@@ -188,8 +187,8 @@ public class SonarRunnerProccess {
         }
     }
 
-    private boolean addModuleProperties(String module, Project moduleProject, SonarQubeProject projectInfo) throws MvnModelInputException {
-        SonarQubeProject subprojectInfo=projectInfo.createSubprojectInfo(moduleProject);
+    private boolean addModuleProperties(String module, Project moduleProject, SonarQubeProjectConfiguration projectInfo) throws MvnModelInputException {
+        SonarQubeProjectConfiguration subprojectInfo=SonarQubeProjectBuilder.getDefaultConfiguration(moduleProject);
         boolean containsSources = configureSourcesAndBinariesProperties(module, moduleProject);
         if(containsSources){
             properties.setProperty(module + ".sonar.projectName", subprojectInfo.getName());

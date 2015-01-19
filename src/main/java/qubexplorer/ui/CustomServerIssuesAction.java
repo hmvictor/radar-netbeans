@@ -38,7 +38,7 @@ public final class CustomServerIssuesAction implements ActionListener {
         ProjectChooser chooser=new ProjectChooser(WindowManager.getDefault().getMainWindow(), true);
         chooser.setSelectedUrl(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"));
         if(chooser.showDialog() == ProjectChooser.Option.ACCEPT) {
-            final ProjectContext projectContext = new ProjectContext(context, chooser.getSelectedProject().getKey());
+            final ProjectContext projectContext = new ProjectContext(context, chooser.getSelectedProject());
             final SonarQube sonarQube = new SonarQube(chooser.getSelectedUrl());
             TaskExecutor.execute(new SummaryTask(sonarQube, projectContext, new IssueFilter[0]){
 
