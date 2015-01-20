@@ -4,7 +4,7 @@
 
     <groupId>org.radar</groupId>
     <artifactId>radar-netbeans</artifactId>
-    <version>2.3-SNAPSHOT</version>
+    <version>2.3</version>
     <packaging>nbm</packaging>
 
     <name>radar-netbeans</name>
@@ -183,6 +183,7 @@
                     <licenseName>Apache License, Version 2.0</licenseName>
                     <licenseFile>license.txt</licenseFile>
                     <homePageUrl>http://code.google.com/p/radar-netbeans/</homePageUrl>
+                    <requiresRestart>true</requiresRestart>
                 </configuration>
             </plugin>
 
