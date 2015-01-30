@@ -137,17 +137,13 @@ public class IssueLocation {
     }
 
     private static FileObject findProjectDir(Project project, SonarQubeProjectConfiguration projectConfiguration, String key) throws MvnModelInputException {
-        if(projectConfiguration.getKey().toString().equals(key)) {
+        if (projectConfiguration.getKey().toString().equals(key)) {
             return project.getProjectDirectory();
         }
-        ProjectContainerProvider projectContainerProvider=project.getLookup().lookup(ProjectContainerProvider.class);
-        if (projectContainerProvider != null) {
-            ProjectContainerProvider.Result result = projectContainerProvider.getContainedProjects();
-            for (Project subproject : result.getProjects()) {
-                SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.getSubconfiguration(projectConfiguration, subproject);
-                if (subprojectInfo.getKey().toString().equals(key)) {
-                    return subproject.getProjectDirectory();
-                }
+        for (Project subproject : ProjectUtils.getContainedProjects(project, true)) {
+            SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.getSubconfiguration(projectConfiguration, subproject);
+            if (subprojectInfo.getKey().toString().equals(key)) {
+                return subproject.getProjectDirectory();
             }
         }
         return null;

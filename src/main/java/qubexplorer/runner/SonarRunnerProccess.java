@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.java.queries.BinaryForSourceQuery;
 import org.netbeans.api.java.queries.SourceLevelQuery;
@@ -22,7 +23,6 @@ import org.sonar.runner.api.ProcessMonitor;
 import org.sonar.runner.api.Runner;
 import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
-import qubexplorer.MvnModelFactory;
 import qubexplorer.MvnModelInputException;
 import qubexplorer.PassEncoder;
 import qubexplorer.SonarQubeProjectConfiguration;
@@ -41,7 +41,7 @@ public class SonarRunnerProccess {
     private PrintStreamConsumer outConsumer;
     private PrintStreamConsumer errConsumer;
     private WrapperConsumer wrapper;
-    private List<String> jvmArguments=Collections.emptyList();
+    private List<String> jvmArguments = Collections.emptyList();
 
     public enum AnalysisMode {
 
@@ -94,12 +94,12 @@ public class SonarRunnerProccess {
         Objects.requireNonNull(jvmArguments, "argument list is null");
         this.jvmArguments = jvmArguments;
     }
-    
+
     protected Runner createForProject(UserCredentials userCredentials, ProcessMonitor processMonitor) throws MvnModelInputException {
         int sourcesCounter = 0;
         ForkedRunner runner = ForkedRunner.create(processMonitor);
         projectHome = project.getProjectDirectory().getPath();
-        SonarQubeProjectConfiguration projectInfo=SonarQubeProjectBuilder.getDefaultConfiguration(project);
+        SonarQubeProjectConfiguration projectInfo = SonarQubeProjectBuilder.getDefaultConfiguration(project);
         properties.setProperty("sonar.projectName", projectInfo.getName());
         properties.setProperty("sonar.projectBaseDir", projectHome);
         properties.setProperty("sonar.projectVersion", projectInfo.getVersion());
@@ -120,32 +120,27 @@ public class SonarRunnerProccess {
             properties.setProperty("sonar.password", PassEncoder.decodeAsString(userCredentials.getPassword()));
         }
         boolean containsSources = configureSourcesAndBinariesProperties(null, project);
-        if(containsSources) {
+        if (containsSources) {
             sourcesCounter++;
         }
-
-        ProjectContainerProvider projectContainerProvider=project.getLookup().lookup(ProjectContainerProvider.class);
-        boolean hasSubprojects = false;
-        if (projectContainerProvider != null) {
-            ProjectContainerProvider.Result result = projectContainerProvider.getContainedProjects();
-            hasSubprojects = !result.getProjects().isEmpty();
-            for (Project subproject : result.getProjects()) {
-                String module = subproject.getProjectDirectory().getNameExt();
-                boolean moduleContainsSources = addModuleProperties(module, subproject, projectInfo);
-                if (moduleContainsSources) {
-                    if (modules.length() > 0) {
-                        modules.append(',');
-                    }
-                    modules.append(module);
-                    sourcesCounter++;
+        Set<Project> subprojects = ProjectUtils.getContainedProjects(project, true);
+        boolean hasSubprojects = !subprojects.isEmpty();
+        for (Project subproject : subprojects) {
+            String module = subproject.getProjectDirectory().getNameExt();
+            boolean moduleContainsSources = addModuleProperties(module, subproject, projectInfo);
+            if (moduleContainsSources) {
+                if (modules.length() > 0) {
+                    modules.append(',');
                 }
+                modules.append(module);
+                sourcesCounter++;
             }
         }
         if (sourcesCounter == 0) {
             throw new SourcesNotFoundException();
         }
         assert projectInfo.getKey().getPartsCount() == 2;
-        properties.setProperty("sonar.projectKey", hasSubprojects ? projectInfo.getKey().getPart(0): projectInfo.getKey().toString());
+        properties.setProperty("sonar.projectKey", hasSubprojects ? projectInfo.getKey().getPart(0) : projectInfo.getKey().toString());
         if (modules.length() > 0) {
             properties.setProperty("sonar.modules", modules.toString());
         }
@@ -188,9 +183,9 @@ public class SonarRunnerProccess {
     }
 
     private boolean addModuleProperties(String module, Project moduleProject, SonarQubeProjectConfiguration projectInfo) throws MvnModelInputException {
-        SonarQubeProjectConfiguration subprojectInfo=SonarQubeProjectBuilder.getDefaultConfiguration(moduleProject);
+        SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.getDefaultConfiguration(moduleProject);
         boolean containsSources = configureSourcesAndBinariesProperties(module, moduleProject);
-        if(containsSources){
+        if (containsSources) {
             properties.setProperty(module + ".sonar.projectName", subprojectInfo.getName());
             assert subprojectInfo.getKey().getPartsCount() == 2;
             properties.setProperty(module + ".sonar.projectKey", subprojectInfo.getKey().getPart(1));
@@ -210,9 +205,9 @@ public class SonarRunnerProccess {
                 throw new SonarRunnerException(ex);
             }
         }
-        if(processMonitor.stop()) {
+        if (processMonitor.stop()) {
             throw new SonarRunnerCancelledException();
-        }else{
+        } else {
             File jsonFile = new File(properties.getProperty("sonar.working.directory"), "sonar-report.json");
             if (!jsonFile.exists()) {
                 throw new SonarRunnerException();
