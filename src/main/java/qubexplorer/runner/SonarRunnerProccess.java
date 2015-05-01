@@ -15,7 +15,6 @@ import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.netbeans.api.queries.FileEncodingQuery;
-import org.netbeans.spi.project.ProjectContainerProvider;
 import org.openide.util.Utilities;
 import org.sonar.runner.api.ForkedRunner;
 import org.sonar.runner.api.PrintStreamConsumer;

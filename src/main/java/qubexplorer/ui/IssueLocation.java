@@ -8,7 +8,6 @@ import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
-import org.netbeans.spi.project.ProjectContainerProvider;
 import org.openide.filesystems.FileObject;
 import qubexplorer.MvnModelInputException;
 import qubexplorer.SonarQubeProjectConfiguration;
@@ -83,16 +82,6 @@ public class IssueLocation {
     }
 
     public Project getProjectOwner(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) throws MvnModelInputException {
-//        SonarQubeProjectConfiguration projectInfo = SonarQubeProjectBuilder.getConfiguration(parentProject);
-//        BasicPomInfo basicPomInfo = getBasicPomInfo(getShortProjectKey());
-//        Model model = new MvnModelFactory().createModel(parentProject);
-//        if (model.getGroupId().equals(basicPomInfo.getGroupId()) && model.getArtifactId().equals(basicPomInfo.getArtifactId())) {
-//            return parentProject;
-//        }
-//        if (projectInfo.getKey().equals(getShortProjectKey())) {
-//            return parentProject;
-//        }
-//        FileObject projectDir = findMvnDir(model, basicPomInfo, model.getGroupId());
         FileObject projectDir = findProjectDir(parentProject, projectConfiguration, getShortProjectKey());
         if (projectDir != null) {
             return FileOwnerQuery.getOwner(projectDir);
