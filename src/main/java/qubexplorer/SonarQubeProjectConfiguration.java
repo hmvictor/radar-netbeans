@@ -11,5 +11,5 @@ public interface SonarQubeProjectConfiguration {
     ResourceKey getKey();
     
     String getVersion();
-    
+
 }

@@ -30,7 +30,7 @@ import qubexplorer.RadarIssue;
 import qubexplorer.ResourceKey;
 import qubexplorer.Severity;
 import qubexplorer.SonarQubeProjectConfiguration;
-import qubexplorer.DefaultSonarQubeProjectConfiguration;
+import qubexplorer.GenericSonarQubeProjectConfiguration;
 import qubexplorer.Summary;
 
 /**
@@ -231,7 +231,7 @@ public class SonarQube implements IssuesContainer{
             List<Resource> resources = sonar.findAll(new ResourceQuery());
             List<SonarQubeProjectConfiguration> projects=new ArrayList<>(resources.size());
             for(Resource r:resources) {
-                projects.add(new DefaultSonarQubeProjectConfiguration(r.getName(), ResourceKey.valueOf(r.getKey()), r.getVersion()));
+                projects.add(new GenericSonarQubeProjectConfiguration(r.getName(), ResourceKey.valueOf(r.getKey()), r.getVersion()));
             }
             return projects;
         }catch(ConnectionException ex) {

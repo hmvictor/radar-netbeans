@@ -13,7 +13,7 @@ import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
-import qubexplorer.DefaultSonarQubeProjectConfiguration;
+import qubexplorer.GenericSonarQubeProjectConfiguration;
 import qubexplorer.ResourceKey;
 import qubexplorer.ui.AuthenticationRepository;
 import qubexplorer.ui.ProjectContext;
@@ -26,7 +26,7 @@ import qubexplorer.ui.ProjectContext;
 public class TaskExecutorTest {
 
     @Spy
-    private TaskImpl<Boolean> task = new TaskImpl<>(new ProjectContext(null, new DefaultSonarQubeProjectConfiguration("name", ResourceKey.valueOf("part1:part2"), "1.0")), "http://testhost:9000");
+    private TaskImpl<Boolean> task = new TaskImpl<>(new ProjectContext(null, new GenericSonarQubeProjectConfiguration("name", ResourceKey.valueOf("part1:part2"), "1.0")), "http://testhost:9000");
 
     @Mock
     private AuthenticationRepository repository;

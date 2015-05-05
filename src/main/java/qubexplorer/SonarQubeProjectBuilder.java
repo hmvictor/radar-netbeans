@@ -10,11 +10,19 @@ import org.openide.filesystems.FileObject;
  *
  * @author Victor
  */
-public class SonarQubeProjectBuilder {
+public final class SonarQubeProjectBuilder {
+    
+    private SonarQubeProjectBuilder() {
+        
+    }
+    
+    private static boolean isMvnProject(Project project) {
+        FileObject pomFile = project.getProjectDirectory().getFileObject("pom.xml");
+        return pomFile != null;
+    }
     
     public static SonarQubeProjectConfiguration getDefaultConfiguration(Project project) {
-        FileObject pomFile = project.getProjectDirectory().getFileObject("pom.xml");
-        if(pomFile != null) {
+        if(isMvnProject(project)) {
             try {
                 return new SonarMvnProject(project);
             } catch (MvnModelInputException ex) {
@@ -22,13 +30,12 @@ public class SonarQubeProjectBuilder {
             }
         }else{
             String name = ProjectUtils.getInformation(project).getName();
-            return new DefaultSonarQubeProjectConfiguration(name, new ResourceKey("base", name), "1.0");
+            return new GenericSonarQubeProjectConfiguration(name, new ResourceKey("base", name), "1.0");
         }
     }
     
     public static SonarQubeProjectConfiguration getConfiguration(Project project) {
-        FileObject pomFile = project.getProjectDirectory().getFileObject("pom.xml");
-        if(pomFile != null) {
+        if(isMvnProject(project)) {
             try {
                 return new SonarMvnProject(project);
             } catch (MvnModelInputException ex) {
@@ -49,7 +56,7 @@ public class SonarQubeProjectBuilder {
                     return null;
                 }
             }
-            return new DefaultSonarQubeProjectConfiguration(name, ResourceKey.valueOf(key), version);
+            return new GenericSonarQubeProjectConfiguration(name, ResourceKey.valueOf(key), version);
         }
     }
     
@@ -63,9 +70,8 @@ public class SonarQubeProjectBuilder {
             }
         }else{
             String name = ProjectUtils.getInformation(subproject).getName();
-            return new DefaultSonarQubeProjectConfiguration(name, new ResourceKey(parentConfig.getKey().getPart(0), name), parentConfig.getVersion());
+            return new GenericSonarQubeProjectConfiguration(name, new ResourceKey(parentConfig.getKey().getPart(0), name), parentConfig.getVersion());
         }
     }
-    
     
 }

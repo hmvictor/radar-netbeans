@@ -13,7 +13,7 @@ public class IssuesTableModel extends DefaultTableModel {
         Severity.class, java.lang.Object.class, java.lang.String.class, java.lang.String.class, Severity.class, java.lang.String.class, String.class
     };
     
-    public static final String[] COLUMN_NAMES = new String [] {"", "Location", "Message", "Rule", "Severity", "Project Key", "Full Path"};
+    private static final String[] COLUMN_NAMES = new String [] {"", "Location", "Message", "Rule", "Severity", "Project Key", "Full Path"};
     
     private RadarIssue[] issues;
 

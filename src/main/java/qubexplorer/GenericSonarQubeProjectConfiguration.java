@@ -1,18 +1,18 @@
 package qubexplorer;
 
 
-public class DefaultSonarQubeProjectConfiguration implements SonarQubeProjectConfiguration {
+public class GenericSonarQubeProjectConfiguration implements SonarQubeProjectConfiguration {
     private String name;
     private ResourceKey key;
     private String version;
 
-    public DefaultSonarQubeProjectConfiguration(String name, ResourceKey key, String version) {
+    public GenericSonarQubeProjectConfiguration(String name, ResourceKey key, String version) {
         this.name = name;
         this.key = key;
         this.version = version;
     }
 
-    public DefaultSonarQubeProjectConfiguration() {
+    public GenericSonarQubeProjectConfiguration() {
     }
     
     public void setName(String name) {

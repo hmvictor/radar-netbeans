@@ -9,7 +9,6 @@ public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
     SonarQubeOptionsPanel(SonarQubeOptionsPanelController controller) {
         this.controller = controller;
         initComponents();
-        // TODO listen to changes in form fields and call controller.changed()
     }
 
     /**
