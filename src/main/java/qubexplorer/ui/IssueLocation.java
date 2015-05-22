@@ -2,6 +2,7 @@ package qubexplorer.ui;
 
 import java.io.File;
 import java.util.Comparator;
+import java.util.Set;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.FileOwnerQuery;
 import org.netbeans.api.project.Project;
@@ -129,10 +130,13 @@ public class IssueLocation {
         if (projectConfiguration.getKey().toString().equals(key)) {
             return project.getProjectDirectory();
         }
-        for (Project subproject : ProjectUtils.getContainedProjects(project, true)) {
-            SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.getSubconfiguration(projectConfiguration, subproject);
-            if (subprojectInfo.getKey().toString().equals(key)) {
-                return subproject.getProjectDirectory();
+        Set<Project> containedProjects = ProjectUtils.getContainedProjects(project, true);
+        if(containedProjects != null) {
+            for (Project subproject : containedProjects) {
+                SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.getSubconfiguration(projectConfiguration, subproject);
+                if (subprojectInfo.getKey().toString().equals(key)) {
+                    return subproject.getProjectDirectory();
+                }
             }
         }
         return null;
