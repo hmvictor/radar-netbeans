@@ -4,7 +4,7 @@
 
     <groupId>org.radar</groupId>
     <artifactId>radar-netbeans</artifactId>
-    <version>2.4-SNAPSHOT</version>
+    <version>2.3.1</version>
     <packaging>nbm</packaging>
 
     <name>radar-netbeans</name>
@@ -182,7 +182,7 @@
                     <author>Victor Hugo Herrera Maldonado</author>
                     <licenseName>Apache License, Version 2.0</licenseName>
                     <licenseFile>license.txt</licenseFile>
-                    <homePageUrl>http://code.google.com/p/radar-netbeans/</homePageUrl>
+                    <homePageUrl>https://github.com/hmvictor/radar-netbeans</homePageUrl>
                     <requiresRestart>true</requiresRestart>
                 </configuration>
             </plugin>

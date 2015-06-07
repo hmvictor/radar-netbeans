@@ -125,16 +125,18 @@ public class SonarRunnerProccess {
             sourcesCounter++;
         }
         Set<Project> subprojects = ProjectUtils.getContainedProjects(project, true);
-        boolean hasSubprojects = !subprojects.isEmpty();
-        for (Project subproject : subprojects) {
-            String module = subproject.getProjectDirectory().getNameExt();
-            boolean moduleContainsSources = addModuleProperties(module, subproject);
-            if (moduleContainsSources) {
-                if (modules.length() > 0) {
-                    modules.append(',');
+        boolean hasSubprojects = subprojects != null && !subprojects.isEmpty();
+        if(subprojects != null) {
+            for (Project subproject : subprojects) {
+                String module = subproject.getProjectDirectory().getNameExt();
+                boolean moduleContainsSources = addModuleProperties(module, subproject);
+                if (moduleContainsSources) {
+                    if (modules.length() > 0) {
+                        modules.append(',');
+                    }
+                    modules.append(module);
+                    sourcesCounter++;
                 }
-                modules.append(module);
-                sourcesCounter++;
             }
         }
         if (sourcesCounter == 0) {
@@ -192,7 +194,10 @@ public class SonarRunnerProccess {
                 if (module != null) {
                     testProperty = module + "." + testProperty;
                 }
-                properties.setProperty(testProperty, FileUtil.archiveOrDirForURL(testSources[0]).getAbsolutePath());
+                File testsDir = FileUtil.archiveOrDirForURL(testSources[0]);
+                if(testsDir.exists()){
+                    properties.setProperty(testProperty, testsDir.getPath());
+                }
             }
             return true;
         } else {
