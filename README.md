@@ -22,7 +22,7 @@ To see the SonarQube issues just invoke the contextual menu (or from Sources men
 
 ![Source Menu](http://wiki.radar-netbeans.googlecode.com/hg/images/radar-2.1/sourcesMenu.png)
 
-This are the ways to retrieve the issues:
+These are the ways to retrieve the issues:
 
 ### Get Issues From Server
 
