@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.project.Project;
 import org.openide.filesystems.FileObject;
@@ -44,7 +45,7 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
         return version;
     }
 
-    private static Model createModel(FileObject projectDir) throws MvnModelInputException {
+    public static Model createModel(FileObject projectDir) throws MvnModelInputException {
         FileObject pomFile = projectDir.getFileObject("pom.xml");
         MavenXpp3Reader mavenreader = new MavenXpp3Reader();
         try (Reader reader = new InputStreamReader(pomFile.getInputStream())) {
@@ -54,6 +55,14 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
         } catch (XmlPullParserException | IOException ex) {
             throw new MvnModelInputException(ex);
         }
+    }
+    
+    public static boolean isMvnProject(Project project) {
+        return project.getProjectDirectory().getFileObject("pom.xml") != null;
+    }
+    
+    public static MavenProject createMavenProject(Project project) throws MvnModelInputException{
+        return new MavenProject(createModel(project.getProjectDirectory()));
     }
 
 }

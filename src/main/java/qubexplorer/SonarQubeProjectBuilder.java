@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.prefs.Preferences;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
-import org.openide.filesystems.FileObject;
 
 /**
  *
@@ -16,13 +15,8 @@ public final class SonarQubeProjectBuilder {
         
     }
     
-    private static boolean isMvnProject(Project project) {
-        FileObject pomFile = project.getProjectDirectory().getFileObject("pom.xml");
-        return pomFile != null;
-    }
-    
     public static SonarQubeProjectConfiguration getDefaultConfiguration(Project project) {
-        if(isMvnProject(project)) {
+        if(SonarMvnProject.isMvnProject(project)) {
             try {
                 return new SonarMvnProject(project);
             } catch (MvnModelInputException ex) {
@@ -35,7 +29,7 @@ public final class SonarQubeProjectBuilder {
     }
     
     public static SonarQubeProjectConfiguration getConfiguration(Project project) {
-        if(isMvnProject(project)) {
+        if(SonarMvnProject.isMvnProject(project)) {
             try {
                 return new SonarMvnProject(project);
             } catch (MvnModelInputException ex) {
@@ -61,8 +55,7 @@ public final class SonarQubeProjectBuilder {
     }
     
     public static SonarQubeProjectConfiguration getSubconfiguration(SonarQubeProjectConfiguration parentConfig, Project subproject) {
-        FileObject pomFile = subproject.getProjectDirectory().getFileObject("pom.xml");
-        if(pomFile != null) {
+        if(SonarMvnProject.isMvnProject(subproject)) {
             try {
                 return new SonarMvnProject(subproject);
             } catch (MvnModelInputException ex) {

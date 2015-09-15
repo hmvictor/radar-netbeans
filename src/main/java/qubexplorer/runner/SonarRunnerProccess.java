@@ -1,33 +1,29 @@
 package qubexplorer.runner;
 
 import java.io.File;
-import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
-import org.netbeans.api.java.project.JavaProjectConstants;
-import org.netbeans.api.java.queries.BinaryForSourceQuery;
+import org.apache.maven.model.Build;
 import org.netbeans.api.java.queries.SourceLevelQuery;
-import org.netbeans.api.java.queries.UnitTestForSourceQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
-import org.netbeans.api.project.SourceGroup;
-import org.netbeans.api.project.Sources;
 import org.netbeans.api.queries.FileEncodingQuery;
+import org.netbeans.modules.maven.api.NbMavenProject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.Utilities;
 import org.sonar.runner.api.ForkedRunner;
 import org.sonar.runner.api.PrintStreamConsumer;
 import org.sonar.runner.api.ProcessMonitor;
 import org.sonar.runner.api.Runner;
-import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
 import qubexplorer.MvnModelInputException;
 import qubexplorer.PassEncoder;
-import qubexplorer.SonarQubeProjectConfiguration;
+import qubexplorer.SonarMvnProject;
 import qubexplorer.SonarQubeProjectBuilder;
+import qubexplorer.SonarQubeProjectConfiguration;
+import qubexplorer.UserCredentials;
 import qubexplorer.server.SonarQube;
 
 /**
@@ -115,22 +111,42 @@ public class SonarRunnerProccess {
         }
         properties.setProperty("sonar.projectDir", projectHome);
         properties.setProperty("project.home", projectHome);
-        properties.setProperty("sonar.working.directory", projectHome + "/./.sonar");
+        String workingDirectory;
+        if(SonarMvnProject.isMvnProject(project)){
+            NbMavenProject nbMavenProject = project.getLookup().lookup(NbMavenProject.class);
+            Build build = nbMavenProject.getMavenProject().getBuild();
+            String path = null;
+            if(build != null){
+                path=build.getDirectory();
+            }
+            File outputDirectory;
+            if(path != null){
+                outputDirectory=FileUtil.normalizeFile(new File(path));
+            }else{
+                outputDirectory=new File(projectHome, "target");
+            }
+            workingDirectory= new File(outputDirectory, "sonar").getAbsolutePath();
+            properties.setProperty("sonar.junit.reportsPath", new File(outputDirectory, "/surefire-reports").getAbsolutePath());
+        }else{
+            workingDirectory=projectHome + "/./.sonar";
+        }
+        properties.setProperty("sonar.working.directory", workingDirectory);
         if (userCredentials != null) {
             properties.setProperty("sonar.login", userCredentials.getUsername());
             properties.setProperty("sonar.password", PassEncoder.decodeAsString(userCredentials.getPassword()));
         }
-        boolean containsSources = configureSourcesAndBinariesProperties(null, project);
-        if (containsSources) {
+        Module mainModule = Module.createMainModule(project);
+        mainModule.configureSourcesAndBinariesProperties(properties);
+        if (mainModule.containsSources()) {
             sourcesCounter++;
         }
         Set<Project> subprojects = ProjectUtils.getContainedProjects(project, true);
         boolean hasSubprojects = subprojects != null && !subprojects.isEmpty();
         if(subprojects != null) {
             for (Project subproject : subprojects) {
-                String module = subproject.getProjectDirectory().getNameExt();
-                boolean moduleContainsSources = addModuleProperties(module, subproject);
-                if (moduleContainsSources) {
+                Module module = Module.createSubmodule(subproject);
+                module.addModuleProperties(properties);
+                if (module.containsSources()) {
                     if (modules.length() > 0) {
                         modules.append(',');
                     }
@@ -155,66 +171,6 @@ public class SonarRunnerProccess {
         runner.addJvmArguments(jvmArguments);
         runner.addProperties(properties);
         return runner;
-    }
-
-    /**
-     * @param project
-     * @return True if the project contains sources.
-     */
-    private boolean configureSourcesAndBinariesProperties(String module, Project project) {
-        Sources sources = ProjectUtils.getSources(project);
-        SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
-        if (sourceGroups != null && sourceGroups.length != 0) {
-            SourceGroup mainSourceGroup = null;
-            for(SourceGroup sGroup: sourceGroups) {
-                URL[] sourcesForUnitTest = UnitTestForSourceQuery.findSources(sGroup.getRootFolder());
-                if(sourcesForUnitTest == null || sourcesForUnitTest.length == 0) {
-                    mainSourceGroup=sGroup;
-                    break;
-                }
-            }
-            assert mainSourceGroup != null;
-            String sourceProperty = "sonar.sources";
-            if (module != null) {
-                sourceProperty = module + "." + sourceProperty;
-            }
-            properties.setProperty(sourceProperty, mainSourceGroup.getRootFolder().getPath());
-            URL[] roots = BinaryForSourceQuery.findBinaryRoots(mainSourceGroup.getRootFolder().toURL()).getRoots();
-            if (roots.length > 0) {
-                File f = Utilities.toFile(roots[0]);
-                String binariesProperty = "sonar.binaries";
-                if (module != null) {
-                    binariesProperty = module + "." + binariesProperty;
-                }
-                properties.setProperty(binariesProperty, f.getPath());
-            }
-            URL[] testSources = UnitTestForSourceQuery.findUnitTests(mainSourceGroup.getRootFolder());
-            if (testSources != null && testSources.length != 0) {
-                String testProperty = "sonar.tests";
-                if (module != null) {
-                    testProperty = module + "." + testProperty;
-                }
-                File testsDir = FileUtil.archiveOrDirForURL(testSources[0]);
-                if(testsDir.exists()){
-                    properties.setProperty(testProperty, testsDir.getPath());
-                }
-            }
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private boolean addModuleProperties(String module, Project moduleProject) throws MvnModelInputException {
-        SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.getDefaultConfiguration(moduleProject);
-        boolean containsSources = configureSourcesAndBinariesProperties(module, moduleProject);
-        if (containsSources) {
-            properties.setProperty(module + ".sonar.projectName", subprojectInfo.getName());
-            assert subprojectInfo.getKey().getPartsCount() == 2;
-            properties.setProperty(module + ".sonar.projectKey", subprojectInfo.getKey().getPart(1));
-            properties.setProperty(module + ".sonar.projectBaseDir", moduleProject.getProjectDirectory().getPath());
-        }
-        return containsSources;
     }
 
     public SonarRunnerResult executeRunner(UserCredentials credentials, ProcessMonitor processMonitor) throws MvnModelInputException {

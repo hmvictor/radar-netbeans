@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nbm>
+    <licenseName>Apache License, Version 2.0</licenseName>
+    <licenseFile>license.txt</licenseFile>
+    <dependencies>
+       <dependency>
+            <id>org.netbeans.modules:org-netbeans-modules-maven</id>
+            <type>impl</type>
+            <explicitValue>org.netbeans.modules.maven/2 = 201403101706</explicitValue>
+        </dependency>
+        <dependency>
+            <id>org.netbeans.modules:org-netbeans-modules-maven-embedder</id>
+            <type>impl</type>
+            <explicitValue>org.netbeans.modules.maven.embedder/2 = 201403101706</explicitValue>
+        </dependency>
+    </dependencies>
+</nbm>
