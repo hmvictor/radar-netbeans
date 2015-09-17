@@ -176,19 +176,10 @@
             <version>RELEASE80</version>
         </dependency>
         <dependency>
-            <groupId>org.netbeans.modules</groupId>
-            <artifactId>org-netbeans-modules-maven</artifactId>
-            <version>RELEASE80</version>
-        </dependency>
-        <dependency>
-            <groupId>org.netbeans.modules</groupId>
-            <artifactId>org-netbeans-modules-maven-embedder</artifactId>
-            <version>RELEASE80</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-core</artifactId>
             <version>3.1.0</version>
+            <type>jar</type>
         </dependency>
     </dependencies>
 
@@ -205,14 +196,6 @@
                     <licenseFile>license.txt</licenseFile>
                     <homePageUrl>https://github.com/hmvictor/radar-netbeans</homePageUrl>
                     <requiresRestart>true</requiresRestart>
-<!--                    <moduleDependencies>
-                        <dependency>
-                            <id>org.netbeans.modules:org-netbeans-modules-maven</id>
-                            <type>spec</type>
-                            <explicitValue>org.netbeans.modules.maven/2 > 2.103.1</explicitValue>
-                        </dependency>
-                    </moduleDependencies>-->
-                    <!--<verifyRuntime>warn</verifyRuntime>-->
                 </configuration>
             </plugin>
 

@@ -10,12 +10,14 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.project.Project;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 
 /**
  *
  * @author Victor
  */
 public class SonarMvnProject implements SonarQubeProjectConfiguration {
+
     private final Model model;
 
     public SonarMvnProject(Project project) throws MvnModelInputException {
@@ -29,18 +31,18 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
 
     @Override
     public ResourceKey getKey() {
-        String groupId=model.getGroupId();
-        if(groupId == null && model.getParent() != null) {
-            groupId=model.getParent().getGroupId();
+        String groupId = model.getGroupId();
+        if (groupId == null && model.getParent() != null) {
+            groupId = model.getParent().getGroupId();
         }
         return new ResourceKey(groupId, model.getArtifactId());
     }
 
     @Override
     public String getVersion() {
-        String version=model.getVersion();
-        if(version == null && model.getParent() != null) {
-            version=model.getParent().getVersion();
+        String version = model.getVersion();
+        if (version == null && model.getParent() != null) {
+            version = model.getParent().getVersion();
         }
         return version;
     }
@@ -56,13 +58,17 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
             throw new MvnModelInputException(ex);
         }
     }
-    
+
     public static boolean isMvnProject(Project project) {
         return project.getProjectDirectory().getFileObject("pom.xml") != null;
     }
-    
-    public static MavenProject createMavenProject(Project project) throws MvnModelInputException{
-        return new MavenProject(createModel(project.getProjectDirectory()));
+
+    public static File getPomFile(Project project) {
+        return FileUtil.toFile(project.getProjectDirectory().getFileObject("pom.xml"));
     }
 
+    public static MavenProject createMavenProject(Project project) throws MvnModelInputException {
+        return new MavenProject(createModel(project.getProjectDirectory()));
+    }
+    
 }

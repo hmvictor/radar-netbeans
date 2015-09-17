@@ -6,13 +6,26 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import org.apache.maven.DefaultMaven;
+import org.apache.maven.execution.DefaultMavenExecutionRequest;
+import org.apache.maven.execution.DefaultMavenExecutionResult;
+import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.model.Build;
+import org.apache.maven.model.building.ModelBuildingRequest;
+import org.apache.maven.project.DefaultProjectBuilder;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuildingException;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.project.ProjectBuildingResult;
+import org.codehaus.plexus.PlexusContainerException;
+import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.netbeans.api.java.queries.SourceLevelQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.queries.FileEncodingQuery;
-import org.netbeans.modules.maven.api.NbMavenProject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Exceptions;
 import org.sonar.runner.api.ForkedRunner;
 import org.sonar.runner.api.PrintStreamConsumer;
 import org.sonar.runner.api.ProcessMonitor;
@@ -113,8 +126,8 @@ public class SonarRunnerProccess {
         properties.setProperty("project.home", projectHome);
         String workingDirectory;
         if(SonarMvnProject.isMvnProject(project)){
-            NbMavenProject nbMavenProject = project.getLookup().lookup(NbMavenProject.class);
-            Build build = nbMavenProject.getMavenProject().getBuild();
+            MavenProject mavenProject = SonarMvnProject.createMavenProject(project);
+            Build build = mavenProject.getBuild();
             String path = null;
             if(build != null){
                 path=build.getDirectory();

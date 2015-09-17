@@ -136,11 +136,11 @@ public class AuthDialog extends javax.swing.JDialog {
     } 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton acceptButton;
-    private javax.swing.JButton cancelButton;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JPasswordField passwordField;
-    private javax.swing.JTextField usernameField;
+    javax.swing.JButton acceptButton;
+    javax.swing.JButton cancelButton;
+    javax.swing.JLabel jLabel1;
+    javax.swing.JLabel jLabel2;
+    javax.swing.JPasswordField passwordField;
+    javax.swing.JTextField usernameField;
     // End of variables declaration//GEN-END:variables
 }
