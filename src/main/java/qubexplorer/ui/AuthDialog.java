@@ -8,7 +8,7 @@ import qubexplorer.UserCredentials;
  * @author Victor
  */
 public class AuthDialog extends javax.swing.JDialog {
-    private UserCredentials authentication;
+    private transient UserCredentials authentication;
 
     /**
      * Creates new form AuthDialog

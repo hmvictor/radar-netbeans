@@ -16,12 +16,14 @@ import org.openide.windows.InputOutput;
 import org.openide.windows.WindowManager;
 import org.sonar.runner.api.PrintStreamConsumer;
 import org.sonar.runner.api.ProcessMonitor;
+import qubexplorer.MvnModelInputException;
 import qubexplorer.runner.SonarRunnerCancelledException;
 import qubexplorer.runner.SonarRunnerProccess;
 import qubexplorer.runner.SonarRunnerResult;
 import qubexplorer.runner.SourcesNotFoundException;
 import qubexplorer.ui.options.SonarQubeOptionsPanel;
 import qubexplorer.ui.task.Task;
+import qubexplorer.ui.task.TaskExecutionException;
 
 /**
  *
@@ -65,38 +67,42 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
     }
     
     @Override
-    public SonarRunnerResult execute() throws Exception {
-        PrintStreamConsumer out = new PrintStreamConsumer(null){
-
-            @Override
-            public void consumeLine(String line) {
-                io.getOut().println(line);
-            }
+    public SonarRunnerResult execute() throws TaskExecutionException {
+        try {
+            PrintStreamConsumer out = new PrintStreamConsumer(null){
+                
+                @Override
+                public void consumeLine(String line) {
+                    io.getOut().println(line);
+                }
+                
+            };
             
-        };
-        
-        PrintStreamConsumer err = new PrintStreamConsumer(null){
-
-            @Override
-            public void consumeLine(String line) {
-                io.getErr().println(line);
-            }
-            
-        };
-        SonarRunnerProccess sonarRunnerProccess = new SonarRunnerProccess(getServerUrl(), getProjectContext().getProject());
-        sonarRunnerProccess.setAnalysisMode(SonarRunnerProccess.AnalysisMode.valueOf(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.analysisMode", "Preview").toUpperCase()));
-        String jvmArguments = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.jvmArguments", "");
-        sonarRunnerProccess.setJvmArguments(Arrays.asList(jvmArguments.split(" +")));
-        sonarRunnerProccess.setOutConsumer(out);
-        sonarRunnerProccess.setErrConsumer(err);
-        return sonarRunnerProccess.executeRunner(getUserCredentials(), new ProcessMonitor() {
-
-            @Override
-            public boolean stop() {
-                return stopped;
-            }
-            
-        });
+            PrintStreamConsumer err = new PrintStreamConsumer(null){
+                
+                @Override
+                public void consumeLine(String line) {
+                    io.getErr().println(line);
+                }
+                
+            };
+            SonarRunnerProccess sonarRunnerProccess = new SonarRunnerProccess(getServerUrl(), getProjectContext().getProject());
+            sonarRunnerProccess.setAnalysisMode(SonarRunnerProccess.AnalysisMode.valueOf(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.analysisMode", "Preview").toUpperCase()));
+            String jvmArguments = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.jvmArguments", "");
+            sonarRunnerProccess.setJvmArguments(Arrays.asList(jvmArguments.split(" +")));
+            sonarRunnerProccess.setOutConsumer(out);
+            sonarRunnerProccess.setErrConsumer(err);
+            return sonarRunnerProccess.executeRunner(getUserCredentials(), new ProcessMonitor() {
+                
+                @Override
+                public boolean stop() {
+                    return stopped;
+                }
+                
+            });
+        } catch (MvnModelInputException ex) {
+            throw new TaskExecutionException(ex);
+        }
     }
 
     @Override

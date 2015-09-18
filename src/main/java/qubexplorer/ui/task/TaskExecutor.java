@@ -43,7 +43,6 @@ public final class TaskExecutor {
         private final AuthenticationRepository authenticationRepository;
         private final Task<T> task;
         private ProgressHandle handle;
-        //persistent mode
 
         public TaskWorker(AuthenticationRepository repository, Task<T> task) {
             this.authenticationRepository = repository;

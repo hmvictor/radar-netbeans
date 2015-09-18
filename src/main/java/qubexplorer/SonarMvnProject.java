@@ -10,7 +10,6 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.project.Project;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 
 /**
  *
@@ -21,7 +20,7 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
     private final Model model;
 
     public SonarMvnProject(Project project) throws MvnModelInputException {
-        this.model = createModel(project.getProjectDirectory());
+        this.model = createModel(project);
     }
 
     @Override
@@ -47,8 +46,8 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
         return version;
     }
 
-    public static Model createModel(FileObject projectDir) throws MvnModelInputException {
-        FileObject pomFile = projectDir.getFileObject("pom.xml");
+    public static Model createModel(Project project) throws MvnModelInputException {
+        FileObject pomFile = getPomFileObject(project);
         MavenXpp3Reader mavenreader = new MavenXpp3Reader();
         try (Reader reader = new InputStreamReader(pomFile.getInputStream())) {
             Model model = mavenreader.read(reader);
@@ -60,15 +59,15 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
     }
 
     public static boolean isMvnProject(Project project) {
-        return project.getProjectDirectory().getFileObject("pom.xml") != null;
+        return getPomFileObject(project) != null;
     }
-
-    public static File getPomFile(Project project) {
-        return FileUtil.toFile(project.getProjectDirectory().getFileObject("pom.xml"));
+    
+    public static FileObject getPomFileObject(Project project) {
+        return project.getProjectDirectory().getFileObject("pom.xml");
     }
 
     public static MavenProject createMavenProject(Project project) throws MvnModelInputException {
-        return new MavenProject(createModel(project.getProjectDirectory()));
+        return new MavenProject(createModel(project));
     }
     
 }

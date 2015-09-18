@@ -34,7 +34,7 @@ public abstract class Task<T> {
         return serverUrl;
     }
     
-    public abstract T execute() throws Exception;
+    public abstract T execute() throws TaskExecutionException;
 
     protected void reset() {
 

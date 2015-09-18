@@ -31,14 +31,17 @@ public final class SonarQubeOptionsPanelController extends OptionsPanelControlle
         changed = false;
     }
 
+    @Override
     public void cancel() {
         // need not do anything special, if no changes have been persisted yet
     }
 
+    @Override
     public boolean isValid() {
         return getPanel().valid();
     }
 
+    @Override
     public boolean isChanged() {
         return changed;
     }

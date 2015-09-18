@@ -1,12 +1,13 @@
 package qubexplorer;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 /**
  *
  * @author Victor
  */
-public class ResourceKey {
+public class ResourceKey implements Serializable{
 
     private final String[] parts;
     

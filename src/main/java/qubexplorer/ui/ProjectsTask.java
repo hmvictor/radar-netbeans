@@ -4,6 +4,7 @@ import java.util.List;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.task.Task;
+import qubexplorer.ui.task.TaskExecutionException;
 
 /**
  *
@@ -18,7 +19,7 @@ public class ProjectsTask extends Task<List<SonarQubeProjectConfiguration>>{
     }
 
     @Override
-    public List<SonarQubeProjectConfiguration> execute() throws Exception {
+    public List<SonarQubeProjectConfiguration> execute() throws TaskExecutionException {
         return sonarQube.getProjects(getUserCredentials());
     }
     

@@ -4,7 +4,7 @@ import org.openide.util.NbPreferences;
 
 public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
 
-    private final SonarQubeOptionsPanelController controller;
+    private final transient SonarQubeOptionsPanelController controller;
 
     SonarQubeOptionsPanel(SonarQubeOptionsPanelController controller) {
         this.controller = controller;

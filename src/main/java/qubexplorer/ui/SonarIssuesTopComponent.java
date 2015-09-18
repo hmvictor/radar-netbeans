@@ -16,6 +16,8 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
@@ -93,6 +95,7 @@ import qubexplorer.ui.task.TaskExecutor;
 })
 public final class SonarIssuesTopComponent extends TopComponent {
     private static final String ACTION_PLAN_PROPERTY = "actionPlan";
+    private static final Logger LOGGER = Logger.getLogger(SonarIssuesTopComponent.class.getName());
 
     private IssuesContainer issuesContainer;
     private ProjectContext projectContext;
@@ -168,8 +171,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 try {
                     openIssueLocation(model.getIssueLocation(row));
                 } catch (MvnModelInputException ex) {
+                    LOGGER.log(Level.WARNING, ex.getMessage(), ex);
                     Exceptions.printStackTrace(ex);
                 } catch (ProjectNotFoundException ex) {
+                    LOGGER.log(Level.WARNING, ex.getMessage(), ex);
                     String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", ex.getShortProjectKey());
                     DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
                 }
@@ -256,7 +261,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         issuesTable.getColumnExt("Severity").addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent pce) {
-                if (pce.getPropertyName().equals("visible") && pce.getNewValue().equals(Boolean.TRUE)) {
+                if ("visible".equals(pce.getPropertyName()) && pce.getNewValue().equals(Boolean.TRUE)) {
                     ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(4, severityComparator);
                 }
             }
@@ -347,7 +352,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
         issuesPopupMenu = new javax.swing.JPopupMenu();
         jMenuItem2 = new javax.swing.JMenuItem();
         jMenuItem3 = new javax.swing.JMenuItem();
-        jPopupMenu1 = new javax.swing.JPopupMenu();
         actionPlanGroup = new javax.swing.ButtonGroup();
         tabbedPane = new javax.swing.JTabbedPane();
         summaryPanel = new javax.swing.JPanel();
@@ -640,7 +644,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
-    private javax.swing.JPopupMenu jPopupMenu1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JMenuItem ruleInfoMenuItem;

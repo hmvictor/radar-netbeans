@@ -129,7 +129,7 @@ public class TaskExecutorTest {
         }
 
         @Override
-        public T execute() throws Exception {
+        public T execute() throws TaskExecutionException {
             return null;
         }
 

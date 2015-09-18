@@ -44,7 +44,7 @@ public class SonarRunnerResult implements IssuesContainer {
             reader.beginObject();
             while (reader.hasNext()) {
                 String name = reader.nextName();
-                if (name.equals("rules")) {
+                if ("rules".equals(name)) {
                     rules = readRules(reader);
                 }else{
                     reader.skipValue();
@@ -66,7 +66,7 @@ public class SonarRunnerResult implements IssuesContainer {
             reader.beginObject();
             while (reader.hasNext()) {
                 String name = reader.nextName();
-                if (name.equals("issues")) {
+                if ("issues".equals(name)) {
                     issues = readIssues(reader, new IssueFilter[0]);
                 }else{
                     reader.skipValue();
@@ -117,7 +117,7 @@ public class SonarRunnerResult implements IssuesContainer {
             reader.beginObject();
             while (reader.hasNext()) {
                 String name = reader.nextName();
-                if (name.equals("issues")) {
+                if ("issues".equals(name)) {
                     issues = readIssues(reader, filters);
                 }else{
                     reader.skipValue();

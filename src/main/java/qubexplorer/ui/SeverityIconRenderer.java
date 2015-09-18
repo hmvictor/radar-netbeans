@@ -15,7 +15,7 @@ import qubexplorer.Severity;
  * @author Victor
  */
 public class SeverityIconRenderer extends DefaultTableCellRenderer{
-    private Map<Severity, Icon> iconsBySeverity=new EnumMap<>(Severity.class);
+    private final Map<Severity, Icon> iconsBySeverity=new EnumMap<>(Severity.class);
 
     public SeverityIconRenderer() {
         iconsBySeverity.put(Severity.BLOCKER, new ImageIcon(getClass().getResource("/qubexplorer/ui/images/blocker.png")));

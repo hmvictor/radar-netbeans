@@ -7,6 +7,8 @@ import com.google.gson.JsonSyntaxException;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.sonar.wsclient.internal.HttpRequestFactory;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.PassEncoder;
@@ -17,6 +19,7 @@ import qubexplorer.UserCredentials;
  * @author Victor
  */
 public class RuleSearchClient {
+    private static final Logger LOGGER=Logger.getLogger(RuleSearchClient.class.getName());
     private final String baseUrl;
 
     public RuleSearchClient(String baseUrl) {
@@ -44,6 +47,7 @@ public class RuleSearchClient {
             rule.setDescription(description.getAsString());
             return rule;
         }catch(JsonSyntaxException ex) {
+            LOGGER.log(Level.WARNING, ex.getMessage(), ex);
             return null;
         }
     }
