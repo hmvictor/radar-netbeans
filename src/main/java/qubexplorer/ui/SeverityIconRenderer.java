@@ -2,8 +2,6 @@ package qubexplorer.ui;
 
 import java.awt.Component;
 import java.util.EnumMap;
-import java.util.Map;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JTable;
@@ -15,7 +13,7 @@ import qubexplorer.Severity;
  * @author Victor
  */
 public class SeverityIconRenderer extends DefaultTableCellRenderer{
-    private final Map<Severity, Icon> iconsBySeverity=new EnumMap<>(Severity.class);
+    private final EnumMap<Severity, ImageIcon> iconsBySeverity=new EnumMap<>(Severity.class);
 
     public SeverityIconRenderer() {
         iconsBySeverity.put(Severity.BLOCKER, new ImageIcon(getClass().getResource("/qubexplorer/ui/images/blocker.png")));

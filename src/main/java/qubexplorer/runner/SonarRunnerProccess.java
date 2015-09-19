@@ -141,25 +141,25 @@ public class SonarRunnerProccess {
             sourcesCounter++;
         }
         Set<Project> subprojects = ProjectUtils.getContainedProjects(project, true);
-        boolean hasSubprojects = subprojects != null && !subprojects.isEmpty();
-        if(subprojects != null) {
-            for (Project subproject : subprojects) {
-                Module module = Module.createSubmodule(subproject);
-                module.addModuleProperties(properties);
-                if (module.containsSources()) {
-                    if (modules.length() > 0) {
-                        modules.append(',');
-                    }
-                    modules.append(module);
-                    sourcesCounter++;
+        if(subprojects == null){
+            subprojects=Collections.emptySet();
+        }
+        for (Project subproject : subprojects) {
+            Module module = Module.createSubmodule(subproject);
+            module.addModuleProperties(properties);
+            if (module.containsSources()) {
+                if (modules.length() > 0) {
+                    modules.append(',');
                 }
+                modules.append(module.getName());
+                sourcesCounter++;
             }
         }
         if (sourcesCounter == 0) {
             throw new SourcesNotFoundException();
         }
         assert projectInfo.getKey().getPartsCount() == 2;
-        properties.setProperty("sonar.projectKey", hasSubprojects ? projectInfo.getKey().getPart(0) : projectInfo.getKey().toString());
+        properties.setProperty("sonar.projectKey", subprojects.isEmpty() ?  projectInfo.getKey().toString() : projectInfo.getKey().getPart(0));
         if (modules.length() > 0) {
             properties.setProperty("sonar.modules", modules.toString());
         }

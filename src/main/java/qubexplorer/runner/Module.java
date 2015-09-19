@@ -42,17 +42,6 @@ public class Module {
         return project;
     }
 
-    public boolean isMainModule() {
-        return mainModule;
-    }
-
-    public String getPropertyName(String property) {
-        if (!mainModule) {
-            return name + "." + property;
-        }
-        return property;
-    }
-
     public boolean containsSources() {
         return getMainSourceGroup() != null;
     }
@@ -73,36 +62,28 @@ public class Module {
         return mainSourceGroup;
     }
     
+    private String getPropertyName(String property) {
+        if (!mainModule) {
+            return name + "." + property;
+        }
+        return property;
+    }
     
-    boolean configureSourcesAndBinariesProperties(Properties properties) {
+    protected void configureSourcesAndBinariesProperties(Properties properties) {
         SourceGroup mainSourceGroup=getMainSourceGroup();
         if (mainSourceGroup != null) {
             String sourcePath=mainSourceGroup.getRootFolder().getPath();
-            boolean isMvnProject = SonarMvnProject.isMvnProject(project);
-            if(isMvnProject) {
+            if(SonarMvnProject.isMvnProject(project)){
                 sourcePath="pom.xml,"+sourcePath;
             }
-            properties.setProperty(getPropertyName("sonar.sources"), sourcePath);
-            if(isMvnProject){
-                ClassPath classPath = ClassPath.getClassPath(project.getProjectDirectory(), ClassPath.COMPILE);
-                if(classPath != null){
-                    StringBuilder librariesPath=new StringBuilder();
-                    for (FileObject root : classPath.getRoots()) {
-                        if(librariesPath.length() > 0){
-                            librariesPath.append(',');
-                        }
-                        FileObject archiveFile = FileUtil.getArchiveFile(root);
-                        if(archiveFile != null){
-                            librariesPath.append(archiveFile.getPath());
-                        }
-                    }
-                        properties.setProperty(getPropertyName("sonar.java.libraries"), librariesPath.toString());
-                }
+            ClassPath classPath = ClassPath.getClassPath(project.getProjectDirectory(), ClassPath.COMPILE);
+            if(classPath != null){
+                properties.setProperty(getPropertyName("sonar.java.libraries"), getLibrariesPath(classPath));
             }
+            properties.setProperty(getPropertyName("sonar.sources"), sourcePath);
             URL[] roots = BinaryForSourceQuery.findBinaryRoots(mainSourceGroup.getRootFolder().toURL()).getRoots();
             if (roots.length > 0) {
-                File f = Utilities.toFile(roots[0]);
-                properties.setProperty(getPropertyName("sonar.java.binaries"), f.getPath());
+                properties.setProperty(getPropertyName("sonar.java.binaries"), Utilities.toFile(roots[0]).getPath());
             }
             URL[] testSources = UnitTestForSourceQuery.findUnitTests(mainSourceGroup.getRootFolder());
             if (testSources != null && testSources.length != 0) {
@@ -111,9 +92,6 @@ public class Module {
                     properties.setProperty(getPropertyName("sonar.tests"), testsDir.getPath());
                 }
             }
-            return true;
-        } else {
-            return false;
         }
     }
 
@@ -134,6 +112,20 @@ public class Module {
 
     public static Module createSubmodule(Project submoduleProject) {
         return new Module(submoduleProject.getProjectDirectory().getNameExt(), submoduleProject, false);
+    }
+    
+    private static String getLibrariesPath(ClassPath classPath) {
+        StringBuilder librariesPath=new StringBuilder();
+        for (FileObject root : classPath.getRoots()) {
+            if(librariesPath.length() > 0){
+                librariesPath.append(',');
+            }
+            FileObject archiveFile = FileUtil.getArchiveFile(root);
+            if(archiveFile != null){
+                librariesPath.append(archiveFile.getPath());
+            }
+        }
+        return librariesPath.toString();
     }
 
 }

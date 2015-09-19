@@ -1,6 +1,8 @@
 package qubexplorer.ui.task;
 
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
@@ -39,6 +41,7 @@ public final class TaskExecutor {
     }
 
     private static class TaskWorker<T> extends SwingWorker<T, Void> {
+        private static final Logger LOGGER = Logger.getLogger(TaskWorker.class.getName());
 
         private final AuthenticationRepository authenticationRepository;
         private final Task<T> task;
@@ -73,6 +76,7 @@ public final class TaskExecutor {
                     authenticationRepository.saveAuthentication(task.getServerUrl(), task.getProjectContext().getConfiguration().getKey().toString(), task.getUserCredentials());
                 }
             } catch (ExecutionException ex) {
+                LOGGER.log(Level.WARNING, ex.getMessage(), ex);
                 handle.finish();
                 handle = null;
                 Throwable cause = ex.getCause();

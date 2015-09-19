@@ -15,7 +15,7 @@ public class IssuesTableModel extends DefaultTableModel {
     
     private static final String[] COLUMN_NAMES = new String [] {"", "Location", "Message", "Rule", "Severity", "Project Key", "Full Path"};
     
-    private RadarIssue[] issues;
+    private transient RadarIssue[] issues;
 
     public IssuesTableModel() {
         super(new Object [][] {}, COLUMN_NAMES);

@@ -97,11 +97,11 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private static final String ACTION_PLAN_PROPERTY = "actionPlan";
     private static final Logger LOGGER = Logger.getLogger(SonarIssuesTopComponent.class.getName());
 
-    private IssuesContainer issuesContainer;
+    private transient IssuesContainer issuesContainer;
     private ProjectContext projectContext;
     private JPopupMenu dropDownMenu=new JPopupMenu();
     
-    private Icon informationIcon=new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"));
+    private ImageIcon informationIcon=new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"));
 
     private final Comparator<Severity> severityComparator = Collections.reverseOrder(new Comparator<Severity>() {
 
@@ -112,7 +112,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     });
 
-    private final Action showRuleInfoAction = new AbstractAction("Show Rule Info", informationIcon) {
+    private final AbstractAction showRuleInfoAction = new AbstractAction("Show Rule Info", informationIcon) {
         
         {
             putValue(Action.SHORT_DESCRIPTION, "Shows information about SonarQube rule");
@@ -130,7 +130,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     };
 
-    private final Action listIssuesAction = new AbstractAction("List Issues", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/application_view_list.png"))) {
+    private final AbstractAction listIssuesAction = new AbstractAction("List Issues", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/application_view_list.png"))) {
         
         {
             putValue(Action.SHORT_DESCRIPTION, "Displays SonarQube issues");
@@ -156,7 +156,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     };
 
-    private final Action gotoIssueAction = new AbstractAction("Go to Source") {
+    private final AbstractAction gotoIssueAction = new AbstractAction("Go to Source") {
         
         {
             putValue(Action.SHORT_DESCRIPTION, "Opens the location of this issue in the source code");
@@ -183,7 +183,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     };
 
-    private final Action showRuleInfoForIssueAction = new AbstractAction("Show Rule Info about Issue", informationIcon) {
+    private final AbstractAction showRuleInfoForIssueAction = new AbstractAction("Show Rule Info about Issue", informationIcon) {
         
         {
             putValue(Action.SHORT_DESCRIPTION, "Shows information about the SonarQube rule for the issue");

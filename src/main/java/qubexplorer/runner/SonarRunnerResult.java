@@ -8,6 +8,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -16,12 +17,12 @@ import java.util.Map;
 import java.util.Set;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.services.Rule;
-import qubexplorer.UserCredentials;
 import qubexplorer.IssuesContainer;
 import qubexplorer.RadarIssue;
 import qubexplorer.ResourceKey;
 import qubexplorer.Severity;
 import qubexplorer.Summary;
+import qubexplorer.UserCredentials;
 import qubexplorer.filter.IssueFilter;
 
 /**
@@ -61,18 +62,8 @@ public class SonarRunnerResult implements IssuesContainer {
     }
 
     public SonarRunnerSummary getSummary() {
-        try (JsonReader reader = new JsonReader(new FileReader(file))) {
-            List<Issue> issues = null;
-            reader.beginObject();
-            while (reader.hasNext()) {
-                String name = reader.nextName();
-                if ("issues".equals(name)) {
-                    issues = readIssues(reader, new IssueFilter[0]);
-                }else{
-                    reader.skipValue();
-                }
-            }
-            reader.endObject();
+        try  {
+            List<Issue> issues = readIssues();
             Map<String, IntWrapper> countsByRule=new HashMap<>();
             Map<String, IntWrapper> countsBySeverity=new HashMap<>();
             Map<Severity, Set<Rule>> rulesBySeverity=new HashMap<>();
@@ -88,26 +79,46 @@ public class SonarRunnerResult implements IssuesContainer {
                     countsBySeverity.put(issue.severity(), new IntWrapper(1));
                 }
                 Severity severity = Severity.valueOf(issue.severity().toUpperCase());
-                Set<Rule> set = rulesBySeverity.get(severity);
-                if(set == null) {
-                    set=new HashSet<>();
-                    rulesBySeverity.put(severity, set);
+                Set<Rule> ruleSet = rulesBySeverity.get(severity);
+                if(ruleSet == null) {
+                    ruleSet=new HashSet<>();
+                    rulesBySeverity.put(severity, ruleSet);
                 }
-                boolean exists=false;
-                for (Rule rule : set) {
-                    if(rule.getKey().equals(issue.ruleKey())){
-                        exists=true;
-                        break;
-                    }
-                }
-                if(!exists){
-                    set.add(rulesByKey.get(issue.ruleKey()));
+                /* Rule class has no equals method defined based in rule key. */
+                if(!containsRule(ruleSet, issue.ruleKey())){
+                    ruleSet.add(rulesByKey.get(issue.ruleKey()));
                 }
             }
             return new SonarRunnerSummary(countsBySeverity, countsByRule, rulesBySeverity);
         } catch (IOException | ParseException ex) {
             throw new SonarRunnerException(ex);
         }
+    }
+    
+    private static boolean containsRule(Set<Rule> ruleSet, String ruleKey){
+        for (Rule rule : ruleSet) {
+            if(rule.getKey().equals(ruleKey)){
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private List<Issue> readIssues() throws IOException, ParseException {
+        try (JsonReader reader = new JsonReader(new FileReader(file))) {
+            List<Issue> issues = null;
+            reader.beginObject();
+            while (reader.hasNext()) {
+                String name = reader.nextName();
+                if ("issues".equals(name)) {
+                    issues = readIssues(reader, new IssueFilter[0]);
+                }else{
+                    reader.skipValue();
+                }
+            }
+            reader.endObject();
+            return issues == null? Collections.<Issue>emptyList(): issues;
+        } 
     }
 
     @Override
@@ -180,7 +191,7 @@ public class SonarRunnerResult implements IssuesContainer {
                     break;
                 case "line":
                     String line = reader.nextString();
-                    if (line != null && line.trim().length() > 0) {
+                    if (line != null && !line.trim().isEmpty()) {
                         issue.setLine(Integer.parseInt(line));
                     }
                     break;

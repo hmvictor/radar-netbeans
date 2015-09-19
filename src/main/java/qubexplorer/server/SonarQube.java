@@ -124,6 +124,7 @@ public class SonarQube implements IssuesContainer{
                 query.pageIndex(pageIndex);
                 result = issueClient.find(query);
                 for(Issue issue:result.list()) {
+                    /* Try to find in cache then from server. */
                     Rule rule = rulesCache.get(issue.ruleKey());
                     if(rule == null) {
                         rule=getRule(userCredentials, issue.ruleKey());
@@ -166,31 +167,36 @@ public class SonarQube implements IssuesContainer{
     
     public Rule getRule(UserCredentials userCredentials, String ruleKey) {
         try{
-            //try Rule Search API
+            //try first the newest Rule Search API
             return new RuleSearchClient(serverUrl).getRule(userCredentials, ruleKey);
         }catch(HttpException ex){
             if(ex.getMessage().contains("Error 404")){
-                RuleQuery ruleQuery=new RuleQuery("java");
-                String[] tokens=ruleKey.split(":");
-                ruleQuery.setSearchText(tokens.length == 2? tokens[1]: ruleKey);
-                Sonar sonar;
-                if(userCredentials == null) {
-                    sonar=Sonar.create(serverUrl);
-                }else {
-                    sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
-                }
-                List<Rule> rules = sonar.findAll(ruleQuery);
-                for(Rule rule:rules) {
-                    if(rule.getKey().equals(ruleKey)) {
-                        return rule;
-                    }
-                }
-                return null;
+                //fallback to old method
+                return getRuleWithQueryAPI(userCredentials, ruleKey);
             }else if(ex.status() == UNAUTHORIZED_RESPONSE_STATUS){
                 throw new AuthorizationException(ex);
             }
             throw ex;
         }
+    }
+    
+    private Rule getRuleWithQueryAPI(UserCredentials userCredentials, String ruleKey) {
+        RuleQuery ruleQuery=new RuleQuery("java");
+        String[] tokens=ruleKey.split(":");
+        ruleQuery.setSearchText(tokens.length == 2? tokens[1]: ruleKey);
+        Sonar sonar;
+        if(userCredentials == null) {
+            sonar=Sonar.create(serverUrl);
+        }else {
+            sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
+        }
+        List<Rule> rules = sonar.findAll(ruleQuery);
+        for(Rule rule:rules) {
+            if(rule.getKey().equals(ruleKey)) {
+                return rule;
+            }
+        }
+        return null;
     }
     
     public List<ResourceKey> getProjectsKeys(UserCredentials userCredentials) {

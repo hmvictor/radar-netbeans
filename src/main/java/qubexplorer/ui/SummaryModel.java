@@ -14,12 +14,13 @@ import qubexplorer.Summary;
  * @author Victor
  */
 public class SummaryModel extends AbstractTreeTableModel {
-    private boolean skipEmptySeverity=false;
+
+    private boolean skipEmptySeverity = false;
     private Severity[] severities;
 
     public SummaryModel(Summary summary, boolean skip) {
         super(summary);
-        skipEmptySeverity=skip;
+        skipEmptySeverity = skip;
         setSeverities();
     }
 
@@ -31,21 +32,21 @@ public class SummaryModel extends AbstractTreeTableModel {
         this.skipEmptySeverity = skipEmptySeverity;
         setSeverities();
     }
-    
-    private void setSeverities(){
-        if(skipEmptySeverity) {
-            List<Severity> tmp=new LinkedList<>();
-            for(Severity s:Severity.values()) {
-                if(getSummary().getCount(s) > 0) {
+
+    private void setSeverities() {
+        if (skipEmptySeverity) {
+            List<Severity> tmp = new LinkedList<>();
+            for (Severity s : Severity.values()) {
+                if (getSummary().getCount(s) > 0) {
                     tmp.add(s);
                 }
             }
-            severities=tmp.toArray(new Severity[tmp.size()]);
-        }else{
-            severities=Severity.values();
+            severities = tmp.toArray(new Severity[tmp.size()]);
+        } else {
+            severities = Severity.values();
         }
     }
-    
+
     @Override
     public int getColumnCount() {
         return 2;
@@ -54,27 +55,27 @@ public class SummaryModel extends AbstractTreeTableModel {
     @Override
     public Object getValueAt(Object node, int i) {
         Summary summary = getSummary();
-        if(node instanceof Summary){
-            if(i == 0){
-                return "Issues";
-            }else{
-                return summary.getCount();
-            }
-        }else if (node instanceof Severity) {
+        Object value = null;
+        if (node instanceof Summary) {
             if (i == 0) {
-                return ((Severity) node).name();
+                value = "Issues";
             } else {
-                return summary.getCount((Severity) node);
+                value = summary.getCount();
+            }
+        } else if (node instanceof Severity) {
+            if (i == 0) {
+                value = ((Severity) node).name();
+            } else {
+                value = summary.getCount((Severity) node);
             }
         } else if (node instanceof Rule) {
-           if(i == 0) {
-               return ((Rule)node).getDescription();
-           }else{
-               return summary.getCount((Rule) node);
-           }
-        } else {
-            return null;
+            if (i == 0) {
+                value = ((Rule) node).getDescription();
+            } else {
+                value = summary.getCount((Rule) node);
+            }
         }
+        return value;
     }
 
     @Override
@@ -85,7 +86,7 @@ public class SummaryModel extends AbstractTreeTableModel {
             return "Count";
         }
     }
-    
+
     @Override
     public Object getChild(Object parent, int i) {
         if (parent instanceof Summary) {
@@ -96,11 +97,11 @@ public class SummaryModel extends AbstractTreeTableModel {
 
                 @Override
                 public int compare(Rule t, Rule t1) {
-                    int count1=getSummary().getCount(t);
-                    int count2=getSummary().getCount(t1);
+                    int count1 = getSummary().getCount(t);
+                    int count2 = getSummary().getCount(t1);
                     return count2 - count1;
                 }
-                
+
             });
             return rules[i];
         } else {
@@ -111,7 +112,6 @@ public class SummaryModel extends AbstractTreeTableModel {
     public Summary getSummary() {
         return (Summary) getRoot();
     }
-    
 
     @Override
     public int getChildCount(Object parent) {
