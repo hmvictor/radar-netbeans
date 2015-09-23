@@ -109,13 +109,8 @@ public class SonarQube implements IssuesContainer{
     
     private List<RadarIssue> getIssues(UserCredentials userCredentials, IssueQuery query) {
         try{
-            SonarClient client;
-            if(userCredentials == null) {
-                client = SonarClient.create(serverUrl);
-            }else{
-                client=SonarClient.builder().url(serverUrl).login(userCredentials.getUsername()).password(PassEncoder.decodeAsString(userCredentials.getPassword())).build();
-            }
-            IssueClient issueClient = client.issueClient();
+            SonarClient sonarClient = createSonarClient(userCredentials);
+            IssueClient issueClient = sonarClient.issueClient();
             List<RadarIssue> issues=new LinkedList<>();
             Map<String, Rule> rulesCache=new HashMap<>();
             Issues result;
@@ -124,14 +119,9 @@ public class SonarQube implements IssuesContainer{
                 query.pageIndex(pageIndex);
                 result = issueClient.find(query);
                 for(Issue issue:result.list()) {
-                    /* Try to find in cache then from server. */
-                    Rule rule = rulesCache.get(issue.ruleKey());
-                    if(rule == null) {
-                        rule=getRule(userCredentials, issue.ruleKey());
-                        if(rule == null){
-                            throw new IllegalStateException("No such rule in server: "+issue.ruleKey());
-                        }
-                        rulesCache.put(issue.ruleKey(), rule);
+                    Rule rule=searchInCacheOrLoadFromServer(rulesCache, issue.ruleKey(), userCredentials);
+                    if(rule == null){
+                        throw new IllegalStateException("No such rule in server: "+issue.ruleKey());
                     }
                     issues.add(new RadarIssue(issue, rule));
                 }
@@ -147,14 +137,30 @@ public class SonarQube implements IssuesContainer{
         }
     }
     
+    private Rule searchInCacheOrLoadFromServer(Map<String, Rule> rulesCache, String ruleKey, UserCredentials userCredentials) {
+        Rule rule = rulesCache.get(ruleKey);
+        if(rule == null) {
+            rule=getRule(userCredentials, ruleKey);
+            if(rule != null) {
+                rulesCache.put(ruleKey, rule);
+            }
+        }
+        return rule;
+    }
+
+    private SonarClient createSonarClient(UserCredentials userCredentials) {
+        SonarClient sonarClient;
+        if(userCredentials == null) {
+            sonarClient = SonarClient.create(serverUrl);
+        }else{
+            sonarClient= SonarClient.builder().url(serverUrl).login(userCredentials.getUsername()).password(PassEncoder.decodeAsString(userCredentials.getPassword())).build();
+        }
+        return sonarClient;
+    }
+    
     public List<ActionPlan> getActionPlans(UserCredentials userCredentials, ResourceKey resourceKey){ 
         try{
-            SonarClient client;
-            if(userCredentials == null) {
-                client = SonarClient.create(serverUrl);
-            }else{
-                client=SonarClient.builder().url(serverUrl).login(userCredentials.getUsername()).password(PassEncoder.decodeAsString(userCredentials.getPassword())).build();
-            }
+            SonarClient client = createSonarClient(userCredentials);
             return client.actionPlanClient().find(resourceKey.toString());
         }catch(HttpException ex) {
             if(ex.status() == UNAUTHORIZED_RESPONSE_STATUS){
@@ -283,5 +289,5 @@ public class SonarQube implements IssuesContainer{
         }
         return counting;
     }
-    
+
 }

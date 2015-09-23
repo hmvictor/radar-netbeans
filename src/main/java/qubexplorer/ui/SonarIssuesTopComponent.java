@@ -140,17 +140,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         public void actionPerformed(ActionEvent e) {
             int row = tableSummary.getSelectedRow();
             if (row != -1) {
-                Object selectedNode = tableSummary.getPathForRow(row).getLastPathComponent();
-                List<IssueFilter> filters = new LinkedList<>();
-                if (getSelectedActionPlan() != null) {
-                    filters.add(new ActionPlanFilter(getSelectedActionPlan()));
-                }
-                if (selectedNode instanceof Severity) {
-                    filters.add(new SeverityFilter((Severity) selectedNode));
-                } else if (selectedNode instanceof Rule) {
-                    filters.add(new RuleFilter((Rule) selectedNode));
-                }
-                TaskExecutor.execute(new IssuesTask(projectContext, issuesContainer, filters.toArray(new IssueFilter[0])));
+                listIssues(tableSummary.getPathForRow(row).getLastPathComponent());
             }
         }
 
@@ -167,17 +157,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
             IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
             int row = issuesTable.getSelectedRow();
             if (row != -1) {
-                row = issuesTable.getRowSorter().convertRowIndexToModel(row);
-                try {
-                    openIssueLocation(model.getIssueLocation(row));
-                } catch (MvnModelInputException ex) {
-                    LOGGER.log(Level.WARNING, ex.getMessage(), ex);
-                    Exceptions.printStackTrace(ex);
-                } catch (ProjectNotFoundException ex) {
-                    LOGGER.log(Level.WARNING, ex.getMessage(), ex);
-                    String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", ex.getShortProjectKey());
-                    DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
-                }
+                openIssueLocation(model.getIssueLocation(issuesTable.getRowSorter().convertRowIndexToModel(row)));
             }
         }
 
@@ -666,36 +646,51 @@ public final class SonarIssuesTopComponent extends TopComponent {
     void readProperties(java.util.Properties p) {
         //Do nothing, required method
     }
+    
+    
+    private void listIssues(Object treeTableNode){
+        List<IssueFilter> filters = new LinkedList<>();
+        if (getSelectedActionPlan() != null) {
+            filters.add(new ActionPlanFilter(getSelectedActionPlan()));
+        }
+        if (treeTableNode instanceof Severity) {
+            filters.add(new SeverityFilter((Severity) treeTableNode));
+        } else if (treeTableNode instanceof Rule) {
+            filters.add(new RuleFilter((Rule) treeTableNode));
+        }
+        TaskExecutor.execute(new IssuesTask(projectContext, issuesContainer, filters.toArray(new IssueFilter[0])));
+    }
 
-    private void openIssueLocation(IssueLocation issueLocation) throws MvnModelInputException {
-        int lineNumber = issueLocation.getLineNumber() <= 0 ? 1 : issueLocation.getLineNumber();
-        File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
-        FileObject fobj = FileUtil.toFileObject(file);
-        if (fobj == null) {
-            String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
-            String message = MessageFormat.format(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.text"), file.getPath());
-            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), message, messageTitle, JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        DataObject dobj = null;
-        try {
-            dobj = DataObject.find(fobj);
-        } catch (DataObjectNotFoundException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        if (dobj != null) {
-            EditorCookie ec = (EditorCookie) dobj.getLookup().lookup(EditorCookie.class);
-            if (ec != null) {
-                ec.open();
-                Line.Set lineSet = ec.getLineSet();
-                int index = lineNumber-1;
-                assert !lineSet.getLines().isEmpty();
-                /* Go to last line of file if issue line does not exist */
-                if(lineSet.getLines().size() <= index) {
-                    index=lineSet.getLines().size()-1;
-                }
-                lineSet.getCurrent(index).show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
+    private void openIssueLocation(IssueLocation issueLocation)  {
+        try{
+            int lineNumber = issueLocation.getLineNumber() <= 0 ? 1 : issueLocation.getLineNumber();
+            File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
+            FileObject fileObject = FileUtil.toFileObject(file);
+            if (fileObject == null) {
+                String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
+                String message = MessageFormat.format(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.text"), file.getPath());
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), message, messageTitle, JOptionPane.WARNING_MESSAGE);
+                return;
             }
+            DataObject dataObject = DataObject.find(fileObject);
+            if (dataObject != null) {
+                EditorCookie editorCookie = (EditorCookie) dataObject.getLookup().lookup(EditorCookie.class);
+                if (editorCookie != null) {
+                    editorCookie.open();
+                    Line.Set lineSet = editorCookie.getLineSet();
+                    assert !lineSet.getLines().isEmpty();
+                    /* Go to last line of file if issue line does not exist */
+                    int index=Math.min(lineNumber, lineSet.getLines().size())-1;
+                    lineSet.getCurrent(index).show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
+                }
+            }
+        } catch (MvnModelInputException | DataObjectNotFoundException ex) {
+            LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+            Exceptions.printStackTrace(ex);
+        } catch (ProjectNotFoundException ex) {
+            LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+            String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", ex.getShortProjectKey());
+            DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
         }
     }
 

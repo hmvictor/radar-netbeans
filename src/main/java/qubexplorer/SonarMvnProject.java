@@ -4,12 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import org.apache.maven.model.Build;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.netbeans.api.project.Project;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 
 /**
  *
@@ -68,6 +70,22 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
 
     public static MavenProject createMavenProject(Project project) throws MvnModelInputException {
         return new MavenProject(createModel(project));
+    }
+    
+    public static File getOutputDirectory(Project project) throws MvnModelInputException {
+        MavenProject mavenProject = SonarMvnProject.createMavenProject(project);
+        Build build = mavenProject.getBuild();
+        String path = null;
+        if(build != null){
+            path=build.getDirectory();
+        }
+        File outputDirectory;
+        if(path != null){
+            outputDirectory=FileUtil.normalizeFile(new File(path));
+        }else{
+            outputDirectory=new File(project.getProjectDirectory().getPath(), "target");
+        }
+        return outputDirectory;
     }
     
 }

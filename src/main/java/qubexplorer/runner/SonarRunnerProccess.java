@@ -6,13 +6,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
-import org.apache.maven.model.Build;
-import org.apache.maven.project.MavenProject;
 import org.netbeans.api.java.queries.SourceLevelQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.queries.FileEncodingQuery;
-import org.openide.filesystems.FileUtil;
 import org.sonar.runner.api.ForkedRunner;
 import org.sonar.runner.api.PrintStreamConsumer;
 import org.sonar.runner.api.ProcessMonitor;
@@ -50,7 +47,6 @@ public class SonarRunnerProccess {
      * This state is modified while running.
      */
     private String projectHome;
-    private final StringBuilder modules = new StringBuilder();
     private final Properties properties = new Properties();
 
     public SonarRunnerProccess(String sonarUrl, Project project) {
@@ -92,7 +88,7 @@ public class SonarRunnerProccess {
         this.jvmArguments = jvmArguments;
     }
 
-    protected Runner createForProject(UserCredentials userCredentials, ProcessMonitor processMonitor) throws MvnModelInputException {
+    protected Runner createRunnerForProject(UserCredentials userCredentials, ProcessMonitor processMonitor) throws MvnModelInputException {
         int sourcesCounter = 0;
         ForkedRunner runner = ForkedRunner.create(processMonitor);
         projectHome = project.getProjectDirectory().getPath();
@@ -103,28 +99,16 @@ public class SonarRunnerProccess {
         properties.setProperty("sonar.sourceEncoding", FileEncodingQuery.getEncoding(project.getProjectDirectory()).displayName());
         properties.setProperty("sonar.host.url", sonarUrl);
         properties.setProperty("sonar.java.source", SourceLevelQuery.getSourceLevel(project.getProjectDirectory()));
-        int version = getMajorVersion(new SonarQube(sonarUrl).getVersion(userCredentials));
-        if (version >= 4) {
+        properties.setProperty("sonar.projectDir", projectHome);
+        properties.setProperty("project.home", projectHome);
+        if (getMajorVersion(new SonarQube(sonarUrl).getVersion(userCredentials)) >= 4) {
             properties.setProperty("sonar.analysis.mode", analysisMode.toString().toLowerCase());
         } else {
             properties.setProperty("sonar.dryRun", "true");
         }
-        properties.setProperty("sonar.projectDir", projectHome);
-        properties.setProperty("project.home", projectHome);
         String workingDirectory;
         if(SonarMvnProject.isMvnProject(project)){
-            MavenProject mavenProject = SonarMvnProject.createMavenProject(project);
-            Build build = mavenProject.getBuild();
-            String path = null;
-            if(build != null){
-                path=build.getDirectory();
-            }
-            File outputDirectory;
-            if(path != null){
-                outputDirectory=FileUtil.normalizeFile(new File(path));
-            }else{
-                outputDirectory=new File(projectHome, "target");
-            }
+            File outputDirectory=SonarMvnProject.getOutputDirectory(project);
             workingDirectory= new File(outputDirectory, "sonar").getAbsolutePath();
             properties.setProperty("sonar.junit.reportsPath", new File(outputDirectory, "/surefire-reports").getAbsolutePath());
         }else{
@@ -140,28 +124,28 @@ public class SonarRunnerProccess {
         if (mainModule.containsSources()) {
             sourcesCounter++;
         }
-        Set<Project> subprojects = ProjectUtils.getContainedProjects(project, true);
-        if(subprojects == null){
-            subprojects=Collections.emptySet();
-        }
+        
+        StringBuilder modulesWithSources = new StringBuilder();
+        Set<Project> subprojects = getSubprojects();
         for (Project subproject : subprojects) {
             Module module = Module.createSubmodule(subproject);
             module.addModuleProperties(properties);
             if (module.containsSources()) {
-                if (modules.length() > 0) {
-                    modules.append(',');
+                if (modulesWithSources.length() > 0) {
+                    modulesWithSources.append(',');
                 }
-                modules.append(module.getName());
+                modulesWithSources.append(module.getName());
                 sourcesCounter++;
             }
         }
+        
         if (sourcesCounter == 0) {
             throw new SourcesNotFoundException();
         }
         assert projectInfo.getKey().getPartsCount() == 2;
         properties.setProperty("sonar.projectKey", subprojects.isEmpty() ?  projectInfo.getKey().toString() : projectInfo.getKey().getPart(0));
-        if (modules.length() > 0) {
-            properties.setProperty("sonar.modules", modules.toString());
+        if (modulesWithSources.length() > 0) {
+            properties.setProperty("sonar.modules", modulesWithSources.toString());
         }
         if (outConsumer != null) {
             runner.setStdOut(outConsumer);
@@ -172,9 +156,17 @@ public class SonarRunnerProccess {
         runner.addProperties(properties);
         return runner;
     }
+    
+    public Set<Project> getSubprojects(){
+        Set<Project> subprojects = ProjectUtils.getContainedProjects(project, true);
+        if(subprojects == null){
+            subprojects=Collections.emptySet();
+        }
+        return subprojects;
+    }
 
     public SonarRunnerResult executeRunner(UserCredentials credentials, ProcessMonitor processMonitor) throws MvnModelInputException {
-        Runner runner = createForProject(credentials, processMonitor);
+        Runner runner = createRunnerForProject(credentials, processMonitor);
         try {
             runner.execute();
         } catch (Exception ex) {
