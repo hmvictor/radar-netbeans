@@ -20,11 +20,11 @@ public abstract class UITask<R, P> extends SwingWorker<R, P> {
             success(result);
         } catch (ExecutionException ex) {
             /* Call template method error handler. */
-            LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+            LOGGER.log(Level.INFO, ex.getMessage(), ex);
             error(ex.getCause());
         } catch (InterruptedException ex) {
             /* Not an application exception. Local handling of this. */
-            LOGGER.log(Level.WARNING, ex.getMessage());
+            LOGGER.log(Level.INFO, ex.getMessage());
             Exceptions.printStackTrace(ex);
         } finally {
             finished();

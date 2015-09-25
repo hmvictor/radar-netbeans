@@ -76,7 +76,7 @@ public final class TaskExecutor {
                     authenticationRepository.saveAuthentication(task.getServerUrl(), task.getProjectContext().getConfiguration().getKey().toString(), task.getUserCredentials());
                 }
             } catch (ExecutionException ex) {
-                LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+                LOGGER.log(Level.INFO, ex.getMessage(), ex);
                 handle.finish();
                 handle = null;
                 Throwable cause = ex.getCause();

@@ -18,6 +18,8 @@ import qubexplorer.MvnModelInputException;
 import qubexplorer.SonarMvnProject;
 import qubexplorer.SonarQubeProjectBuilder;
 import qubexplorer.SonarQubeProjectConfiguration;
+import qubexplorer.server.SonarQube;
+import qubexplorer.server.Version;
 
 /**
  *
@@ -69,11 +71,11 @@ public class Module {
         return property;
     }
     
-    protected void configureSourcesAndBinariesProperties(Properties properties) {
+    protected void configureSourcesAndBinariesProperties(Version sonarQubeVersion, Properties properties) {
         SourceGroup mainSourceGroup=getMainSourceGroup();
         if (mainSourceGroup != null) {
             String sourcePath=mainSourceGroup.getRootFolder().getPath();
-            if(SonarMvnProject.isMvnProject(project)){
+            if(SonarMvnProject.isMvnProject(project) && sonarQubeVersion.compareTo(4, 5) >= 0){
                 sourcePath="pom.xml,"+sourcePath;
             }
             ClassPath classPath = ClassPath.getClassPath(project.getProjectDirectory(), ClassPath.COMPILE);
@@ -94,10 +96,10 @@ public class Module {
             }
         }
     }
-
-    public void addModuleProperties(Properties properties) throws MvnModelInputException {
+    
+    public void addModuleProperties(Version sonarQubeVersion, Properties properties) throws MvnModelInputException {
         SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.getDefaultConfiguration(project);
-        configureSourcesAndBinariesProperties(properties);
+        configureSourcesAndBinariesProperties(sonarQubeVersion, properties);
         if (containsSources()) {
             properties.setProperty(getPropertyName("sonar.projectName"), subprojectInfo.getName());
             assert subprojectInfo.getKey().getPartsCount() == 2;

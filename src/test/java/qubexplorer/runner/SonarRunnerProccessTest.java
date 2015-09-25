@@ -3,10 +3,12 @@ package qubexplorer.runner;
 import java.util.Arrays;
 import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import qubexplorer.server.Version;
 
 /**
  *
@@ -25,7 +27,7 @@ public class SonarRunnerProccessTest {
 
     @Test
     public void testVersion() {
-        assertThat(SonarRunnerProccess.getMajorVersion(version), is(expected));
+        assertThat(new Version(version).getMajor(), is(expected));
     }
 
     @Parameterized.Parameters

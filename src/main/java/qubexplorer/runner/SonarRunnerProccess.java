@@ -22,6 +22,7 @@ import qubexplorer.SonarQubeProjectBuilder;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.UserCredentials;
 import qubexplorer.server.SonarQube;
+import qubexplorer.server.Version;
 
 /**
  *
@@ -98,21 +99,25 @@ public class SonarRunnerProccess {
         properties.setProperty("sonar.projectVersion", projectInfo.getVersion());
         properties.setProperty("sonar.sourceEncoding", FileEncodingQuery.getEncoding(project.getProjectDirectory()).displayName());
         properties.setProperty("sonar.host.url", sonarUrl);
-        properties.setProperty("sonar.java.source", SourceLevelQuery.getSourceLevel(project.getProjectDirectory()));
+        String sourceLevel = SourceLevelQuery.getSourceLevel(project.getProjectDirectory());
+        if (sourceLevel != null) {
+            properties.setProperty("sonar.java.source", sourceLevel);
+        }
         properties.setProperty("sonar.projectDir", projectHome);
         properties.setProperty("project.home", projectHome);
-        if (getMajorVersion(new SonarQube(sonarUrl).getVersion(userCredentials)) >= 4) {
+        Version sonarQubeVersion = new SonarQube(sonarUrl).getVersion(userCredentials);
+        if (sonarQubeVersion.getMajor() >= 4) {
             properties.setProperty("sonar.analysis.mode", analysisMode.toString().toLowerCase());
         } else {
             properties.setProperty("sonar.dryRun", "true");
         }
         String workingDirectory;
-        if(SonarMvnProject.isMvnProject(project)){
-            File outputDirectory=SonarMvnProject.getOutputDirectory(project);
-            workingDirectory= new File(outputDirectory, "sonar").getAbsolutePath();
+        if (SonarMvnProject.isMvnProject(project)) {
+            File outputDirectory = SonarMvnProject.getOutputDirectory(project);
+            workingDirectory = new File(outputDirectory, "sonar").getAbsolutePath();
             properties.setProperty("sonar.junit.reportsPath", new File(outputDirectory, "/surefire-reports").getAbsolutePath());
-        }else{
-            workingDirectory=projectHome + "/./.sonar";
+        } else {
+            workingDirectory = projectHome + "/./.sonar";
         }
         properties.setProperty("sonar.working.directory", workingDirectory);
         if (userCredentials != null) {
@@ -120,16 +125,16 @@ public class SonarRunnerProccess {
             properties.setProperty("sonar.password", PassEncoder.decodeAsString(userCredentials.getPassword()));
         }
         Module mainModule = Module.createMainModule(project);
-        mainModule.configureSourcesAndBinariesProperties(properties);
+        mainModule.configureSourcesAndBinariesProperties(sonarQubeVersion, properties);
         if (mainModule.containsSources()) {
             sourcesCounter++;
         }
-        
+
         StringBuilder modulesWithSources = new StringBuilder();
         Set<Project> subprojects = getSubprojects();
         for (Project subproject : subprojects) {
             Module module = Module.createSubmodule(subproject);
-            module.addModuleProperties(properties);
+            module.addModuleProperties(sonarQubeVersion, properties);
             if (module.containsSources()) {
                 if (modulesWithSources.length() > 0) {
                     modulesWithSources.append(',');
@@ -138,12 +143,12 @@ public class SonarRunnerProccess {
                 sourcesCounter++;
             }
         }
-        
+
         if (sourcesCounter == 0) {
             throw new SourcesNotFoundException();
         }
         assert projectInfo.getKey().getPartsCount() == 2;
-        properties.setProperty("sonar.projectKey", subprojects.isEmpty() ?  projectInfo.getKey().toString() : projectInfo.getKey().getPart(0));
+        properties.setProperty("sonar.projectKey", subprojects.isEmpty() ? projectInfo.getKey().toString() : projectInfo.getKey().getPart(0));
         if (modulesWithSources.length() > 0) {
             properties.setProperty("sonar.modules", modulesWithSources.toString());
         }
@@ -156,11 +161,11 @@ public class SonarRunnerProccess {
         runner.addProperties(properties);
         return runner;
     }
-    
-    public Set<Project> getSubprojects(){
+
+    public Set<Project> getSubprojects() {
         Set<Project> subprojects = ProjectUtils.getContainedProjects(project, true);
-        if(subprojects == null){
-            subprojects=Collections.emptySet();
+        if (subprojects == null) {
+            subprojects = Collections.emptySet();
         }
         return subprojects;
     }
@@ -185,15 +190,6 @@ public class SonarRunnerProccess {
             } else {
                 return new SonarRunnerResult(jsonFile);
             }
-        }
-    }
-
-    protected static int getMajorVersion(String version) {
-        int index = version.indexOf('.');
-        if (index != -1) {
-            return Integer.parseInt(version.substring(0, index));
-        } else {
-            throw new IllegalArgumentException("Problem getting major version in " + version);
         }
     }
 

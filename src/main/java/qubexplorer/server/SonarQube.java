@@ -60,7 +60,7 @@ public class SonarQube implements IssuesContainer{
         return serverUrl;
     }
     
-    public String getVersion(UserCredentials userCredentials) {
+    public Version getVersion(UserCredentials userCredentials) {
         Sonar sonar;
         if(userCredentials == null) {
             sonar=Sonar.create(serverUrl);
@@ -68,7 +68,7 @@ public class SonarQube implements IssuesContainer{
             sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
         }
         ServerQuery serverQuery=new ServerQuery();
-        return sonar.find(serverQuery).getVersion();
+        return new Version(sonar.find(serverQuery).getVersion());
     }
     
     public double getRulesCompliance(UserCredentials userCredentials, ResourceKey resourceKey) {
