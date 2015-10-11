@@ -94,6 +94,9 @@ public class SonarRunnerProccess {
         ForkedRunner runner = ForkedRunner.create(processMonitor);
         projectHome = project.getProjectDirectory().getPath();
         SonarQubeProjectConfiguration projectInfo = SonarQubeProjectBuilder.getDefaultConfiguration(project);
+        Module mainModule = Module.createMainModule(project);
+        //TODO this is for not overriding properties set for this plugin, is the best?
+        mainModule.loadExternalProperties(properties);
         properties.setProperty("sonar.projectName", projectInfo.getName());
         properties.setProperty("sonar.projectBaseDir", projectHome);
         properties.setProperty("sonar.projectVersion", projectInfo.getVersion());
@@ -124,7 +127,6 @@ public class SonarRunnerProccess {
             properties.setProperty("sonar.login", userCredentials.getUsername());
             properties.setProperty("sonar.password", PassEncoder.decodeAsString(userCredentials.getPassword()));
         }
-        Module mainModule = Module.createMainModule(project);
         mainModule.configureSourcesAndBinariesProperties(sonarQubeVersion, properties);
         if (mainModule.containsSources()) {
             sourcesCounter++;

@@ -18,7 +18,6 @@ import qubexplorer.MvnModelInputException;
 import qubexplorer.SonarMvnProject;
 import qubexplorer.SonarQubeProjectBuilder;
 import qubexplorer.SonarQubeProjectConfiguration;
-import qubexplorer.server.SonarQube;
 import qubexplorer.server.Version;
 
 /**
@@ -62,6 +61,16 @@ public class Module {
             }
         }
         return mainSourceGroup;
+    }
+    
+    public void loadExternalProperties(Properties properties) {
+        if(SonarMvnProject.isMvnProject(project)){
+            /* Read from pom file */
+            throw new UnsupportedOperationException("Not yet implemented");
+        }else{
+            /* Read from properties or from configuration? */
+            throw new UnsupportedOperationException("Not yet implemented");
+        }
     }
     
     private String getPropertyName(String property) {
