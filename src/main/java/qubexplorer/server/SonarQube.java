@@ -7,10 +7,17 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.httpclient.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.conn.params.ConnRoutePNames;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.sonar.wsclient.Host;
 import org.sonar.wsclient.Sonar;
 import org.sonar.wsclient.SonarClient;
 import org.sonar.wsclient.base.HttpException;
 import org.sonar.wsclient.connectors.ConnectionException;
+import org.sonar.wsclient.connectors.HttpClient4Connector;
 import org.sonar.wsclient.issue.ActionPlan;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.issue.IssueClient;
@@ -37,18 +44,19 @@ import qubexplorer.Summary;
  *
  * @author Victor
  */
-public class SonarQube implements IssuesContainer{
+public class SonarQube implements IssuesContainer {
+
     private static final String VIOLATIONS_DENSITY_METRICS = "violations_density";
     private static final int UNAUTHORIZED_RESPONSE_STATUS = 401;
     private static final int PAGE_SIZE = 500;
     private String serverUrl;
 
     public SonarQube(String servelUrl) {
-        this.serverUrl=servelUrl;
+        this.serverUrl = servelUrl;
         //remove ending '/' if needed because of a problem with the underlying http client.
         assert this.serverUrl.length() > 1;
-        if(this.serverUrl.endsWith("/")) {
-            this.serverUrl=this.serverUrl.substring(0, this.serverUrl.length()-1);
+        if (this.serverUrl.endsWith("/")) {
+            this.serverUrl = this.serverUrl.substring(0, this.serverUrl.length() - 1);
         }
     }
 
@@ -59,170 +67,171 @@ public class SonarQube implements IssuesContainer{
     public String getServerUrl() {
         return serverUrl;
     }
-    
+
     public Version getVersion(UserCredentials userCredentials) {
-        Sonar sonar;
-        if(userCredentials == null) {
-            sonar=Sonar.create(serverUrl);
-        }else{
-            sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
-        }
-        ServerQuery serverQuery=new ServerQuery();
+        Sonar sonar = createSonar(userCredentials);
+        ServerQuery serverQuery = new ServerQuery();
         return new Version(sonar.find(serverQuery).getVersion());
     }
-    
+
     public double getRulesCompliance(UserCredentials userCredentials, ResourceKey resourceKey) {
-        try{
-            if(!existsProject(userCredentials, resourceKey)) {
+        try {
+            if (!existsProject(userCredentials, resourceKey)) {
                 throw new NoSuchProjectException(resourceKey);
             }
-            Sonar sonar;
-            if(userCredentials == null) {
-                sonar=Sonar.create(serverUrl);
-            }else{
-                sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
-            }
-            ResourceQuery query=new ResourceQuery(resourceKey.toString());
+            Sonar sonar = createSonar(userCredentials);
+            ResourceQuery query = new ResourceQuery(resourceKey.toString());
             query.setMetrics(VIOLATIONS_DENSITY_METRICS);
             Resource r = sonar.find(query);
             return r.getMeasure(VIOLATIONS_DENSITY_METRICS).getValue();
-        } catch(ConnectionException ex) {
-            if(isError401(ex)){
+        } catch (ConnectionException ex) {
+            if (isError401(ex)) {
                 throw new AuthorizationException(ex);
-            }else{
+            } else {
                 throw ex;
             }
         }
     }
-    
+
     @Override
     public List<RadarIssue> getIssues(UserCredentials auth, ResourceKey projectKey, IssueFilter... filters) {
-        if(!existsProject(auth, projectKey)) {
+        if (!existsProject(auth, projectKey)) {
             throw new NoSuchProjectException(projectKey);
         }
         IssueQuery query = IssueQuery.create().componentRoots(projectKey.toString()).pageSize(PAGE_SIZE).statuses("OPEN");
-        for(IssueFilter filter:filters) {
+        for (IssueFilter filter : filters) {
             filter.apply(query);
         }
         return getIssues(auth, query);
     }
-    
+
     private List<RadarIssue> getIssues(UserCredentials userCredentials, IssueQuery query) {
-        try{
+        try {
             SonarClient sonarClient = createSonarClient(userCredentials);
             IssueClient issueClient = sonarClient.issueClient();
-            List<RadarIssue> issues=new LinkedList<>();
-            Map<String, Rule> rulesCache=new HashMap<>();
+            List<RadarIssue> issues = new LinkedList<>();
+            Map<String, Rule> rulesCache = new HashMap<>();
             Issues result;
-            int pageIndex=1;
-            do{
+            int pageIndex = 1;
+            do {
                 query.pageIndex(pageIndex);
                 result = issueClient.find(query);
-                for(Issue issue:result.list()) {
-                    Rule rule=searchInCacheOrLoadFromServer(rulesCache, issue.ruleKey(), userCredentials);
-                    if(rule == null){
-                        throw new IllegalStateException("No such rule in server: "+issue.ruleKey());
+                for (Issue issue : result.list()) {
+                    Rule rule = searchInCacheOrLoadFromServer(rulesCache, issue.ruleKey(), userCredentials);
+                    if (rule == null) {
+                        throw new IllegalStateException("No such rule in server: " + issue.ruleKey());
                     }
                     issues.add(new RadarIssue(issue, rule));
                 }
                 pageIndex++;
-            }while(pageIndex <= result.paging().pages());
+            } while (pageIndex <= result.paging().pages());
             return issues;
-        }catch(HttpException ex) {
-            if(ex.status() == UNAUTHORIZED_RESPONSE_STATUS){
+        } catch (HttpException ex) {
+            if (ex.status() == UNAUTHORIZED_RESPONSE_STATUS) {
                 throw new AuthorizationException(ex);
-            }else{
+            } else {
                 throw ex;
             }
         }
     }
-    
+
     private Rule searchInCacheOrLoadFromServer(Map<String, Rule> rulesCache, String ruleKey, UserCredentials userCredentials) {
         Rule rule = rulesCache.get(ruleKey);
-        if(rule == null) {
-            rule=getRule(userCredentials, ruleKey);
-            if(rule != null) {
+        if (rule == null) {
+            rule = getRule(userCredentials, ruleKey);
+            if (rule != null) {
                 rulesCache.put(ruleKey, rule);
             }
         }
         return rule;
     }
 
-    private SonarClient createSonarClient(UserCredentials userCredentials) {
-        SonarClient sonarClient;
-        if(userCredentials == null) {
-            sonarClient = SonarClient.create(serverUrl);
-        }else{
-            sonarClient= SonarClient.builder().url(serverUrl).login(userCredentials.getUsername()).password(PassEncoder.decodeAsString(userCredentials.getPassword())).build();
+    private Sonar createSonar(UserCredentials userCredentials) {
+        Host host = new Host(serverUrl);
+        if (userCredentials != null) {
+            host.setUsername(userCredentials.getUsername());
+            host.setPassword(PassEncoder.decodeAsString(userCredentials.getPassword()));
         }
-        return sonarClient;
+        HttpClient4Connector connector=new HttpClient4Connector(host);
+//        if(proxy) {
+//            DefaultHttpClient httpClient = connector.getHttpClient();
+//            httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, new HttpHost(proxyHost, proxyPort));
+//            if(proxyCredentials){
+//                httpClient.getCredentialsProvider().setCredentials(new AuthScope(proxyHost, proxyPort), new UsernamePasswordCredentials(proxyLogin, proxyPassword));
+//            }
+//        }
+        return new Sonar(connector);
     }
-    
-    public List<ActionPlan> getActionPlans(UserCredentials userCredentials, ResourceKey resourceKey){ 
-        try{
+
+    private SonarClient createSonarClient(UserCredentials userCredentials) {
+        SonarClient.Builder builder = SonarClient.builder().url(serverUrl);
+        if (userCredentials != null) {
+            builder.login(userCredentials.getUsername()).password(PassEncoder.decodeAsString(userCredentials.getPassword()));
+        }
+//        if(proxy){
+//            builder.proxy(proxyHost, proxyPort);
+//            if(proxyCredentials) {
+//                builder.proxyLogin(proxyLogin).proxyPassword(proxyPassword);
+//            }
+//        }
+        return builder.build();
+    }
+
+    public List<ActionPlan> getActionPlans(UserCredentials userCredentials, ResourceKey resourceKey) {
+        try {
             SonarClient client = createSonarClient(userCredentials);
             return client.actionPlanClient().find(resourceKey.toString());
-        }catch(HttpException ex) {
-            if(ex.status() == UNAUTHORIZED_RESPONSE_STATUS){
+        } catch (HttpException ex) {
+            if (ex.status() == UNAUTHORIZED_RESPONSE_STATUS) {
                 throw new AuthorizationException(ex);
-            }else{
+            } else {
                 throw ex;
             }
         }
     }
-    
+
     public Rule getRule(UserCredentials userCredentials, String ruleKey) {
-        try{
+        try {
             //try first the newest Rule Search API
             return new RuleSearchClient(serverUrl).getRule(userCredentials, ruleKey);
-        }catch(HttpException ex){
-            if(ex.getMessage().contains("Error 404")){
+        } catch (HttpException ex) {
+            if (ex.getMessage().contains("Error 404")) {
                 //fallback to old method
                 return getRuleWithQueryAPI(userCredentials, ruleKey);
-            }else if(ex.status() == UNAUTHORIZED_RESPONSE_STATUS){
+            } else if (ex.status() == UNAUTHORIZED_RESPONSE_STATUS) {
                 throw new AuthorizationException(ex);
             }
             throw ex;
         }
     }
-    
+
     private Rule getRuleWithQueryAPI(UserCredentials userCredentials, String ruleKey) {
-        RuleQuery ruleQuery=new RuleQuery("java");
-        String[] tokens=ruleKey.split(":");
-        ruleQuery.setSearchText(tokens.length == 2? tokens[1]: ruleKey);
-        Sonar sonar;
-        if(userCredentials == null) {
-            sonar=Sonar.create(serverUrl);
-        }else {
-            sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
-        }
+        RuleQuery ruleQuery = new RuleQuery("java");
+        String[] tokens = ruleKey.split(":");
+        ruleQuery.setSearchText(tokens.length == 2 ? tokens[1] : ruleKey);
+        Sonar sonar = createSonar(userCredentials);
         List<Rule> rules = sonar.findAll(ruleQuery);
-        for(Rule rule:rules) {
-            if(rule.getKey().equals(ruleKey)) {
+        for (Rule rule : rules) {
+            if (rule.getKey().equals(ruleKey)) {
                 return rule;
             }
         }
         return null;
     }
-    
+
     public List<ResourceKey> getProjectsKeys(UserCredentials userCredentials) {
-        try{
-            Sonar sonar;
-            if(userCredentials == null) {
-                sonar=Sonar.create(serverUrl);
-            }else {
-                sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
-            }
+        try {
+            Sonar sonar = createSonar(userCredentials);
             List<Resource> resources = sonar.findAll(new ResourceQuery());
-            List<ResourceKey> keys=new ArrayList<>(resources.size());
-            for(Resource r:resources) {
+            List<ResourceKey> keys = new ArrayList<>(resources.size());
+            for (Resource r : resources) {
                 keys.add(ResourceKey.valueOf(r.getKey()));
             }
             return keys;
-        }catch(ConnectionException ex) {
-            if(isError401(ex)){
+        } catch (ConnectionException ex) {
+            if (isError401(ex)) {
                 throw new AuthorizationException(ex);
-            }else{
+            } else {
                 throw ex;
             }
         }
@@ -231,33 +240,28 @@ public class SonarQube implements IssuesContainer{
     private static boolean isError401(ConnectionException ex) {
         return ex.getMessage().contains("HTTP error: 401");
     }
-    
+
     public List<SonarQubeProjectConfiguration> getProjects(UserCredentials userCredentials) {
-        try{
-            Sonar sonar;
-            if(userCredentials == null) {
-                sonar=Sonar.create(serverUrl);
-            }else {
-                sonar=Sonar.create(serverUrl, userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword()));
-            }
+        try {
+            Sonar sonar = createSonar(userCredentials);
             List<Resource> resources = sonar.findAll(new ResourceQuery());
-            List<SonarQubeProjectConfiguration> projects=new ArrayList<>(resources.size());
-            for(Resource r:resources) {
+            List<SonarQubeProjectConfiguration> projects = new ArrayList<>(resources.size());
+            for (Resource r : resources) {
                 projects.add(new GenericSonarQubeProjectConfiguration(r.getName(), ResourceKey.valueOf(r.getKey()), r.getVersion()));
             }
             return projects;
-        }catch(ConnectionException ex) {
-            if(isError401(ex)){
+        } catch (ConnectionException ex) {
+            if (isError401(ex)) {
                 throw new AuthorizationException(ex);
-            }else{
+            } else {
                 throw ex;
             }
         }
     }
-    
-    public boolean existsProject(UserCredentials auth, ResourceKey projectKey){
-        for(ResourceKey tmp: getProjectsKeys(auth) ){
-            if(tmp.equals(projectKey)) {
+
+    public boolean existsProject(UserCredentials auth, ResourceKey projectKey) {
+        for (ResourceKey tmp : getProjectsKeys(auth)) {
+            if (tmp.equals(projectKey)) {
                 return true;
             }
         }
@@ -266,22 +270,22 @@ public class SonarQube implements IssuesContainer{
 
     @Override
     public Summary getSummary(UserCredentials auth, ResourceKey resourceKey, IssueFilter[] filters) {
-        if(!existsProject(auth, resourceKey)) {
+        if (!existsProject(auth, resourceKey)) {
             throw new NoSuchProjectException(resourceKey);
         }
-        ServerSummary counting=new ServerSummary();
-        for(Severity severity: Severity.values()) {
-            IssueFilter[] tempFilters=new IssueFilter[filters.length+1];
-            tempFilters[0]=new SeverityFilter(severity);
+        ServerSummary counting = new ServerSummary();
+        for (Severity severity : Severity.values()) {
+            IssueFilter[] tempFilters = new IssueFilter[filters.length + 1];
+            tempFilters[0] = new SeverityFilter(severity);
             System.arraycopy(filters, 0, tempFilters, 1, filters.length);
             List<RadarIssue> issues = getIssues(auth, resourceKey, tempFilters);
-            Map<Rule, Integer> counts=new HashMap<>();
-            for(RadarIssue issue: issues){
+            Map<Rule, Integer> counts = new HashMap<>();
+            for (RadarIssue issue : issues) {
                 Integer counter = counts.get(issue.rule());
-                if(counter == null) {
-                    counter=1;
-                }else{
-                    counter=counter+1;
+                if (counter == null) {
+                    counter = 1;
+                } else {
+                    counter = counter + 1;
                 }
                 counts.put(issue.rule(), counter);
             }
