@@ -1,5 +1,7 @@
 package qubexplorer.server;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import qubexplorer.filter.SeverityFilter;
 import qubexplorer.filter.IssueFilter;
 import java.util.ArrayList;
@@ -12,6 +14,9 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.netbeans.api.keyring.Keyring;
+import org.openide.util.Exceptions;
+import org.openide.util.NetworkSettings;
 import org.sonar.wsclient.Host;
 import org.sonar.wsclient.Sonar;
 import org.sonar.wsclient.SonarClient;
@@ -152,14 +157,16 @@ public class SonarQube implements IssuesContainer {
             host.setUsername(userCredentials.getUsername());
             host.setPassword(PassEncoder.decodeAsString(userCredentials.getPassword()));
         }
-        HttpClient4Connector connector=new HttpClient4Connector(host);
-//        if(proxy) {
-//            DefaultHttpClient httpClient = connector.getHttpClient();
-//            httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, new HttpHost(proxyHost, proxyPort));
-//            if(proxyCredentials){
-//                httpClient.getCredentialsProvider().setCredentials(new AuthScope(proxyHost, proxyPort), new UsernamePasswordCredentials(proxyLogin, proxyPassword));
-//            }
-//        }
+        HttpClient4Connector connector = new HttpClient4Connector(host);
+        ProxySettings proxySettings = getProxySettings();
+        if(proxySettings != null) {
+            DefaultHttpClient httpClient = connector.getHttpClient();
+            httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, new HttpHost(proxySettings.getHost(), proxySettings.getPort()));
+            if(proxySettings.getUsername() != null){
+                httpClient.getCredentialsProvider()
+                        .setCredentials(new AuthScope(proxySettings.getHost(), proxySettings.getPort()), new UsernamePasswordCredentials(proxySettings.getUsername(), proxySettings.getPassword()));
+            }
+        }
         return new Sonar(connector);
     }
 
@@ -168,13 +175,38 @@ public class SonarQube implements IssuesContainer {
         if (userCredentials != null) {
             builder.login(userCredentials.getUsername()).password(PassEncoder.decodeAsString(userCredentials.getPassword()));
         }
-//        if(proxy){
-//            builder.proxy(proxyHost, proxyPort);
-//            if(proxyCredentials) {
-//                builder.proxyLogin(proxyLogin).proxyPassword(proxyPassword);
-//            }
-//        }
+        ProxySettings proxySettings = getProxySettings();
+        if (proxySettings != null) {
+            builder.proxy(proxySettings.getHost(), proxySettings.getPort());
+            if (proxySettings.getUsername() != null) {
+                builder.proxyLogin(proxySettings.getUsername()).proxyPassword(proxySettings.getPassword());
+            }
+        }
         return builder.build();
+    }
+
+    private ProxySettings getProxySettings() {
+        try {
+            ProxySettings settings = null;
+            URI uri = new URI(serverUrl);
+            String proxyHost = NetworkSettings.getProxyHost(uri);
+            if (proxyHost != null) {
+                int proxyPort = 8080;
+                String stringProxyPort = NetworkSettings.getProxyPort(uri);
+                if (stringProxyPort != null) {
+                    proxyPort = Integer.parseInt(stringProxyPort);
+                }
+                settings = new ProxySettings(proxyHost, proxyPort);
+                String authenticationUsername = NetworkSettings.getAuthenticationUsername(uri);
+                if (authenticationUsername != null) {
+                    settings.setUsername(authenticationUsername);
+                    settings.setKeyForPassword(NetworkSettings.getKeyForAuthenticationPassword(uri));
+                }
+            }
+            return settings;
+        } catch (URISyntaxException ex) {
+            throw new IllegalArgumentException("Wrong URI " + serverUrl, ex);
+        }
     }
 
     public List<ActionPlan> getActionPlans(UserCredentials userCredentials, ResourceKey resourceKey) {
@@ -292,6 +324,44 @@ public class SonarQube implements IssuesContainer {
             counting.setRuleCounts(severity, counts);
         }
         return counting;
+    }
+    
+    private static class ProxySettings {
+
+        private final String host;
+        private final int port;
+        private String username;
+        private String keyForPassword;
+
+        public ProxySettings(String host, int port) {
+            this.host = host;
+            this.port = port;
+        }
+
+        public String getHost() {
+            return host;
+        }
+
+        public int getPort() {
+            return port;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public String getPassword(){
+            return new String(Keyring.read(keyForPassword));
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public void setKeyForPassword(String keyForPassword) {
+            this.keyForPassword = keyForPassword;
+        }
+
     }
 
 }
