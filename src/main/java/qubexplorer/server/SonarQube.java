@@ -9,14 +9,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.httpclient.HttpHost;
+import org.netbeans.api.keyring.Keyring;
+import org.openide.util.NetworkSettings;
+import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.netbeans.api.keyring.Keyring;
-import org.openide.util.Exceptions;
-import org.openide.util.NetworkSettings;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.sonar.wsclient.Host;
 import org.sonar.wsclient.Sonar;
 import org.sonar.wsclient.SonarClient;
@@ -158,14 +157,16 @@ public class SonarQube implements IssuesContainer {
             host.setPassword(PassEncoder.decodeAsString(userCredentials.getPassword()));
         }
         HttpClient4Connector connector = new HttpClient4Connector(host);
-        ProxySettings proxySettings = getProxySettings();
-        if(proxySettings != null) {
+        final ProxySettings proxySettings = getProxySettings();
+        if (proxySettings != null) {
             DefaultHttpClient httpClient = connector.getHttpClient();
-            httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, new HttpHost(proxySettings.getHost(), proxySettings.getPort()));
-            if(proxySettings.getUsername() != null){
+            if (proxySettings.getUsername() != null) {
                 httpClient.getCredentialsProvider()
                         .setCredentials(new AuthScope(proxySettings.getHost(), proxySettings.getPort()), new UsernamePasswordCredentials(proxySettings.getUsername(), proxySettings.getPassword()));
             }
+            HttpHost proxy = new HttpHost(proxySettings.getHost(), proxySettings.getPort());
+            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
+            httpClient.setRoutePlanner(routePlanner);
         }
         return new Sonar(connector);
     }
@@ -325,7 +326,7 @@ public class SonarQube implements IssuesContainer {
         }
         return counting;
     }
-    
+
     private static class ProxySettings {
 
         private final String host;
@@ -350,7 +351,7 @@ public class SonarQube implements IssuesContainer {
             return username;
         }
 
-        public String getPassword(){
+        public String getPassword() {
             return new String(Keyring.read(keyForPassword));
         }
 
