@@ -126,7 +126,7 @@ public class SonarQube implements IssuesContainer{
                     issues.add(new RadarIssue(issue, rule));
                 }
                 pageIndex++;
-            }while(pageIndex <= result.paging().pages());
+            }while(result.paging().pages() != null && pageIndex <= result.paging().pages());
             return issues;
         }catch(HttpException ex) {
             if(ex.status() == UNAUTHORIZED_RESPONSE_STATUS){
