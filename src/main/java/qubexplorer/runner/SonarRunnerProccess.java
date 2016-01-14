@@ -29,6 +29,7 @@ import qubexplorer.server.Version;
  * @author Victor
  */
 public class SonarRunnerProccess {
+    private static final String JSON_FILENAME = "sonar-report.json";
 
     private final Project project;
     private final String sonarUrl;
@@ -96,7 +97,7 @@ public class SonarRunnerProccess {
         SonarQubeProjectConfiguration projectInfo = SonarQubeProjectBuilder.getDefaultConfiguration(project);
         Module mainModule = Module.createMainModule(project);
         //TODO this is for not overriding properties set for this plugin, is the best?
-        mainModule.loadExternalProperties(properties);
+//        mainModule.loadExternalProperties(properties);
         properties.setProperty("sonar.projectName", projectInfo.getName());
         properties.setProperty("sonar.projectBaseDir", projectHome);
         properties.setProperty("sonar.projectVersion", projectInfo.getVersion());
@@ -109,7 +110,10 @@ public class SonarRunnerProccess {
         properties.setProperty("sonar.projectDir", projectHome);
         properties.setProperty("project.home", projectHome);
         Version sonarQubeVersion = new SonarQube(sonarUrl).getVersion(userCredentials);
-        if (sonarQubeVersion.getMajor() >= 4) {
+        if(sonarQubeVersion.compareTo(5, 2) >= 0){
+            properties.setProperty("sonar.analysis.mode", "issues");
+            properties.setProperty("sonar.report.export.path", JSON_FILENAME);
+        }else if (sonarQubeVersion.getMajor() >= 4) {
             properties.setProperty("sonar.analysis.mode", analysisMode.toString().toLowerCase());
         } else {
             properties.setProperty("sonar.dryRun", "true");
@@ -186,7 +190,7 @@ public class SonarRunnerProccess {
         if (processMonitor.stop()) {
             throw new SonarRunnerCancelledException();
         } else {
-            File jsonFile = new File(properties.getProperty("sonar.working.directory"), "sonar-report.json");
+            File jsonFile = new File(properties.getProperty("sonar.working.directory"), JSON_FILENAME);
             if (!jsonFile.exists()) {
                 throw new SonarRunnerException("No result file");
             } else {
