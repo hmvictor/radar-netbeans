@@ -4,8 +4,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import org.netbeans.api.project.Project;
 import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
-import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
@@ -18,14 +16,11 @@ import qubexplorer.ui.task.TaskExecutor;
  * @author Victor
  */
 @ActionID(
-        category = "Build",
+        category = "SonarQube",
         id = "qubexplorer.ui.SonarRunnerAction")
 @ActionRegistration(
         displayName = "#CTL_SonarRunnerAction")
 @NbBundle.Messages("CTL_SonarRunnerAction=Get Issues with Sonar Runner")
-@ActionReferences(value = {
-    @ActionReference(path = "Projects/Actions", position = 8964, separatorBefore = 8956, separatorAfter = 8968),
-    @ActionReference(path = "Menu/Source", position = 8964, separatorBefore = 8956, separatorAfter = 8968)})
 public class SonarRunnerAction implements ActionListener {
 
     private final Project context;
