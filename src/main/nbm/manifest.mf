@@ -1,4 +1,5 @@
 Manifest-Version: 1.0
+OpenIDE-Module-Layer: qubexplorer/sonarqubeexplorer/layer.xml
 OpenIDE-Module-Localizing-Bundle: qubexplorer/sonarqubeexplorer/Bundle.properties
 OpenIDE-Module-Requires: org.openide.windows.WindowManager
 OpenIDE-Module-Short-Description: Sonar Plugin
