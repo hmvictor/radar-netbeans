@@ -6,6 +6,18 @@
             <file name="sonarqube-info-annotation.xml" 
                   url="info-annotation.xml">
             </file>
+            <file name="sonarqube-minor-annotation.xml" 
+                  url="minor-annotation.xml">
+            </file>
+            <file name="sonarqube-major-annotation.xml" 
+                  url="major-annotation.xml">
+            </file>
+            <file name="sonarqube-critical-annotation.xml" 
+                  url="critical-annotation.xml">
+            </file>
+            <file name="sonarqube-blocker-annotation.xml" 
+                  url="blocker-annotation.xml">
+            </file>
         </folder>
     </folder>
 </filesystem>

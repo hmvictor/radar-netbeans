@@ -19,21 +19,22 @@ import qubexplorer.MvnModelInputException;
 import qubexplorer.RadarIssue;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
-import qubexplorer.ui.editorannotations.InfoAnnotation;
+import qubexplorer.ui.editorannotations.SonarQubeAnnotation;
 import qubexplorer.ui.task.Task;
 
 /**
  *
  * @author Victor
  */
-public class IssuesTask extends Task<List<RadarIssue>>{
+public class IssuesTask extends Task<List<RadarIssue>> {
+
     private final IssuesContainer issuesContainer;
     private final IssueFilter[] filters;
 
     public IssuesTask(ProjectContext projectContext, IssuesContainer issuesContainer, IssueFilter[] filters) {
-        super(projectContext, issuesContainer instanceof SonarQube? ((SonarQube)issuesContainer).getServerUrl(): null);
-        this.issuesContainer=issuesContainer;
-        this.filters=filters;
+        super(projectContext, issuesContainer instanceof SonarQube ? ((SonarQube) issuesContainer).getServerUrl() : null);
+        this.issuesContainer = issuesContainer;
+        this.filters = filters;
     }
 
     @Override
@@ -50,32 +51,27 @@ public class IssuesTask extends Task<List<RadarIssue>>{
         sonarTopComponent.showIssues(filters, result.toArray(new RadarIssue[0]));
         for (RadarIssue radarIssue : result) {
             try {
-                if(radarIssue.line() == null) {
-                    continue;
-                }
-                IssueLocation issueLocation = new IssueLocation(radarIssue.componentKey(), radarIssue.line());
-                File file = issueLocation.getFile(getProjectContext().getProject(), getProjectContext().getConfiguration());
-                FileObject fileObject = FileUtil.toFileObject(file);
-                if (fileObject == null) {
-                    String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
-                    String message = MessageFormat.format(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.text"), file.getPath());
-                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), message, messageTitle, JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                DataObject dataObject = DataObject.find(fileObject);
-                LineCookie lineCookie = (LineCookie)dataObject.getLookup().lookup(LineCookie.class);
-                Line.Set lineSet = lineCookie.getLineSet();
-                int index=Math.min(radarIssue.line(), lineSet.getLines().size())-1;
-                final Line line = lineSet.getOriginal(index);
-                final Annotation ann = new InfoAnnotation();
-                if(line != null) {
-                    ann.attach(line);
+                if (radarIssue.line() != null) {
+                    IssueLocation issueLocation = new IssueLocation(radarIssue.componentKey(), radarIssue.line());
+                    File file = issueLocation.getFile(getProjectContext().getProject(), getProjectContext().getConfiguration());
+                    FileObject fileObject = FileUtil.toFileObject(file);
+                    if (fileObject != null) {
+                        DataObject dataObject = DataObject.find(fileObject);
+                        LineCookie lineCookie = (LineCookie) dataObject.getLookup().lookup(LineCookie.class);
+                        Line.Set lineSet = lineCookie.getLineSet();
+                        int index = Math.min(radarIssue.line(), lineSet.getLines().size()) - 1;
+                        Line line = lineSet.getOriginal(index);
+                        Annotation ann = new SonarQubeAnnotation(radarIssue.severityObject(), radarIssue.message());
+                        if (line != null) {
+                            ann.attach(line);
+                        }
+                    }
                 }
             } catch (MvnModelInputException | DataObjectNotFoundException ex) {
                 ;
             }
         }
-        
+
     }
-    
+
 }
