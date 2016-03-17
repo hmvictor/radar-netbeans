@@ -1,25 +1,11 @@
 package qubexplorer.ui;
 
-import java.io.File;
-import java.text.MessageFormat;
 import java.util.List;
-import javax.swing.JOptionPane;
-import org.openide.cookies.EditorCookie;
-import org.openide.cookies.LineCookie;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
-import org.openide.loaders.DataObject;
-import org.openide.loaders.DataObjectNotFoundException;
-import org.openide.text.Annotation;
-import org.openide.text.Line;
-import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 import qubexplorer.IssuesContainer;
-import qubexplorer.MvnModelInputException;
 import qubexplorer.RadarIssue;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
-import qubexplorer.ui.editorannotations.SonarQubeAnnotation;
 import qubexplorer.ui.task.Task;
 
 /**
@@ -49,29 +35,6 @@ public class IssuesTask extends Task<List<RadarIssue>> {
         sonarTopComponent.requestVisible();
         sonarTopComponent.setProjectContext(getProjectContext());
         sonarTopComponent.showIssues(filters, result.toArray(new RadarIssue[0]));
-        for (RadarIssue radarIssue : result) {
-            try {
-                if (radarIssue.line() != null) {
-                    IssueLocation issueLocation = new IssueLocation(radarIssue.componentKey(), radarIssue.line());
-                    File file = issueLocation.getFile(getProjectContext().getProject(), getProjectContext().getConfiguration());
-                    FileObject fileObject = FileUtil.toFileObject(file);
-                    if (fileObject != null) {
-                        DataObject dataObject = DataObject.find(fileObject);
-                        LineCookie lineCookie = (LineCookie) dataObject.getLookup().lookup(LineCookie.class);
-                        Line.Set lineSet = lineCookie.getLineSet();
-                        int index = Math.min(radarIssue.line(), lineSet.getLines().size()) - 1;
-                        Line line = lineSet.getOriginal(index);
-                        Annotation ann = new SonarQubeAnnotation(radarIssue.severityObject(), radarIssue.message());
-                        if (line != null) {
-                            ann.attach(line);
-                        }
-                    }
-                }
-            } catch (MvnModelInputException | DataObjectNotFoundException ex) {
-                ;
-            }
-        }
-
     }
 
 }

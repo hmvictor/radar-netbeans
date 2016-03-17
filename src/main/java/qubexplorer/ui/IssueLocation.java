@@ -9,10 +9,18 @@ import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
+import org.openide.cookies.LineCookie;
 import org.openide.filesystems.FileObject;
+import org.openide.loaders.DataObject;
+import org.openide.loaders.DataObjectNotFoundException;
+import org.openide.text.Annotation;
+import org.openide.text.Line;
+import org.openide.util.Lookup;
 import qubexplorer.MvnModelInputException;
+import qubexplorer.RadarIssue;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.SonarQubeProjectBuilder;
+import qubexplorer.ui.editorannotations.SonarQubeAnnotation;
 
 /**
  *
@@ -111,6 +119,22 @@ public class IssueLocation {
         return file;
     }
 
+    public Annotation attachAnnotation(RadarIssue radarIssue, FileObject fileObject) throws DataObjectNotFoundException {
+        DataObject dataObject = DataObject.find(fileObject);
+        Lookup lookup = dataObject.getLookup();
+        LineCookie lineCookie = (LineCookie) lookup.lookup(LineCookie.class);
+        Line.Set lineSet = lineCookie.getLineSet();
+        int index = Math.min(getLineNumber(), lineSet.getLines().size()) - 1;
+        Line line = lineSet.getCurrent(index);
+        Annotation ann = null;
+        if (line != null) {
+            ann = new SonarQubeAnnotation(radarIssue.severityObject(), radarIssue.message());
+            ann.attach(line);
+        }
+        return ann;
+    }
+
+
     @Override
     public String toString() {
         if (lineNumber <= 0) {
@@ -131,7 +155,7 @@ public class IssueLocation {
             return project.getProjectDirectory();
         }
         Set<Project> subprojects = ProjectUtils.getContainedProjects(project, true);
-        if(subprojects != null) {
+        if (subprojects != null) {
             for (Project subproject : subprojects) {
                 SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.getSubconfiguration(projectConfiguration, subproject);
                 if (subprojectInfo.getKey().toString().equals(key)) {

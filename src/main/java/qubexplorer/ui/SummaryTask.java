@@ -22,6 +22,12 @@ public class SummaryTask extends Task<Summary>{
         this.issuesContainer = issuesContainer;
         this.filters = filters;
     }
+
+    @Override
+    protected void init() {
+        SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
+        sonarTopComponent.resetState();
+    }
     
     @Override
     public Summary execute() {

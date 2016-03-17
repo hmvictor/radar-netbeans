@@ -52,6 +52,8 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
     
     @Override
     protected void init() {
+        SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
+        sonarTopComponent.resetState();
         stopAction.setEnabled(true);
         if(io == null) {
             io = IOProvider.getDefault().getIO("Sonar-runner", true, new Action[]{stopAction}, IOContainer.getDefault());

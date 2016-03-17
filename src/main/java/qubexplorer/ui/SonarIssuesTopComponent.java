@@ -9,20 +9,25 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.DefaultRowSorter;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -44,12 +49,15 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.DropDownButtonFactory;
 import org.openide.cookies.EditorCookie;
+import org.openide.cookies.LineCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
+import org.openide.text.Annotation;
 import org.openide.text.Line;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -66,6 +74,7 @@ import qubexplorer.filter.IssueFilter;
 import qubexplorer.filter.RuleFilter;
 import qubexplorer.filter.SeverityFilter;
 import qubexplorer.runner.SonarRunnerResult;
+import qubexplorer.server.ServerSummary;
 import qubexplorer.ui.task.TaskExecutor;
 
 /**
@@ -94,14 +103,15 @@ import qubexplorer.ui.task.TaskExecutor;
     "HINT_SonarIssuesTopComponent=This is a Sonar Qube Window"
 })
 public final class SonarIssuesTopComponent extends TopComponent {
+
     private static final String ACTION_PLAN_PROPERTY = "actionPlan";
     private static final Logger LOGGER = Logger.getLogger(SonarIssuesTopComponent.class.getName());
 
     private transient IssuesContainer issuesContainer;
     private ProjectContext projectContext;
-    private JPopupMenu dropDownMenu=new JPopupMenu();
-    
-    private ImageIcon informationIcon=new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"));
+    private JPopupMenu dropDownMenu = new JPopupMenu();
+
+    private ImageIcon informationIcon = new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"));
 
     private final Comparator<Severity> severityComparator = Collections.reverseOrder(new Comparator<Severity>() {
 
@@ -113,7 +123,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     });
 
     private final AbstractAction showRuleInfoAction = new AbstractAction("Show Rule Info", informationIcon) {
-        
+
         {
             putValue(Action.SHORT_DESCRIPTION, "Shows information about SonarQube rule");
         }
@@ -131,7 +141,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     };
 
     private final AbstractAction listIssuesAction = new AbstractAction("List Issues", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/application_view_list.png"))) {
-        
+
         {
             putValue(Action.SHORT_DESCRIPTION, "Displays SonarQube issues");
         }
@@ -147,7 +157,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     };
 
     private final AbstractAction gotoIssueAction = new AbstractAction("Go to Source") {
-        
+
         {
             putValue(Action.SHORT_DESCRIPTION, "Opens the location of this issue in the source code");
         }
@@ -164,7 +174,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     };
 
     private final AbstractAction showRuleInfoForIssueAction = new AbstractAction("Show Rule Info about Issue", informationIcon) {
-        
+
         {
             putValue(Action.SHORT_DESCRIPTION, "Shows information about the SonarQube rule for the issue");
         }
@@ -205,6 +215,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
 
     };
+
+    private final Map<String, List<FileObjectOpenedListener>> listenersByFilepath = new ConcurrentHashMap<>();
+
+    private final List<Annotation> attachedAnnotations = new CopyOnWriteArrayList<>();
 
     public SonarIssuesTopComponent() {
         initComponents();
@@ -250,6 +264,29 @@ public final class SonarIssuesTopComponent extends TopComponent {
         listIssuesAction.setEnabled(false);
         gotoIssueAction.setEnabled(false);
         showRuleInfoForIssueAction.setEnabled(false);
+        WindowManager.getDefault().getRegistry().addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals("opened")) {
+                    HashSet<TopComponent> newHashSet = (HashSet<TopComponent>) evt.getNewValue();
+                    HashSet<TopComponent> oldHashSet = (HashSet<TopComponent>) evt.getOldValue();
+                    for (TopComponent topComponent : newHashSet) {
+                        if (!oldHashSet.contains(topComponent)) {
+                            DataObject dObj = topComponent.getLookup().lookup(DataObject.class);
+                            if (dObj != null) {
+                                FileObject fileOpened = dObj.getPrimaryFile();
+                                List<FileObjectOpenedListener> listeners = listenersByFilepath.get(fileOpened.getPath());
+                                if (listeners != null) {
+                                    for (FileObjectOpenedListener listener : listeners) {
+                                        listener.fileOpened(fileOpened);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
     public void setProjectContext(ProjectContext projectContext) {
@@ -646,9 +683,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
     void readProperties(java.util.Properties p) {
         //Do nothing, required method
     }
-    
-    
-    private void listIssues(Object treeTableNode){
+
+    private void listIssues(Object treeTableNode) {
         List<IssueFilter> filters = new LinkedList<>();
         if (getSelectedActionPlan() != null) {
             filters.add(new ActionPlanFilter(getSelectedActionPlan()));
@@ -661,8 +697,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
         TaskExecutor.execute(new IssuesTask(projectContext, issuesContainer, filters.toArray(new IssueFilter[0])));
     }
 
-    private void openIssueLocation(IssueLocation issueLocation)  {
-        try{
+    private void openIssueLocation(IssueLocation issueLocation) {
+        try {
             int lineNumber = issueLocation.getLineNumber() <= 0 ? 1 : issueLocation.getLineNumber();
             File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
             FileObject fileObject = FileUtil.toFileObject(file);
@@ -676,15 +712,16 @@ public final class SonarIssuesTopComponent extends TopComponent {
             if (dataObject != null) {
                 EditorCookie editorCookie = (EditorCookie) dataObject.getLookup().lookup(EditorCookie.class);
                 if (editorCookie != null) {
+                    editorCookie.openDocument();
                     editorCookie.open();
                     Line.Set lineSet = editorCookie.getLineSet();
-                    assert !lineSet.getLines().isEmpty();
+//                    assert !lineSet.getLines().isEmpty();
                     /* Go to last line of file if issue line does not exist */
-                    int index=Math.min(lineNumber, lineSet.getLines().size())-1;
+                    int index = Math.min(lineNumber, lineSet.getLines().size()) - 1;
                     lineSet.getCurrent(index).show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
                 }
             }
-        } catch (MvnModelInputException | DataObjectNotFoundException ex) {
+        } catch (MvnModelInputException | IOException ex) {
             LOGGER.log(Level.WARNING, ex.getMessage(), ex);
             Exceptions.printStackTrace(ex);
         } catch (ProjectNotFoundException ex) {
@@ -711,7 +748,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }
 
     public void setIssues(IssueFilter[] filters, RadarIssue... issues) {
+        detachCurrentAnnotations();
+
         IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
+
         model.setIssues(issues);
         StringBuilder builder = new StringBuilder();
         for (IssueFilter filter : filters) {
@@ -720,15 +760,20 @@ public final class SonarIssuesTopComponent extends TopComponent {
             }
             builder.append(filter.getDescription());
         }
+
         if (builder.length() > 0) {
             builder.append(". ");
         }
-        builder.append("Number of issues:");
+
+        builder.append(
+                "Number of issues:");
         builder.append(issues.length);
+
         title.setText(builder.toString());
         issuesTable.getColumnExt("Rule").setVisible(true);
         issuesTable.getColumnExt("Severity").setVisible(false);
-        issuesTable.getColumnExt("Project Key").setVisible(false);
+        issuesTable.getColumnExt(
+                "Project Key").setVisible(false);
         issuesTable.getColumnExt("Full Path").setVisible(false);
         issuesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
@@ -742,6 +787,55 @@ public final class SonarIssuesTopComponent extends TopComponent {
         });
         showIssuesCount();
         filterText.setText("");
+        addEditorAnnotations(issues);
+    }
+
+    private void detachCurrentAnnotations() {
+        for (Annotation annotation : attachedAnnotations) {
+            annotation.detach();
+        }
+        attachedAnnotations.clear();
+    }
+
+    private void addEditorAnnotations(RadarIssue[] issues) {
+        for (RadarIssue radarIssue : issues) {
+            try {
+                if (radarIssue.line() != null) {
+                    IssueLocation issueLocation = new IssueLocation(radarIssue.componentKey(), radarIssue.line());
+                    File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
+                    FileObject fileObject = FileUtil.toFileObject(file);
+                    if (fileObject != null) {
+                        if (isFileOpen(fileObject)) {
+                            Annotation atachedAnnotation = issueLocation.attachAnnotation(radarIssue, fileObject);
+                            if (atachedAnnotation != null) {
+                                attachedAnnotations.add(atachedAnnotation);
+                            }
+                        } else {
+                            registerFileOpenedListener(fileObject, new AnnotationAttacher(radarIssue));
+                        }
+                    }
+                }
+            } catch (MvnModelInputException | DataObjectNotFoundException ex) {
+                ;
+            }
+        }
+    }
+
+    private void registerFileOpenedListener(FileObject fileObject, FileObjectOpenedListener listener) {
+        List<FileObjectOpenedListener> listeners = listenersByFilepath.get(fileObject.getPath());
+        if (listeners == null) {
+            listeners = new CopyOnWriteArrayList<>();
+            listenersByFilepath.put(fileObject.getPath(), listeners);
+        }
+        listeners.add(listener);
+    }
+
+    private boolean isFileOpen(FileObject fileObject) throws DataObjectNotFoundException {
+        DataObject dataObject = DataObject.find(fileObject);
+        Lookup lookup = dataObject.getLookup();
+        LineCookie lineCookie = (LineCookie) lookup.lookup(LineCookie.class);
+        Line.Set lineSet = lineCookie.getLineSet();
+        return !lineSet.getLines().isEmpty();
     }
 
     private void showIssuesCount() {
@@ -779,6 +873,43 @@ public final class SonarIssuesTopComponent extends TopComponent {
             tableSummary.changeSelection(row, row, false, false);
             summaryPopupMenu.show(tableSummary, evt.getX(), evt.getY());
         }
+    }
+
+    public void resetState() {
+        detachCurrentAnnotations();
+        ServerSummary summary = new ServerSummary();
+        for (Severity severity : Severity.values()) {
+            Map<Rule, Integer> counts = new HashMap<>();
+            summary.setRuleCounts(severity, counts);
+        }
+        showSummary(summary);
+    }
+
+    public class AnnotationAttacher implements FileObjectOpenedListener {
+
+        private final RadarIssue radarIssue;
+        private boolean attached;
+
+        public AnnotationAttacher(RadarIssue radarIssue) {
+            this.radarIssue = radarIssue;
+        }
+
+        @Override
+        public void fileOpened(FileObject fileOpened) {
+            try {
+                if (!attached) {
+                    IssueLocation issueLocation = new IssueLocation(radarIssue.componentKey(), radarIssue.line());
+                    Annotation annotation = issueLocation.attachAnnotation(radarIssue, fileOpened);
+                    if (annotation != null) {
+                        attachedAnnotations.add(annotation);
+                        attached = true;
+                    }
+                }
+            } catch (DataObjectNotFoundException ex) {
+                ;
+            }
+        }
+
     }
 
 }
