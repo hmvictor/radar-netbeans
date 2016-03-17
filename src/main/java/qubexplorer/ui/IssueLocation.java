@@ -9,6 +9,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
+import org.openide.cookies.EditorCookie;
 import org.openide.cookies.LineCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.loaders.DataObject;
@@ -35,10 +36,6 @@ public class IssueLocation {
     public IssueLocation(String componentKey, int lineNumber) {
         this.componentKey = componentKey;
         this.lineNumber = lineNumber;
-    }
-
-    public IssueLocation(String componentKey) {
-        this(componentKey, 0);
     }
 
     public String getPath() {
@@ -120,20 +117,26 @@ public class IssueLocation {
     }
 
     public Annotation attachAnnotation(RadarIssue radarIssue, FileObject fileObject) throws DataObjectNotFoundException {
+        Annotation ann = null;
         DataObject dataObject = DataObject.find(fileObject);
         Lookup lookup = dataObject.getLookup();
-        LineCookie lineCookie = (LineCookie) lookup.lookup(LineCookie.class);
-        Line.Set lineSet = lineCookie.getLineSet();
-        int index = Math.min(getLineNumber(), lineSet.getLines().size()) - 1;
-        Line line = lineSet.getCurrent(index);
-        Annotation ann = null;
-        if (line != null) {
-            ann = new SonarQubeAnnotation(radarIssue.severityObject(), radarIssue.message());
-            ann.attach(line);
+        EditorCookie editorCookie = (EditorCookie) lookup.lookup(LineCookie.class);
+        if (editorCookie != null) {
+            Line line = getLine(editorCookie);
+            if (line != null) {
+                ann = new SonarQubeAnnotation(radarIssue.severityObject(), radarIssue.message());
+                ann.attach(line);
+            }
         }
         return ann;
     }
-
+    
+    public Line getLine(EditorCookie editorCookie) {
+        Line.Set lineSet = editorCookie.getLineSet();
+        int effectiveLineNumber = getLineNumber() <= 0 ? 1 : getLineNumber();
+        int index = Math.min(effectiveLineNumber, lineSet.getLines().size()) - 1;
+        return lineSet.getCurrent(index);
+    }
 
     @Override
     public String toString() {

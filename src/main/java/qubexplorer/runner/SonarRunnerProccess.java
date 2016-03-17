@@ -31,7 +31,7 @@ import qubexplorer.server.Version;
  * @author Victor
  */
 public class SonarRunnerProccess {
-    private static final String JSON_FILENAME = "sonar-report.json";
+    protected static final String JSON_FILENAME = "sonar-report.json";
     
     public enum AnalysisMode {
 
@@ -152,16 +152,6 @@ public class SonarRunnerProccess {
             throw new SourcesNotFoundException();
         }
         properties.setProperty("sonar.projectKey", result.hasSubmodules() ? projectInfo.getKey().getPart(0) : projectInfo.getKey().toString());
-        
-//        if(sonarQubeVersion.compareTo(5, 2) >= 0){
-//            //VersionConfig.config(properties)
-//            properties.setProperty("sonar.analysis.mode", "issues");
-//            properties.setProperty("sonar.report.export.path", JSON_FILENAME);
-//        }else if (sonarQubeVersion.getMajor() >= 4) {
-//            properties.setProperty("sonar.analysis.mode", analysisMode.toString().toLowerCase());
-//        } else {
-//            properties.setProperty("sonar.dryRun", "true");
-//        }
     }
     
     private List<VersionConfig> getVersionConfigsFor(Version sonarQubeVersion){
@@ -280,55 +270,4 @@ public class SonarRunnerProccess {
         }
     }
     
-    private static interface VersionConfig{
-        
-        boolean applies(Version sonarQubeVersion);
-        
-        void apply(SonarRunnerProccess proccess, Properties properties);
-        
-    }
-    
-    private static class VersionConfigLessThan4 implements VersionConfig{
-        
-        @Override
-        public boolean applies(Version sonarQubeVersion) {
-            return sonarQubeVersion.getMajor() < 4;
-        }
-        
-        @Override
-        public void apply(SonarRunnerProccess proccess, Properties properties) {
-            properties.setProperty("sonar.dryRun", "true");
-        }
-        
-    };
-    
-    private static class VersionConfigLessThan5_2 implements VersionConfig{
-        
-        @Override
-        public boolean applies(Version sonarQubeVersion) {
-            return sonarQubeVersion.getMajor() >= 4 && sonarQubeVersion.compareTo(5, 2) >= 0;
-        }
-        
-        @Override
-        public void apply(SonarRunnerProccess proccess, Properties properties) {
-            properties.setProperty("sonar.analysis.mode", proccess.getAnalysisMode().toString().toLowerCase());
-        }
-        
-    };
-    
-    private static class VersionConfigMoreThan5_2 implements VersionConfig{
-        
-        @Override
-        public boolean applies(Version sonarQubeVersion) {
-            return sonarQubeVersion.compareTo(5, 2) >= 0;
-        }
-        
-        @Override
-        public void apply(SonarRunnerProccess proccess, Properties properties) {
-            properties.setProperty("sonar.analysis.mode", "issues");
-            properties.setProperty("sonar.report.export.path", JSON_FILENAME);
-        }
-        
-    };
-
 }

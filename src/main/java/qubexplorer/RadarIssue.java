@@ -7,6 +7,7 @@ import java.util.Objects;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.issue.IssueComment;
 import org.sonar.wsclient.services.Rule;
+import qubexplorer.ui.IssueLocation;
 
 /**
  *
@@ -129,6 +130,11 @@ public class RadarIssue implements Issue{
     @Override
     public List<IssueComment> comments() {
         return issue.comments();
+    }
+
+    public IssueLocation getLocation() {
+        int lineNumber=issue.line() == null ? 0: issue.line();
+        return new IssueLocation(issue.componentKey(), lineNumber);
     }
 
 }

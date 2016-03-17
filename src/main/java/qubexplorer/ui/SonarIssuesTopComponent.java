@@ -699,7 +699,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private void openIssueLocation(IssueLocation issueLocation) {
         try {
-            int lineNumber = issueLocation.getLineNumber() <= 0 ? 1 : issueLocation.getLineNumber();
             File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
             FileObject fileObject = FileUtil.toFileObject(file);
             if (fileObject == null) {
@@ -714,11 +713,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 if (editorCookie != null) {
                     editorCookie.openDocument();
                     editorCookie.open();
-                    Line.Set lineSet = editorCookie.getLineSet();
-//                    assert !lineSet.getLines().isEmpty();
-                    /* Go to last line of file if issue line does not exist */
-                    int index = Math.min(lineNumber, lineSet.getLines().size()) - 1;
-                    lineSet.getCurrent(index).show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
+                    Line line=issueLocation.getLine(editorCookie);
+                    line.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
                 }
             }
         } catch (MvnModelInputException | IOException ex) {
@@ -801,7 +797,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         for (RadarIssue radarIssue : issues) {
             try {
                 if (radarIssue.line() != null) {
-                    IssueLocation issueLocation = new IssueLocation(radarIssue.componentKey(), radarIssue.line());
+                    IssueLocation issueLocation = radarIssue.getLocation();
                     File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
                     FileObject fileObject = FileUtil.toFileObject(file);
                     if (fileObject != null) {
@@ -898,7 +894,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         public void fileOpened(FileObject fileOpened) {
             try {
                 if (!attached) {
-                    IssueLocation issueLocation = new IssueLocation(radarIssue.componentKey(), radarIssue.line());
+                    IssueLocation issueLocation = radarIssue.getLocation();
                     Annotation annotation = issueLocation.attachAnnotation(radarIssue, fileOpened);
                     if (annotation != null) {
                         attachedAnnotations.add(annotation);
