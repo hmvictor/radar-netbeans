@@ -24,7 +24,7 @@ public class ActionPlanFilter implements IssueFilter{
 
     @Override
     public boolean isValid(Issue issue) {
-        return issue.actionPlan().equals(actionPlan.key());
+        return actionPlan.key().equals(issue.actionPlan());
     }
     
     @Override

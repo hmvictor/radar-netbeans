@@ -15,7 +15,6 @@ import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -51,7 +50,6 @@ import org.openide.awt.DropDownButtonFactory;
 import org.openide.cookies.EditorCookie;
 import org.openide.cookies.LineCookie;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.text.Annotation;
@@ -74,7 +72,7 @@ import qubexplorer.filter.IssueFilter;
 import qubexplorer.filter.RuleFilter;
 import qubexplorer.filter.SeverityFilter;
 import qubexplorer.runner.SonarRunnerResult;
-import qubexplorer.server.ServerSummary;
+import qubexplorer.server.SimpleSummary;
 import qubexplorer.ui.task.TaskExecutor;
 
 /**
@@ -264,29 +262,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         listIssuesAction.setEnabled(false);
         gotoIssueAction.setEnabled(false);
         showRuleInfoForIssueAction.setEnabled(false);
-        WindowManager.getDefault().getRegistry().addPropertyChangeListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals("opened")) {
-                    HashSet<TopComponent> newHashSet = (HashSet<TopComponent>) evt.getNewValue();
-                    HashSet<TopComponent> oldHashSet = (HashSet<TopComponent>) evt.getOldValue();
-                    for (TopComponent topComponent : newHashSet) {
-                        if (!oldHashSet.contains(topComponent)) {
-                            DataObject dObj = topComponent.getLookup().lookup(DataObject.class);
-                            if (dObj != null) {
-                                FileObject fileOpened = dObj.getPrimaryFile();
-                                List<FileObjectOpenedListener> listeners = listenersByFilepath.get(fileOpened.getPath());
-                                if (listeners != null) {
-                                    for (FileObjectOpenedListener listener : listeners) {
-                                        listener.fileOpened(fileOpened);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        });
+        WindowManager.getDefault().getRegistry().addPropertyChangeListener(new WindowOpenedPropertyChangeListener());
     }
 
     public void setProjectContext(ProjectContext projectContext) {
@@ -699,22 +675,22 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private void openIssueLocation(IssueLocation issueLocation) {
         try {
-            File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
-            FileObject fileObject = FileUtil.toFileObject(file);
+            FileObject fileObject = issueLocation.getFileObject(projectContext.getProject(), projectContext.getConfiguration());
             if (fileObject == null) {
+                File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
                 String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
                 String message = MessageFormat.format(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.text"), file.getPath());
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), message, messageTitle, JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            DataObject dataObject = DataObject.find(fileObject);
-            if (dataObject != null) {
-                EditorCookie editorCookie = (EditorCookie) dataObject.getLookup().lookup(EditorCookie.class);
-                if (editorCookie != null) {
-                    editorCookie.openDocument();
-                    editorCookie.open();
-                    Line line=issueLocation.getLine(editorCookie);
-                    line.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
+            }else{
+                DataObject dataObject = DataObject.find(fileObject);
+                if (dataObject != null) {
+                    EditorCookie editorCookie = (EditorCookie) dataObject.getLookup().lookup(EditorCookie.class);
+                    if (editorCookie != null) {
+                        editorCookie.openDocument();
+                        editorCookie.open();
+                        Line line = issueLocation.getLine(editorCookie);
+                        line.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
+                    }
                 }
             }
         } catch (MvnModelInputException | IOException ex) {
@@ -798,17 +774,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
             try {
                 if (radarIssue.line() != null) {
                     IssueLocation issueLocation = radarIssue.getLocation();
-                    File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
-                    FileObject fileObject = FileUtil.toFileObject(file);
+                    FileObject fileObject = issueLocation.getFileObject(projectContext.getProject(), projectContext.getConfiguration());
                     if (fileObject != null) {
-                        if (isFileOpen(fileObject)) {
-                            Annotation atachedAnnotation = issueLocation.attachAnnotation(radarIssue, fileObject);
-                            if (atachedAnnotation != null) {
-                                attachedAnnotations.add(atachedAnnotation);
-                            }
-                        } else {
-                            registerFileOpenedListener(fileObject, new AnnotationAttacher(radarIssue));
-                        }
+                        tryToAttachAnnotation(radarIssue, fileObject);
                     }
                 }
             } catch (MvnModelInputException | DataObjectNotFoundException ex) {
@@ -824,6 +792,14 @@ public final class SonarIssuesTopComponent extends TopComponent {
             listenersByFilepath.put(fileObject.getPath(), listeners);
         }
         listeners.add(listener);
+    }
+
+    private List<FileObjectOpenedListener> getFileOpenedListeners(FileObject fileObject) {
+        List<FileObjectOpenedListener> listeners = listenersByFilepath.get(fileObject.getPath());
+        if (listeners == null) {
+            listeners = Collections.emptyList();
+        }
+        return listeners;
     }
 
     private boolean isFileOpen(FileObject fileObject) throws DataObjectNotFoundException {
@@ -873,12 +849,19 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     public void resetState() {
         detachCurrentAnnotations();
-        ServerSummary summary = new ServerSummary();
-        for (Severity severity : Severity.values()) {
-            Map<Rule, Integer> counts = new HashMap<>();
-            summary.setRuleCounts(severity, counts);
+        SimpleSummary emptySummary = new SimpleSummary();
+        showSummary(emptySummary);
+    }
+
+    private void tryToAttachAnnotation(RadarIssue radarIssue, FileObject fileObject) throws DataObjectNotFoundException {
+        if (isFileOpen(fileObject)) {
+            Annotation atachedAnnotation = radarIssue.getLocation().attachAnnotation(radarIssue, fileObject);
+            if (atachedAnnotation != null) {
+                attachedAnnotations.add(atachedAnnotation);
+            }
+        } else {
+            registerFileOpenedListener(fileObject, new AnnotationAttacher(radarIssue));
         }
-        showSummary(summary);
     }
 
     public class AnnotationAttacher implements FileObjectOpenedListener {
@@ -906,6 +889,27 @@ public final class SonarIssuesTopComponent extends TopComponent {
             }
         }
 
+    }
+
+    private class WindowOpenedPropertyChangeListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if ("opened".equals(evt.getPropertyName())) {
+                HashSet<TopComponent> newOpenedComponents = (HashSet<TopComponent>) evt.getNewValue();
+                HashSet<TopComponent> oldOpenedComponents = (HashSet<TopComponent>) evt.getOldValue();
+                newOpenedComponents.removeAll(oldOpenedComponents);
+                for (TopComponent newOpenedComponent : newOpenedComponents) {
+                    DataObject dObj = newOpenedComponent.getLookup().lookup(DataObject.class);
+                    if (dObj != null) {
+                        FileObject fileOpened = dObj.getPrimaryFile();
+                        for (FileObjectOpenedListener listener : getFileOpenedListeners(fileOpened)) {
+                            listener.fileOpened(fileOpened);
+                        }
+                    }
+                }
+            }
+        }
     }
 
 }

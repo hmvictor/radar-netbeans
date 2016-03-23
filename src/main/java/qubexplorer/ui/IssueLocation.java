@@ -12,6 +12,7 @@ import org.netbeans.api.project.Sources;
 import org.openide.cookies.EditorCookie;
 import org.openide.cookies.LineCookie;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.text.Annotation;
@@ -114,6 +115,11 @@ public class IssueLocation {
             file = new File(sourceGroups[0].getRootFolder().getPath(), filePath);
         }
         return file;
+    }
+    
+    public FileObject getFileObject(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) throws MvnModelInputException {
+        File file=getFile(parentProject, projectConfiguration);
+        return FileUtil.toFileObject(file);
     }
 
     public Annotation attachAnnotation(RadarIssue radarIssue, FileObject fileObject) throws DataObjectNotFoundException {

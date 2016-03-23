@@ -117,8 +117,7 @@ public class SonarRunnerProccess {
         Module mainModule = Module.createMainModule(project);
         assert projectInfo.getKey().getPartsCount() == 2;
         
-        //TODO this is for not overriding properties set for this plugin, is the best?
-//        mainModule.loadExternalProperties(properties);
+        //mainModule.loadExternalProperties(properties);
         properties.setProperty("sonar.projectBaseDir", projectHome);
         properties.setProperty("sonar.host.url", sonarUrl);
         properties.setProperty("sonar.projectDir", projectHome);
