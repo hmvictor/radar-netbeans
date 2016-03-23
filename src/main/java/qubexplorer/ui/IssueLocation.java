@@ -124,9 +124,7 @@ public class IssueLocation {
 
     public Annotation attachAnnotation(RadarIssue radarIssue, FileObject fileObject) throws DataObjectNotFoundException {
         Annotation ann = null;
-        DataObject dataObject = DataObject.find(fileObject);
-        Lookup lookup = dataObject.getLookup();
-        EditorCookie editorCookie = (EditorCookie) lookup.lookup(LineCookie.class);
+        EditorCookie editorCookie = getEditorCookie(fileObject);
         if (editorCookie != null) {
             Line line = getLine(editorCookie);
             if (line != null) {
@@ -151,6 +149,12 @@ public class IssueLocation {
         } else {
             return componentKey + " [" + lineNumber + "]";
         }
+    }
+    
+    public static EditorCookie getEditorCookie(FileObject fileObject) throws DataObjectNotFoundException{
+        DataObject dataObject = DataObject.find(fileObject);
+        Lookup lookup = dataObject.getLookup();
+        return (EditorCookie) lookup.lookup(LineCookie.class);
     }
 
     static BasicPomInfo getBasicPomInfo(String componentKey) {

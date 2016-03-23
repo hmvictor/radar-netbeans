@@ -1,6 +1,7 @@
 package qubexplorer.ui;
 
 import java.awt.Event;
+import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -19,6 +20,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
@@ -677,20 +680,14 @@ public final class SonarIssuesTopComponent extends TopComponent {
         try {
             FileObject fileObject = issueLocation.getFileObject(projectContext.getProject(), projectContext.getConfiguration());
             if (fileObject == null) {
-                File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
-                String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
-                String message = MessageFormat.format(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.text"), file.getPath());
-                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), message, messageTitle, JOptionPane.WARNING_MESSAGE);
-            }else{
-                DataObject dataObject = DataObject.find(fileObject);
-                if (dataObject != null) {
-                    EditorCookie editorCookie = (EditorCookie) dataObject.getLookup().lookup(EditorCookie.class);
-                    if (editorCookie != null) {
-                        editorCookie.openDocument();
-                        editorCookie.open();
-                        Line line = issueLocation.getLine(editorCookie);
-                        line.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
-                    }
+                notifyFileObjectNotFound(issueLocation);
+            } else {
+                EditorCookie editorCookie = IssueLocation.getEditorCookie(fileObject);
+                if (editorCookie != null) {
+                    editorCookie.openDocument();
+                    editorCookie.open();
+                    Line line = issueLocation.getLine(editorCookie);
+                    line.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
                 }
             }
         } catch (MvnModelInputException | IOException ex) {
@@ -701,6 +698,13 @@ public final class SonarIssuesTopComponent extends TopComponent {
             String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", ex.getShortProjectKey());
             DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
         }
+    }
+
+    private void notifyFileObjectNotFound(IssueLocation issueLocation) throws MvnModelInputException {
+        File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
+        String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
+        String message = MessageFormat.format(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.text"), file.getPath());
+        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), message, messageTitle, JOptionPane.WARNING_MESSAGE);
     }
 
     public void filterTextChanged() {
@@ -894,22 +898,39 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private class WindowOpenedPropertyChangeListener implements PropertyChangeListener {
 
         @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            if ("opened".equals(evt.getPropertyName())) {
-                HashSet<TopComponent> newOpenedComponents = (HashSet<TopComponent>) evt.getNewValue();
-                HashSet<TopComponent> oldOpenedComponents = (HashSet<TopComponent>) evt.getOldValue();
-                newOpenedComponents.removeAll(oldOpenedComponents);
-                for (TopComponent newOpenedComponent : newOpenedComponents) {
-                    DataObject dObj = newOpenedComponent.getLookup().lookup(DataObject.class);
-                    if (dObj != null) {
-                        FileObject fileOpened = dObj.getPrimaryFile();
-                        for (FileObjectOpenedListener listener : getFileOpenedListeners(fileOpened)) {
-                            listener.fileOpened(fileOpened);
-                        }
+        public void propertyChange(PropertyChangeEvent event) {
+            if ("opened".equals(event.getPropertyName())) {
+                for (TopComponent newOpenedComponent : getNewOpenedComponents(event)) {
+                    FileObject fileObject = getFileObject(newOpenedComponent);
+                    if (fileObject != null) {
+                        fireFileOpenedNotification(fileObject);
                     }
                 }
             }
         }
+
+        private Set<TopComponent> getNewOpenedComponents(PropertyChangeEvent event) {
+            HashSet<TopComponent> newOpenedComponents = (HashSet<TopComponent>) event.getNewValue();
+            HashSet<TopComponent> oldOpenedComponents = (HashSet<TopComponent>) event.getOldValue();
+            newOpenedComponents.removeAll(oldOpenedComponents);
+            return newOpenedComponents;
+        }
+
+        private FileObject getFileObject(TopComponent topComponent) {
+            FileObject fileObject=null;
+            DataObject dataObject = topComponent.getLookup().lookup(DataObject.class);
+            if (dataObject != null) {
+                fileObject=dataObject.getPrimaryFile();
+            }
+            return fileObject;
+        }
+
+        private void fireFileOpenedNotification(FileObject fileOpened) {
+            for (FileObjectOpenedListener listener : getFileOpenedListeners(fileOpened)) {
+                listener.fileOpened(fileOpened);
+            }
+        }
+
     }
 
 }
