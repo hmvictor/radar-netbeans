@@ -1,4 +1,4 @@
-package qubexplorer.ui;
+package qubexplorer.ui.issues;
 
 import org.openide.text.Annotation;
 import qubexplorer.Severity;
@@ -7,11 +7,11 @@ import qubexplorer.Severity;
  *
  * @author Victor
  */
-public class SonarQubeAnnotation extends Annotation{
+public class SonarQubeEditorAnnotation extends Annotation{
     private final Severity severity;
     private final String description;
 
-    public SonarQubeAnnotation(Severity severity, String message) {
+    public SonarQubeEditorAnnotation(Severity severity, String message) {
         this.severity = severity;
         this.description=severity+": "+message;
     }

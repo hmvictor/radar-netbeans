@@ -1,5 +1,13 @@
 package qubexplorer.ui;
 
+import qubexplorer.ui.issues.FileObjectOpenedListener;
+import qubexplorer.ui.issues.IssuesTableModel;
+import qubexplorer.ui.issues.IssuesTask;
+import qubexplorer.ui.issues.LocationRenderer;
+import qubexplorer.ui.issues.IssueLocation;
+import qubexplorer.ui.summary.SummaryTreeCellRenderer;
+import qubexplorer.ui.summary.SummaryTask;
+import qubexplorer.ui.summary.SummaryModel;
 import qubexplorer.ProjectNotFoundException;
 import java.awt.Event;
 import java.awt.HeadlessException;

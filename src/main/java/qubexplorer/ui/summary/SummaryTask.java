@@ -1,4 +1,4 @@
-package qubexplorer.ui;
+package qubexplorer.ui.summary;
 
 import org.openide.windows.WindowManager;
 import qubexplorer.IssuesContainer;
@@ -6,6 +6,10 @@ import qubexplorer.NoSuchProjectException;
 import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
+import qubexplorer.ui.AuthenticationRepository;
+import qubexplorer.ui.ProjectChooser;
+import qubexplorer.ui.ProjectContext;
+import qubexplorer.ui.SonarIssuesTopComponent;
 import qubexplorer.ui.task.Task;
 import qubexplorer.ui.task.TaskExecutor;
 

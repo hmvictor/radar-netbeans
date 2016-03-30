@@ -1,4 +1,4 @@
-package qubexplorer.ui;
+package qubexplorer.ui.summary;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -8,6 +8,8 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import qubexplorer.SonarQubeProjectBuilder;
+import qubexplorer.ui.ProjectContext;
+import qubexplorer.ui.SonarQubeOptionsPanel;
 import qubexplorer.ui.task.TaskExecutor;
 
 /**

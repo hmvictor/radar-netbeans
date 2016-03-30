@@ -1,4 +1,4 @@
-package qubexplorer.ui;
+package qubexplorer.ui.summary;
 
 import java.util.Arrays;
 import java.util.Comparator;

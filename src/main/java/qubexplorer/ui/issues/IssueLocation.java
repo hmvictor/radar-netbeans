@@ -1,4 +1,4 @@
-package qubexplorer.ui;
+package qubexplorer.ui.issues;
 
 import qubexplorer.ProjectNotFoundException;
 import java.io.File;
@@ -128,7 +128,7 @@ public class IssueLocation {
         if (editorCookie != null) {
             Line line = getLine(editorCookie);
             if (line != null) {
-                ann = new SonarQubeAnnotation(radarIssue.severityObject(), radarIssue.message());
+                ann = new SonarQubeEditorAnnotation(radarIssue.severityObject(), radarIssue.message());
                 ann.attach(line);
             }
         }

@@ -1,4 +1,4 @@
-package qubexplorer.ui;
+package qubexplorer.ui.issues;
 
 import java.util.List;
 import org.openide.windows.WindowManager;
@@ -6,6 +6,8 @@ import qubexplorer.IssuesContainer;
 import qubexplorer.RadarIssue;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
+import qubexplorer.ui.ProjectContext;
+import qubexplorer.ui.SonarIssuesTopComponent;
 import qubexplorer.ui.task.Task;
 
 /**

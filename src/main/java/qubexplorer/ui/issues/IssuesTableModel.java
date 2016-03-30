@@ -1,4 +1,4 @@
-package qubexplorer.ui;
+package qubexplorer.ui.issues;
 
 import javax.swing.table.DefaultTableModel;
 import qubexplorer.RadarIssue;

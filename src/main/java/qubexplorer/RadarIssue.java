@@ -7,7 +7,7 @@ import java.util.Objects;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.issue.IssueComment;
 import org.sonar.wsclient.services.Rule;
-import qubexplorer.ui.IssueLocation;
+import qubexplorer.ui.issues.IssueLocation;
 
 /**
  *

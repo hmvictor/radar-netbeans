@@ -1,4 +1,4 @@
-package qubexplorer.ui;
+package qubexplorer.ui.summary;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,6 +11,10 @@ import org.openide.windows.WindowManager;
 import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
+import qubexplorer.ui.ActionPlansTask;
+import qubexplorer.ui.ProjectChooser;
+import qubexplorer.ui.ProjectContext;
+import qubexplorer.ui.SonarQubeOptionsPanel;
 import qubexplorer.ui.task.TaskExecutor;
 
 @ActionID(
