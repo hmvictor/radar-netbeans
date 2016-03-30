@@ -1,5 +1,6 @@
 package qubexplorer.ui;
 
+import qubexplorer.ProjectNotFoundException;
 import java.awt.Event;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;

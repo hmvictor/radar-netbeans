@@ -1,5 +1,6 @@
 package qubexplorer.ui;
 
+import qubexplorer.ProjectNotFoundException;
 import java.io.File;
 import java.util.Comparator;
 import java.util.Set;
@@ -22,7 +23,6 @@ import qubexplorer.MvnModelInputException;
 import qubexplorer.RadarIssue;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.SonarQubeProjectBuilder;
-import qubexplorer.ui.editorannotations.SonarQubeAnnotation;
 
 /**
  *

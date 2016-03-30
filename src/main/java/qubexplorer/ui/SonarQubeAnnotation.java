@@ -1,4 +1,4 @@
-package qubexplorer.ui.editorannotations;
+package qubexplorer.ui;
 
 import org.openide.text.Annotation;
 import qubexplorer.Severity;

@@ -21,7 +21,6 @@ import qubexplorer.runner.SonarRunnerCancelledException;
 import qubexplorer.runner.SonarRunnerProccess;
 import qubexplorer.runner.SonarRunnerResult;
 import qubexplorer.runner.SourcesNotFoundException;
-import qubexplorer.ui.options.SonarQubeOptionsPanel;
 import qubexplorer.ui.task.Task;
 import qubexplorer.ui.task.TaskExecutionException;
 

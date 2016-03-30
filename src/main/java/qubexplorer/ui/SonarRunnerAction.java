@@ -8,7 +8,6 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import qubexplorer.SonarQubeProjectBuilder;
-import qubexplorer.ui.options.SonarQubeOptionsPanel;
 import qubexplorer.ui.task.TaskExecutor;
 
 /**

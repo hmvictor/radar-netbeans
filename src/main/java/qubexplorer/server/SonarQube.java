@@ -57,7 +57,7 @@ public class SonarQube implements IssuesContainer {
 
     public SonarQube(String servelUrl) {
         this.serverUrl = servelUrl;
-        //remove ending '/' if needed because of a problem with the underlying http client.
+        /* remove ending '/' if needed because of a problem with the underlying http client. */
         assert this.serverUrl.length() > 1;
         if (this.serverUrl.endsWith("/")) {
             this.serverUrl = this.serverUrl.substring(0, this.serverUrl.length() - 1);

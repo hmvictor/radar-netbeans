@@ -50,7 +50,7 @@ public class SonarRunnerProccess {
     private WrapperConsumer wrapper;
     private List<String> jvmArguments = Collections.emptyList();
     
-    private final List<VersionConfig> versionConfigs=Collections.unmodifiableList(Arrays.asList(new VersionConfigLessThan4(), new VersionConfigLessThan5_2(), new VersionConfigMoreThan5_2()));
+    private final List<VersionConfig> versionConfigs=Collections.unmodifiableList(Arrays.asList(new VersionConfigLessThan4(), new VersionConfigLessThan5Point2(), new VersionConfigMoreThan5Point2()));
 
     /**
      * This state is modified while running.

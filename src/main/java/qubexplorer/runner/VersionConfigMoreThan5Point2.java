@@ -7,16 +7,17 @@ import qubexplorer.server.Version;
  *
  * @author Victor
  */
-class VersionConfigLessThan5_2 implements VersionConfig {
+class VersionConfigMoreThan5Point2 implements VersionConfig {
     
     @Override
     public boolean applies(Version sonarQubeVersion) {
-        return sonarQubeVersion.getMajor() >= 4 && sonarQubeVersion.compareTo(5, 2) >= 0;
+        return sonarQubeVersion.compareTo(5, 2) >= 0;
     }
 
     @Override
     public void apply(SonarRunnerProccess proccess, Properties properties) {
-        properties.setProperty("sonar.analysis.mode", proccess.getAnalysisMode().toString().toLowerCase());
+        properties.setProperty("sonar.analysis.mode", "issues");
+        properties.setProperty("sonar.report.export.path", SonarRunnerProccess.JSON_FILENAME);
     }
     
 }
