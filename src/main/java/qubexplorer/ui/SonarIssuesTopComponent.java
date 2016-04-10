@@ -10,7 +10,6 @@ import qubexplorer.ui.summary.SummaryTask;
 import qubexplorer.ui.summary.SummaryModel;
 import qubexplorer.ProjectNotFoundException;
 import java.awt.Event;
-import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -25,13 +24,8 @@ import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -226,9 +220,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     };
 
-    private final Map<String, List<FileObjectOpenedListener>> listenersByFilepath = new ConcurrentHashMap<>();
-
     private final List<Annotation> attachedAnnotations = new CopyOnWriteArrayList<>();
+    
+    private FileOpenedNotifier fileOpenedNotifier=new FileOpenedNotifier();
 
     public SonarIssuesTopComponent() {
         initComponents();
@@ -274,7 +268,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         listIssuesAction.setEnabled(false);
         gotoIssueAction.setEnabled(false);
         showRuleInfoForIssueAction.setEnabled(false);
-        WindowManager.getDefault().getRegistry().addPropertyChangeListener(new WindowOpenedPropertyChangeListener());
+        fileOpenedNotifier.init();
     }
 
     public void setProjectContext(ProjectContext projectContext) {
@@ -798,23 +792,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
     }
 
-    private void registerFileOpenedListener(FileObject fileObject, FileObjectOpenedListener listener) {
-        List<FileObjectOpenedListener> listeners = listenersByFilepath.get(fileObject.getPath());
-        if (listeners == null) {
-            listeners = new CopyOnWriteArrayList<>();
-            listenersByFilepath.put(fileObject.getPath(), listeners);
-        }
-        listeners.add(listener);
-    }
-
-    private List<FileObjectOpenedListener> getFileOpenedListeners(FileObject fileObject) {
-        List<FileObjectOpenedListener> listeners = listenersByFilepath.get(fileObject.getPath());
-        if (listeners == null) {
-            listeners = Collections.emptyList();
-        }
-        return listeners;
-    }
-
     private boolean isFileOpen(FileObject fileObject) throws DataObjectNotFoundException {
         DataObject dataObject = DataObject.find(fileObject);
         Lookup lookup = dataObject.getLookup();
@@ -861,6 +838,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }
 
     public void resetState() {
+        fileOpenedNotifier.unregisterCurrentFileOpenedListeners();
         detachCurrentAnnotations();
         SimpleSummary emptySummary = new SimpleSummary();
         showSummary(emptySummary);
@@ -873,7 +851,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 attachedAnnotations.add(atachedAnnotation);
             }
         } else {
-            registerFileOpenedListener(fileObject, new AnnotationAttacher(radarIssue));
+            fileOpenedNotifier.registerFileOpenedListener(fileObject, new AnnotationAttacher(radarIssue));
         }
     }
 
@@ -899,44 +877,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 }
             } catch (DataObjectNotFoundException ex) {
                 ;
-            }
-        }
-
-    }
-
-    private class WindowOpenedPropertyChangeListener implements PropertyChangeListener {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent event) {
-            if ("opened".equals(event.getPropertyName())) {
-                for (TopComponent newOpenedComponent : getNewOpenedComponents(event)) {
-                    FileObject fileObject = getFileObject(newOpenedComponent);
-                    if (fileObject != null) {
-                        fireFileOpenedNotification(fileObject);
-                    }
-                }
-            }
-        }
-
-        private Set<TopComponent> getNewOpenedComponents(PropertyChangeEvent event) {
-            HashSet<TopComponent> newOpenedComponents = (HashSet<TopComponent>) event.getNewValue();
-            HashSet<TopComponent> oldOpenedComponents = (HashSet<TopComponent>) event.getOldValue();
-            newOpenedComponents.removeAll(oldOpenedComponents);
-            return newOpenedComponents;
-        }
-
-        private FileObject getFileObject(TopComponent topComponent) {
-            FileObject fileObject=null;
-            DataObject dataObject = topComponent.getLookup().lookup(DataObject.class);
-            if (dataObject != null) {
-                fileObject=dataObject.getPrimaryFile();
-            }
-            return fileObject;
-        }
-
-        private void fireFileOpenedNotification(FileObject fileOpened) {
-            for (FileObjectOpenedListener listener : getFileOpenedListeners(fileOpened)) {
-                listener.fileOpened(fileOpened);
             }
         }
 
