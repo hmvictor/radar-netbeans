@@ -1,5 +1,14 @@
 package qubexplorer.ui;
 
+import qubexplorer.ui.issues.FileObjectOpenedListener;
+import qubexplorer.ui.issues.IssuesTableModel;
+import qubexplorer.ui.issues.IssuesTask;
+import qubexplorer.ui.issues.LocationRenderer;
+import qubexplorer.ui.issues.IssueLocation;
+import qubexplorer.ui.summary.SummaryTreeCellRenderer;
+import qubexplorer.ui.summary.SummaryTask;
+import qubexplorer.ui.summary.SummaryModel;
+import qubexplorer.ProjectNotFoundException;
 import java.awt.Event;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,6 +18,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.Collections;
@@ -16,13 +26,13 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.DefaultRowSorter;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -44,12 +54,14 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.DropDownButtonFactory;
 import org.openide.cookies.EditorCookie;
+import org.openide.cookies.LineCookie;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
+import org.openide.text.Annotation;
 import org.openide.text.Line;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -57,7 +69,6 @@ import org.sonar.wsclient.issue.ActionPlan;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.RadarIssue;
 import qubexplorer.IssuesContainer;
-import qubexplorer.MvnModelInputException;
 import qubexplorer.Severity;
 import qubexplorer.server.SonarQube;
 import qubexplorer.Summary;
@@ -66,6 +77,7 @@ import qubexplorer.filter.IssueFilter;
 import qubexplorer.filter.RuleFilter;
 import qubexplorer.filter.SeverityFilter;
 import qubexplorer.runner.SonarRunnerResult;
+import qubexplorer.server.SimpleSummary;
 import qubexplorer.ui.task.TaskExecutor;
 
 /**
@@ -94,14 +106,15 @@ import qubexplorer.ui.task.TaskExecutor;
     "HINT_SonarIssuesTopComponent=This is a Sonar Qube Window"
 })
 public final class SonarIssuesTopComponent extends TopComponent {
+
     private static final String ACTION_PLAN_PROPERTY = "actionPlan";
     private static final Logger LOGGER = Logger.getLogger(SonarIssuesTopComponent.class.getName());
 
     private transient IssuesContainer issuesContainer;
     private ProjectContext projectContext;
-    private JPopupMenu dropDownMenu=new JPopupMenu();
-    
-    private ImageIcon informationIcon=new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"));
+    private JPopupMenu dropDownMenu = new JPopupMenu();
+
+    private ImageIcon informationIcon = new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"));
 
     private final Comparator<Severity> severityComparator = Collections.reverseOrder(new Comparator<Severity>() {
 
@@ -113,7 +126,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     });
 
     private final AbstractAction showRuleInfoAction = new AbstractAction("Show Rule Info", informationIcon) {
-        
+
         {
             putValue(Action.SHORT_DESCRIPTION, "Shows information about SonarQube rule");
         }
@@ -131,7 +144,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     };
 
     private final AbstractAction listIssuesAction = new AbstractAction("List Issues", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/application_view_list.png"))) {
-        
+
         {
             putValue(Action.SHORT_DESCRIPTION, "Displays SonarQube issues");
         }
@@ -147,7 +160,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     };
 
     private final AbstractAction gotoIssueAction = new AbstractAction("Go to Source") {
-        
+
         {
             putValue(Action.SHORT_DESCRIPTION, "Opens the location of this issue in the source code");
         }
@@ -164,7 +177,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     };
 
     private final AbstractAction showRuleInfoForIssueAction = new AbstractAction("Show Rule Info about Issue", informationIcon) {
-        
+
         {
             putValue(Action.SHORT_DESCRIPTION, "Shows information about the SonarQube rule for the issue");
         }
@@ -205,6 +218,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
 
     };
+
+    private final List<Annotation> attachedAnnotations = new CopyOnWriteArrayList<>();
+    
+    private FileOpenedNotifier fileOpenedNotifier=new FileOpenedNotifier();
 
     public SonarIssuesTopComponent() {
         initComponents();
@@ -250,6 +267,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         listIssuesAction.setEnabled(false);
         gotoIssueAction.setEnabled(false);
         showRuleInfoForIssueAction.setEnabled(false);
+        fileOpenedNotifier.init();
     }
 
     public void setProjectContext(ProjectContext projectContext) {
@@ -646,9 +664,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
     void readProperties(java.util.Properties p) {
         //Do nothing, required method
     }
-    
-    
-    private void listIssues(Object treeTableNode){
+
+    private void listIssues(Object treeTableNode) {
         List<IssueFilter> filters = new LinkedList<>();
         if (getSelectedActionPlan() != null) {
             filters.add(new ActionPlanFilter(getSelectedActionPlan()));
@@ -661,30 +678,21 @@ public final class SonarIssuesTopComponent extends TopComponent {
         TaskExecutor.execute(new IssuesTask(projectContext, issuesContainer, filters.toArray(new IssueFilter[0])));
     }
 
-    private void openIssueLocation(IssueLocation issueLocation)  {
-        try{
-            int lineNumber = issueLocation.getLineNumber() <= 0 ? 1 : issueLocation.getLineNumber();
-            File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
-            FileObject fileObject = FileUtil.toFileObject(file);
+    private void openIssueLocation(IssueLocation issueLocation) {
+        try {
+            FileObject fileObject = issueLocation.getFileObject(projectContext.getProject(), projectContext.getConfiguration());
             if (fileObject == null) {
-                String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
-                String message = MessageFormat.format(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.text"), file.getPath());
-                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), message, messageTitle, JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            DataObject dataObject = DataObject.find(fileObject);
-            if (dataObject != null) {
-                EditorCookie editorCookie = (EditorCookie) dataObject.getLookup().lookup(EditorCookie.class);
+                notifyFileObjectNotFound(issueLocation);
+            } else {
+                EditorCookie editorCookie = IssueLocation.getEditorCookie(fileObject);
                 if (editorCookie != null) {
+                    editorCookie.openDocument();
                     editorCookie.open();
-                    Line.Set lineSet = editorCookie.getLineSet();
-                    assert !lineSet.getLines().isEmpty();
-                    /* Go to last line of file if issue line does not exist */
-                    int index=Math.min(lineNumber, lineSet.getLines().size())-1;
-                    lineSet.getCurrent(index).show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
+                    Line line = issueLocation.getLine(editorCookie);
+                    line.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
                 }
             }
-        } catch (MvnModelInputException | DataObjectNotFoundException ex) {
+        } catch (IOException ex) {
             LOGGER.log(Level.WARNING, ex.getMessage(), ex);
             Exceptions.printStackTrace(ex);
         } catch (ProjectNotFoundException ex) {
@@ -692,6 +700,13 @@ public final class SonarIssuesTopComponent extends TopComponent {
             String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", ex.getShortProjectKey());
             DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
         }
+    }
+
+    private void notifyFileObjectNotFound(IssueLocation issueLocation) {
+        File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
+        String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
+        String message = MessageFormat.format(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.text"), file.getPath());
+        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), message, messageTitle, JOptionPane.WARNING_MESSAGE);
     }
 
     public void filterTextChanged() {
@@ -711,7 +726,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }
 
     public void setIssues(IssueFilter[] filters, RadarIssue... issues) {
+        detachCurrentAnnotations();
+
         IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
+
         model.setIssues(issues);
         StringBuilder builder = new StringBuilder();
         for (IssueFilter filter : filters) {
@@ -720,15 +738,20 @@ public final class SonarIssuesTopComponent extends TopComponent {
             }
             builder.append(filter.getDescription());
         }
+
         if (builder.length() > 0) {
             builder.append(". ");
         }
-        builder.append("Number of issues:");
+
+        builder.append(
+                "Number of issues:");
         builder.append(issues.length);
+
         title.setText(builder.toString());
         issuesTable.getColumnExt("Rule").setVisible(true);
         issuesTable.getColumnExt("Severity").setVisible(false);
-        issuesTable.getColumnExt("Project Key").setVisible(false);
+        issuesTable.getColumnExt(
+                "Project Key").setVisible(false);
         issuesTable.getColumnExt("Full Path").setVisible(false);
         issuesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
@@ -742,6 +765,49 @@ public final class SonarIssuesTopComponent extends TopComponent {
         });
         showIssuesCount();
         filterText.setText("");
+        addEditorAnnotations(issues);
+    }
+
+    private void detachCurrentAnnotations() {
+        for (Annotation annotation : attachedAnnotations) {
+            annotation.detach();
+        }
+        attachedAnnotations.clear();
+    }
+
+    private void addEditorAnnotations(RadarIssue[] issues) {
+        for (RadarIssue issue : issues) {
+            try {
+                if (issue.line() != null) {
+                    tryToAtachEditorAnnotation(issue);
+                }
+            } catch (DataObjectNotFoundException ex) {
+                ;
+            }
+        }
+    }
+
+    private void tryToAtachEditorAnnotation(RadarIssue issue) throws DataObjectNotFoundException {
+        IssueLocation issueLocation = issue.getLocation();
+        FileObject fileObject = issueLocation.getFileObject(projectContext.getProject(), projectContext.getConfiguration());
+        if (fileObject != null) {
+            if (isFileOpen(fileObject)) {
+                Annotation atachedAnnotation = issue.getLocation().attachAnnotation(issue, fileObject);
+                if (atachedAnnotation != null) {
+                    attachedAnnotations.add(atachedAnnotation);
+                }
+            } else {
+                fileOpenedNotifier.registerFileOpenedListener(fileObject, new AnnotationAttacher(issue));
+            }
+        }
+    }
+
+    private boolean isFileOpen(FileObject fileObject) throws DataObjectNotFoundException {
+        DataObject dataObject = DataObject.find(fileObject);
+        Lookup lookup = dataObject.getLookup();
+        LineCookie lineCookie = (LineCookie) lookup.lookup(LineCookie.class);
+        Line.Set lineSet = lineCookie.getLineSet();
+        return !lineSet.getLines().isEmpty();
     }
 
     private void showIssuesCount() {
@@ -779,6 +845,40 @@ public final class SonarIssuesTopComponent extends TopComponent {
             tableSummary.changeSelection(row, row, false, false);
             summaryPopupMenu.show(tableSummary, evt.getX(), evt.getY());
         }
+    }
+
+    public void resetState() {
+        fileOpenedNotifier.unregisterCurrentFileOpenedListeners();
+        detachCurrentAnnotations();
+        SimpleSummary emptySummary = new SimpleSummary();
+        showSummary(emptySummary);
+    }
+
+    public class AnnotationAttacher implements FileObjectOpenedListener {
+
+        private final RadarIssue radarIssue;
+        private boolean attached;
+
+        public AnnotationAttacher(RadarIssue radarIssue) {
+            this.radarIssue = radarIssue;
+        }
+
+        @Override
+        public void fileOpened(FileObject fileOpened) {
+            try {
+                if (!attached) {
+                    IssueLocation issueLocation = radarIssue.getLocation();
+                    Annotation annotation = issueLocation.attachAnnotation(radarIssue, fileOpened);
+                    if (annotation != null) {
+                        attachedAnnotations.add(annotation);
+                        attached = true;
+                    }
+                }
+            } catch (DataObjectNotFoundException ex) {
+                ;
+            }
+        }
+
     }
 
 }

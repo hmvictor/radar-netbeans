@@ -2,6 +2,7 @@ package qubexplorer.runner;
 
 import qubexplorer.Summary;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -25,7 +26,7 @@ public class SonarRunnerSummary implements Summary {
     }
 
     public SonarRunnerSummary() {
-        this(new HashMap<String, IntWrapper>(), new HashMap<String, IntWrapper>(), new HashMap<Severity, Set<Rule>>());
+        this(new HashMap<String, IntWrapper>(), new HashMap<String, IntWrapper>(), new EnumMap<Severity, Set<Rule>>(Severity.class));
     }
     
     @Override

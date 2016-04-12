@@ -6,6 +6,8 @@ import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
+import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.task.Task;
@@ -50,6 +52,19 @@ public class ProjectChooser extends javax.swing.JDialog {
                 validateDialog();
             }
 
+        });
+        AutoCompleteDecorator.decorate(resourceCombox, new ObjectToStringConverter() {
+            
+            @Override
+            public String getPreferredStringForItem(Object item) {
+                String represantion="";
+                if(item != null) {
+                    SonarQubeProjectConfiguration project=(SonarQubeProjectConfiguration) item;
+                    represantion=ProjectRenderer.toString(project);
+                }
+                return represantion;
+            }
+            
         });
     }
 

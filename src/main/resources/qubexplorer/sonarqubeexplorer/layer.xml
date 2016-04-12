@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+    <folder name="Editors">
+        <folder name="AnnotationTypes">
+            <file name="sonarqube-info-annotation.xml" 
+                  url="info-annotation.xml">
+            </file>
+            <file name="sonarqube-minor-annotation.xml" 
+                  url="minor-annotation.xml">
+            </file>
+            <file name="sonarqube-major-annotation.xml" 
+                  url="major-annotation.xml">
+            </file>
+            <file name="sonarqube-critical-annotation.xml" 
+                  url="critical-annotation.xml">
+            </file>
+            <file name="sonarqube-blocker-annotation.xml" 
+                  url="blocker-annotation.xml">
+            </file>
+        </folder>
+    </folder>
+</filesystem>

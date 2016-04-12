@@ -1,4 +1,4 @@
-package qubexplorer.ui;
+package qubexplorer.ui.issues;
 
 import javax.swing.table.DefaultTableModel;
 import qubexplorer.RadarIssue;
@@ -27,8 +27,7 @@ public class IssuesTableModel extends DefaultTableModel {
     }
     
     public Object[] createRowData(RadarIssue issue){
-        int lineNumber=issue.line() == null ? 0: issue.line();
-        IssueLocation issueLocation = new IssueLocation(issue.componentKey(), lineNumber);
+        IssueLocation issueLocation=issue.getLocation();
         return new Object[]{issue.severityObject(), issueLocation, issue.message(), issue.rule().getTitle(), issue.severityObject(), issueLocation.getProjectKey(), issueLocation.getPath()};
     }
     

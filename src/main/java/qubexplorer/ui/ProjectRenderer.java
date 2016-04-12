@@ -17,9 +17,13 @@ public class ProjectRenderer extends DefaultListCellRenderer{
         JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, hasFocus);
         if (value instanceof SonarQubeProjectConfiguration) {
             SonarQubeProjectConfiguration project=(SonarQubeProjectConfiguration) value;
-            label.setText(String.format("%s (%s)", project.getName(), project.getKey()));
+            label.setText(toString(project));
         }
         return label;
+    }
+    
+    public static String toString(SonarQubeProjectConfiguration project){
+        return String.format("%s (%s)", project.getName(), project.getKey());
     }
     
 }

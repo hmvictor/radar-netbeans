@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE type PUBLIC
+    "-//NetBeans//DTD annotation type 1.1//EN"
+    "http://www.netbeans.org/dtds/annotation-type-1_1.dtd">
+<type name="sonarqube-info-annotation"
+      description_key="sonarqube-info-annotation"
+      localizing_bundle="qubexplorer.ui.Bundle"
+      visible="true" 
+      severity="warning"
+      glyph="nbresloc:/qubexplorer/ui/images/info.png"
+      waveunderline="#37C43C"
+      custom_sidebar_color="#37C43C"
+      type="line"/>

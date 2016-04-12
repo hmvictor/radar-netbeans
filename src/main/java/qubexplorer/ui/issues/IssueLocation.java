@@ -1,5 +1,6 @@
-package qubexplorer.ui;
+package qubexplorer.ui.issues;
 
+import qubexplorer.ProjectNotFoundException;
 import java.io.File;
 import java.util.Comparator;
 import java.util.Set;
@@ -9,8 +10,16 @@ import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
+import org.openide.cookies.EditorCookie;
+import org.openide.cookies.LineCookie;
 import org.openide.filesystems.FileObject;
-import qubexplorer.MvnModelInputException;
+import org.openide.filesystems.FileUtil;
+import org.openide.loaders.DataObject;
+import org.openide.loaders.DataObjectNotFoundException;
+import org.openide.text.Annotation;
+import org.openide.text.Line;
+import org.openide.util.Lookup;
+import qubexplorer.RadarIssue;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.SonarQubeProjectBuilder;
 
@@ -27,10 +36,6 @@ public class IssueLocation {
     public IssueLocation(String componentKey, int lineNumber) {
         this.componentKey = componentKey;
         this.lineNumber = lineNumber;
-    }
-
-    public IssueLocation(String componentKey) {
-        this(componentKey, 0);
     }
 
     public String getPath() {
@@ -82,7 +87,7 @@ public class IssueLocation {
         return tokens[0] + ":" + tokens[1];
     }
 
-    public Project getProjectOwner(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) throws MvnModelInputException {
+    public Project getProjectOwner(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) {
         FileObject projectDir = findProjectDir(parentProject, projectConfiguration, getShortProjectKey());
         if (projectDir != null) {
             return FileOwnerQuery.getOwner(projectDir);
@@ -91,7 +96,7 @@ public class IssueLocation {
         }
     }
 
-    public File getFile(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) throws MvnModelInputException {
+    public File getFile(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) {
         Project projectOwner = getProjectOwner(parentProject, projectConfiguration);
         if (projectOwner == null) {
             throw new ProjectNotFoundException(getShortProjectKey());
@@ -110,6 +115,31 @@ public class IssueLocation {
         }
         return file;
     }
+    
+    public FileObject getFileObject(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) {
+        File file=getFile(parentProject, projectConfiguration);
+        return FileUtil.toFileObject(file);
+    }
+
+    public Annotation attachAnnotation(RadarIssue radarIssue, FileObject fileObject) throws DataObjectNotFoundException {
+        Annotation ann = null;
+        EditorCookie editorCookie = getEditorCookie(fileObject);
+        if (editorCookie != null) {
+            Line line = getLine(editorCookie);
+            if (line != null) {
+                ann = new SonarQubeEditorAnnotation(radarIssue.severityObject(), radarIssue.message());
+                ann.attach(line);
+            }
+        }
+        return ann;
+    }
+    
+    public Line getLine(EditorCookie editorCookie) {
+        Line.Set lineSet = editorCookie.getLineSet();
+        int effectiveLineNumber = getLineNumber() <= 0 ? 1 : getLineNumber();
+        int index = Math.min(effectiveLineNumber, lineSet.getLines().size()) - 1;
+        return lineSet.getCurrent(index);
+    }
 
     @Override
     public String toString() {
@@ -119,6 +149,12 @@ public class IssueLocation {
             return componentKey + " [" + lineNumber + "]";
         }
     }
+    
+    public static EditorCookie getEditorCookie(FileObject fileObject) throws DataObjectNotFoundException{
+        DataObject dataObject = DataObject.find(fileObject);
+        Lookup lookup = dataObject.getLookup();
+        return (EditorCookie) lookup.lookup(LineCookie.class);
+    }
 
     static BasicPomInfo getBasicPomInfo(String componentKey) {
         String[] tokens = componentKey.split(":");
@@ -126,12 +162,12 @@ public class IssueLocation {
         return new BasicPomInfo(tokens[0], tokens[1]);
     }
 
-    private static FileObject findProjectDir(Project project, SonarQubeProjectConfiguration projectConfiguration, String key) throws MvnModelInputException {
+    private static FileObject findProjectDir(Project project, SonarQubeProjectConfiguration projectConfiguration, String key) {
         if (projectConfiguration.getKey().toString().equals(key)) {
             return project.getProjectDirectory();
         }
         Set<Project> subprojects = ProjectUtils.getContainedProjects(project, true);
-        if(subprojects != null) {
+        if (subprojects != null) {
             for (Project subproject : subprojects) {
                 SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.getSubconfiguration(projectConfiguration, subproject);
                 if (subprojectInfo.getKey().toString().equals(key)) {

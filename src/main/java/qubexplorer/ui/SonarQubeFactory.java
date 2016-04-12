@@ -2,7 +2,6 @@ package qubexplorer.ui;
 
 import org.openide.util.NbPreferences;
 import qubexplorer.server.SonarQube;
-import qubexplorer.ui.options.SonarQubeOptionsPanel;
 
 /**
  *

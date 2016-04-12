@@ -9,6 +9,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -66,7 +67,7 @@ public class SonarRunnerResult implements IssuesContainer {
             List<Issue> issues = readIssues();
             Map<String, IntWrapper> countsByRule=new HashMap<>();
             Map<String, IntWrapper> countsBySeverity=new HashMap<>();
-            Map<Severity, Set<Rule>> rulesBySeverity=new HashMap<>();
+            Map<Severity, Set<Rule>> rulesBySeverity=new EnumMap<>(Severity.class);
             for (Issue issue : issues) {
                 if(countsByRule.containsKey(issue.ruleKey())) {
                     countsByRule.get(issue.ruleKey()).add(1);
@@ -97,7 +98,7 @@ public class SonarRunnerResult implements IssuesContainer {
     
     private static boolean containsRule(Set<Rule> ruleSet, String ruleKey){
         for (Rule rule : ruleSet) {
-            if(rule.getKey().equals(ruleKey)){
+            if(ruleKey.equals(rule.getKey())){
                 return true;
             }
         }
@@ -145,7 +146,7 @@ public class SonarRunnerResult implements IssuesContainer {
         }
     }
     
-    private List<Rule> readRules(JsonReader reader) throws IOException, ParseException {
+    private static List<Rule> readRules(JsonReader reader) throws IOException, ParseException {
         List<Rule> ruleList = new LinkedList<>();
         reader.beginArray();
         while (reader.hasNext()) {
@@ -156,7 +157,7 @@ public class SonarRunnerResult implements IssuesContainer {
         return ruleList;
     }
 
-    private List<Issue> readIssues(JsonReader reader, IssueFilter[] filters) throws IOException, ParseException {
+    private static List<Issue> readIssues(JsonReader reader, IssueFilter[] filters) throws IOException, ParseException {
         List<Issue> issues = new LinkedList<>();
         reader.beginArray();
         while (reader.hasNext()) {
@@ -176,7 +177,7 @@ public class SonarRunnerResult implements IssuesContainer {
         return issues;
     }
 
-    private Issue readIssue(JsonReader reader) throws IOException, ParseException {
+    private static Issue readIssue(JsonReader reader) throws IOException, ParseException {
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
         SonarRunnerIssue issue = new SonarRunnerIssue();
         reader.beginObject();
@@ -222,7 +223,7 @@ public class SonarRunnerResult implements IssuesContainer {
         return issue;
     }
     
-    private Rule readRule(JsonReader reader) throws IOException, ParseException {
+    private static Rule readRule(JsonReader reader) throws IOException, ParseException {
         reader.beginObject();
         Rule rule=new Rule();
         while (reader.hasNext()) {

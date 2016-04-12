@@ -1,11 +1,9 @@
-package qubexplorer.ui;
+package qubexplorer.ui.summary;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import org.netbeans.api.project.Project;
 import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
-import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle.Messages;
 import qubexplorer.SonarQubeProjectBuilder;
@@ -13,17 +11,17 @@ import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
+import qubexplorer.ui.ActionPlansTask;
+import qubexplorer.ui.ProjectContext;
+import qubexplorer.ui.SonarQubeFactory;
 import qubexplorer.ui.task.TaskExecutor;
 
 @ActionID(
-        category = "Build",
+        category = "SonarQube",
         id = "qubexplorer.ui.SonarDialogAction")
 @ActionRegistration(
         displayName = "#CTL_SonarDialogAction")
 @Messages("CTL_SonarDialogAction=Get Issues from Server")
-@ActionReferences(value = {
-    @ActionReference(path = "Projects/Actions", position = 8962, separatorBefore = 8956, separatorAfter = 8968),
-    @ActionReference(path = "Menu/Source", position = 8962, separatorBefore = 8956, separatorAfter = 8968)})
 public final class ServerIssuesAction implements ActionListener {
 
     private final Project context;

@@ -19,7 +19,7 @@ public class RuleDialog extends javax.swing.JDialog {
     }
     
     public void setRule(Rule rule) {
-        title.setText(rule.getTitle());
+        ruleTitle.setText(rule.getTitle());
         description.setText(rule.getDescription());
         description.setCaretPosition(0);
     }
@@ -33,7 +33,7 @@ public class RuleDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        title = new javax.swing.JLabel();
+        ruleTitle = new javax.swing.JLabel();
         closeButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         description = new javax.swing.JEditorPane();
@@ -47,9 +47,9 @@ public class RuleDialog extends javax.swing.JDialog {
             }
         });
 
-        title.setFont(title.getFont().deriveFont(title.getFont().getSize()+5f));
-        title.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        org.openide.awt.Mnemonics.setLocalizedText(title, org.openide.util.NbBundle.getMessage(RuleDialog.class, "RuleDialog.title.text_1")); // NOI18N
+        ruleTitle.setFont(ruleTitle.getFont().deriveFont(ruleTitle.getFont().getSize()+5f));
+        ruleTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        org.openide.awt.Mnemonics.setLocalizedText(ruleTitle, org.openide.util.NbBundle.getMessage(RuleDialog.class, "RuleDialog.ruleTitle.text_1")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(RuleDialog.class, "RuleDialog.closeButton.text")); // NOI18N
         closeButton.addActionListener(new java.awt.event.ActionListener() {
@@ -73,14 +73,14 @@ public class RuleDialog extends javax.swing.JDialog {
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 427, Short.MAX_VALUE)
                         .addComponent(closeButton))
-                    .addComponent(title, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(ruleTitle, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(title)
+                .addComponent(ruleTitle)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 269, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -103,7 +103,7 @@ public class RuleDialog extends javax.swing.JDialog {
         RuleDialog dialog=new RuleDialog(owner, true);
         dialog.setLocationRelativeTo(owner);
         dialog.setRule(rule);
-        int minWidth = Math.max(dialog.getWidth(), dialog.title.getMinimumSize().width);
+        int minWidth = Math.max(dialog.getWidth(), dialog.ruleTitle.getMinimumSize().width);
         dialog.setSize(minWidth+50, dialog.getHeight());
         dialog.setVisible(true);
         dialog.dispose();
@@ -113,6 +113,6 @@ public class RuleDialog extends javax.swing.JDialog {
     private javax.swing.JButton closeButton;
     private javax.swing.JEditorPane description;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JLabel title;
+    private javax.swing.JLabel ruleTitle;
     // End of variables declaration//GEN-END:variables
 }

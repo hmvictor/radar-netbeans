@@ -1,4 +1,4 @@
-package qubexplorer.ui;
+package qubexplorer.ui.summary;
 
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -21,7 +21,9 @@ import qubexplorer.runner.SonarRunnerCancelledException;
 import qubexplorer.runner.SonarRunnerProccess;
 import qubexplorer.runner.SonarRunnerResult;
 import qubexplorer.runner.SourcesNotFoundException;
-import qubexplorer.ui.options.SonarQubeOptionsPanel;
+import qubexplorer.ui.ProjectContext;
+import qubexplorer.ui.SonarIssuesTopComponent;
+import qubexplorer.ui.SonarQubeOptionsPanel;
 import qubexplorer.ui.task.Task;
 import qubexplorer.ui.task.TaskExecutionException;
 
@@ -52,6 +54,8 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
     
     @Override
     protected void init() {
+        SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
+        sonarTopComponent.resetState();
         stopAction.setEnabled(true);
         if(io == null) {
             io = IOProvider.getDefault().getIO("Sonar-runner", true, new Action[]{stopAction}, IOContainer.getDefault());

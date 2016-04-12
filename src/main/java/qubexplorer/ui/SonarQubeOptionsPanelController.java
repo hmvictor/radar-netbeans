@@ -1,4 +1,4 @@
-package qubexplorer.ui.options;
+package qubexplorer.ui;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;

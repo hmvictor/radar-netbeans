@@ -57,7 +57,7 @@ public class SonarQube implements IssuesContainer {
 
     public SonarQube(String servelUrl) {
         this.serverUrl = servelUrl;
-        //remove ending '/' if needed because of a problem with the underlying http client.
+        /* remove ending '/' if needed because of a problem with the underlying http client. */
         assert this.serverUrl.length() > 1;
         if (this.serverUrl.endsWith("/")) {
             this.serverUrl = this.serverUrl.substring(0, this.serverUrl.length() - 1);
@@ -122,13 +122,10 @@ public class SonarQube implements IssuesContainer {
                 result = issueClient.find(query);
                 for (Issue issue : result.list()) {
                     Rule rule = searchInCacheOrLoadFromServer(rulesCache, issue.ruleKey(), userCredentials);
-                    if (rule == null) {
-                        throw new IllegalStateException("No such rule in server: " + issue.ruleKey());
-                    }
                     issues.add(new RadarIssue(issue, rule));
                 }
                 pageIndex++;
-            }while(result.paging().pages() != null && pageIndex <= result.paging().pages());
+            } while (result.paging().pages() != null && pageIndex <= result.paging().pages());
             return issues;
         } catch (HttpException ex) {
             if (ex.status() == UNAUTHORIZED_RESPONSE_STATUS) {
@@ -146,6 +143,9 @@ public class SonarQube implements IssuesContainer {
             if (rule != null) {
                 rulesCache.put(ruleKey, rule);
             }
+        }
+        if (rule == null) {
+            throw new IllegalStateException("No such rule in server: " + ruleKey);
         }
         return rule;
     }
@@ -245,7 +245,7 @@ public class SonarQube implements IssuesContainer {
         Sonar sonar = createSonar(userCredentials);
         List<Rule> rules = sonar.findAll(ruleQuery);
         for (Rule rule : rules) {
-            if (rule.getKey().equals(ruleKey)) {
+            if (ruleKey.equals(rule.getKey())) {
                 return rule;
             }
         }
@@ -306,25 +306,17 @@ public class SonarQube implements IssuesContainer {
         if (!existsProject(auth, resourceKey)) {
             throw new NoSuchProjectException(resourceKey);
         }
-        ServerSummary counting = new ServerSummary();
+        SimpleSummary simpleSummary = new SimpleSummary();
         for (Severity severity : Severity.values()) {
             IssueFilter[] tempFilters = new IssueFilter[filters.length + 1];
             tempFilters[0] = new SeverityFilter(severity);
             System.arraycopy(filters, 0, tempFilters, 1, filters.length);
             List<RadarIssue> issues = getIssues(auth, resourceKey, tempFilters);
-            Map<Rule, Integer> counts = new HashMap<>();
             for (RadarIssue issue : issues) {
-                Integer counter = counts.get(issue.rule());
-                if (counter == null) {
-                    counter = 1;
-                } else {
-                    counter = counter + 1;
-                }
-                counts.put(issue.rule(), counter);
+                simpleSummary.increment(severity, issue.rule(), 1);
             }
-            counting.setRuleCounts(severity, counts);
         }
-        return counting;
+        return simpleSummary;
     }
 
     private static class ProxySettings {

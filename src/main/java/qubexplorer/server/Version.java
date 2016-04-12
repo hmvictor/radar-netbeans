@@ -6,7 +6,7 @@ package qubexplorer.server;
  */
 public class Version {
     private final String versionString;
-    private String tokens[];
+    private final String[] tokens;
 
     public Version(String versionString) {
         this.versionString = versionString;

@@ -158,4 +158,14 @@ public class SonarRunnerIssue implements Issue{
         return Collections.emptyList();
     }
 
+    @Override
+    public Long componentId() {
+        return 0L;
+    }
+
+    @Override
+    public String debt() {
+        return "";
+    }
+
 }

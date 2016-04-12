@@ -1,4 +1,4 @@
-package qubexplorer.ui.options;
+package qubexplorer.ui;
 
 import org.openide.util.NbPreferences;
 
