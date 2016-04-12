@@ -137,4 +137,14 @@ public class RadarIssue implements Issue{
         return new IssueLocation(issue.componentKey(), lineNumber);
     }
 
+    @Override
+    public Long componentId() {
+        return issue.componentId();
+    }
+
+    @Override
+    public String debt() {
+        return issue.debt();
+    }
+
 }
