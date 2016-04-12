@@ -69,7 +69,6 @@ import org.sonar.wsclient.issue.ActionPlan;
 import org.sonar.wsclient.services.Rule;
 import qubexplorer.RadarIssue;
 import qubexplorer.IssuesContainer;
-import qubexplorer.MvnModelInputException;
 import qubexplorer.Severity;
 import qubexplorer.server.SonarQube;
 import qubexplorer.Summary;
@@ -693,7 +692,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                     line.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
                 }
             }
-        } catch (MvnModelInputException | IOException ex) {
+        } catch (IOException ex) {
             LOGGER.log(Level.WARNING, ex.getMessage(), ex);
             Exceptions.printStackTrace(ex);
         } catch (ProjectNotFoundException ex) {
@@ -703,7 +702,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
     }
 
-    private void notifyFileObjectNotFound(IssueLocation issueLocation) throws MvnModelInputException {
+    private void notifyFileObjectNotFound(IssueLocation issueLocation) {
         File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
         String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
         String message = MessageFormat.format(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.text"), file.getPath());
@@ -777,17 +776,28 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }
 
     private void addEditorAnnotations(RadarIssue[] issues) {
-        for (RadarIssue radarIssue : issues) {
+        for (RadarIssue issue : issues) {
             try {
-                if (radarIssue.line() != null) {
-                    IssueLocation issueLocation = radarIssue.getLocation();
-                    FileObject fileObject = issueLocation.getFileObject(projectContext.getProject(), projectContext.getConfiguration());
-                    if (fileObject != null) {
-                        tryToAttachAnnotation(radarIssue, fileObject);
-                    }
+                if (issue.line() != null) {
+                    tryToAtachEditorAnnotation(issue);
                 }
-            } catch (MvnModelInputException | DataObjectNotFoundException ex) {
+            } catch (DataObjectNotFoundException ex) {
                 ;
+            }
+        }
+    }
+
+    private void tryToAtachEditorAnnotation(RadarIssue issue) throws DataObjectNotFoundException {
+        IssueLocation issueLocation = issue.getLocation();
+        FileObject fileObject = issueLocation.getFileObject(projectContext.getProject(), projectContext.getConfiguration());
+        if (fileObject != null) {
+            if (isFileOpen(fileObject)) {
+                Annotation atachedAnnotation = issue.getLocation().attachAnnotation(issue, fileObject);
+                if (atachedAnnotation != null) {
+                    attachedAnnotations.add(atachedAnnotation);
+                }
+            } else {
+                fileOpenedNotifier.registerFileOpenedListener(fileObject, new AnnotationAttacher(issue));
             }
         }
     }
@@ -842,17 +852,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
         detachCurrentAnnotations();
         SimpleSummary emptySummary = new SimpleSummary();
         showSummary(emptySummary);
-    }
-
-    private void tryToAttachAnnotation(RadarIssue radarIssue, FileObject fileObject) throws DataObjectNotFoundException {
-        if (isFileOpen(fileObject)) {
-            Annotation atachedAnnotation = radarIssue.getLocation().attachAnnotation(radarIssue, fileObject);
-            if (atachedAnnotation != null) {
-                attachedAnnotations.add(atachedAnnotation);
-            }
-        } else {
-            fileOpenedNotifier.registerFileOpenedListener(fileObject, new AnnotationAttacher(radarIssue));
-        }
     }
 
     public class AnnotationAttacher implements FileObjectOpenedListener {

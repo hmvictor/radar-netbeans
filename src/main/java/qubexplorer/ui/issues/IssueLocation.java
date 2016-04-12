@@ -19,7 +19,6 @@ import org.openide.loaders.DataObjectNotFoundException;
 import org.openide.text.Annotation;
 import org.openide.text.Line;
 import org.openide.util.Lookup;
-import qubexplorer.MvnModelInputException;
 import qubexplorer.RadarIssue;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.SonarQubeProjectBuilder;
@@ -88,7 +87,7 @@ public class IssueLocation {
         return tokens[0] + ":" + tokens[1];
     }
 
-    public Project getProjectOwner(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) throws MvnModelInputException {
+    public Project getProjectOwner(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) {
         FileObject projectDir = findProjectDir(parentProject, projectConfiguration, getShortProjectKey());
         if (projectDir != null) {
             return FileOwnerQuery.getOwner(projectDir);
@@ -97,7 +96,7 @@ public class IssueLocation {
         }
     }
 
-    public File getFile(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) throws MvnModelInputException {
+    public File getFile(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) {
         Project projectOwner = getProjectOwner(parentProject, projectConfiguration);
         if (projectOwner == null) {
             throw new ProjectNotFoundException(getShortProjectKey());
@@ -117,7 +116,7 @@ public class IssueLocation {
         return file;
     }
     
-    public FileObject getFileObject(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) throws MvnModelInputException {
+    public FileObject getFileObject(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) {
         File file=getFile(parentProject, projectConfiguration);
         return FileUtil.toFileObject(file);
     }
@@ -163,7 +162,7 @@ public class IssueLocation {
         return new BasicPomInfo(tokens[0], tokens[1]);
     }
 
-    private static FileObject findProjectDir(Project project, SonarQubeProjectConfiguration projectConfiguration, String key) throws MvnModelInputException {
+    private static FileObject findProjectDir(Project project, SonarQubeProjectConfiguration projectConfiguration, String key) {
         if (projectConfiguration.getKey().toString().equals(key)) {
             return project.getProjectDirectory();
         }
