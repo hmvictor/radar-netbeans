@@ -20,8 +20,6 @@ To see the SonarQube issues just invoke the contextual menu (or from Sources men
 
 ![Contextual Menu](src/docs/images/contextMenu.png)
 
-![Source Menu](src/docs/images/sourcesMenu.png)
-
 These are the ways to retrieve the issues:
 
 ### Get Issues From Server
