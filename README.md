@@ -6,7 +6,7 @@ You can retrieve issues from a server or you can run a local analysis.
 
 ## Configuration
 
-![Configuration](http://wiki.radar-netbeans.googlecode.com/hg/images/radar-2.2/configuration.png)
+![Configuration](src/docs/images/configuration.png)
 
 You can configure the url of your SonarQube server (default is localhost, port 9000).
 
@@ -18,9 +18,9 @@ Also, you can set JVM arguments for sonar runner proccess (For example, max memo
 
 To see the SonarQube issues just invoke the contextual menu (or from Sources menu) in your Java Maven project and choose how you get your issues. 
 
-![Contextual Menu](http://wiki.radar-netbeans.googlecode.com/hg/images/radar-2.1/contextMenu.png)
+![Contextual Menu](src/docs/images/contextMenu.png)
 
-![Source Menu](http://wiki.radar-netbeans.googlecode.com/hg/images/radar-2.1/sourcesMenu.png)
+![Source Menu](src/docs/images/sourcesMenu.png)
 
 These are the ways to retrieve the issues:
 
@@ -35,7 +35,7 @@ For a multimodule project you have to invoke the action in the main parent proje
 
 Same as previous but a dialog appears that allows you to use a different server url and choose a different project key in the server.
 
-![Custom Connection](http://wiki.radar-netbeans.googlecode.com/hg/images/radar-2.1/custom.png)
+![Custom Connection](src/docs/images/custom.png)
 
 Same note for multimodule project applies too.
 
@@ -47,20 +47,20 @@ This analysis is made locally with SonarQube Runner. A connection to the server 
 
 So, after choosing the way to retrieve issues and some processing, a count of your issues will appear. The count is shown by severity and by rule.
 
-![Summary](http://wiki.radar-netbeans.googlecode.com/hg/images/radar-2.1/summary.png)
+![Summary](src/docs/images/summary.png)
 
 Note: For remote retrieving of issues, you can filter your issues by action plan if there is any.
 
-![Action Plan](http://wiki.radar-netbeans.googlecode.com/hg/images/radar-2.1/actionPlan.png)
+![Action Plan](src/docs/images/actionPlan.png)
 
 To see the issues for a particular category, select and click in List issues and a table with the issues will be shown. From here you can go to the code 
 right-clicking a row.
 
-![Issues](http://wiki.radar-netbeans.googlecode.com/hg/images/radar-2.1/issues.png)
+![Issues](src/docs/images/issues.png)
 
 If you wanna see more information about a rule, select it from the Summary view and click the button *Show Information*. A dialog will open and show more documentation about the rule.
 
-![Rule Dialog](http://wiki.radar-netbeans.googlecode.com/hg/images/radar-2.1/ruleDialog.png)
+![Rule Dialog](src/docs/images/ruleDialog.png)
 
 # Notes
 
