@@ -16,7 +16,7 @@ Also, you can set JVM arguments for sonar runner proccess (For example, max memo
 
 ## Seeing issues
 
-To see the SonarQube issues just invoke the contextual menu (or from Sources menu) in your Java Maven project and choose how you get your issues. 
+To see the SonarQube issues just invoke the contextual menu in your Java Maven project and choose how you get your issues. 
 
 ![Contextual Menu](src/docs/images/contextMenu.png)
 
