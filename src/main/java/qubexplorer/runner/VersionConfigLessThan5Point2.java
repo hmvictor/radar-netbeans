@@ -11,7 +11,7 @@ class VersionConfigLessThan5Point2 implements VersionConfig {
     
     @Override
     public boolean applies(Version sonarQubeVersion) {
-        return sonarQubeVersion.getMajor() >= 4 && sonarQubeVersion.compareTo(5, 2) >= 0;
+        return sonarQubeVersion.getMajor() >= 4 && sonarQubeVersion.compareTo(5, 2) <= 0;
     }
 
     @Override

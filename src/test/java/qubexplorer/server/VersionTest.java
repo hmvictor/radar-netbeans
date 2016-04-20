@@ -58,6 +58,8 @@ public class VersionTest {
         assertThat(new Version("3.6").compareTo(4, 5) >= 0, is(false));
         assertThat(new Version("3.5").compareTo(4, 5) >= 0, is(false));
         
+        assertThat(new Version("4.5.1").compareTo(5, 2) <= 0, is(true));
+        
         assertThat(new Version("4.5").compareTo(4, 5) == 0, is(true));
         assertThat(new Version("4.5.1").compareTo(4, 5) == 0, is(true));
         assertThat(new Version("4.6").compareTo(4, 5) > 0, is(true));
