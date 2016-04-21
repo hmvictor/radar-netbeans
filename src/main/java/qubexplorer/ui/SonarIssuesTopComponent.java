@@ -864,19 +864,29 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
 
         @Override
-        public void fileOpened(FileObject fileOpened) {
-            try {
+        public void fileOpened(final FileObject fileOpened) {
+            
                 if (!attached) {
-                    IssueLocation issueLocation = radarIssue.getLocation();
-                    Annotation annotation = issueLocation.attachAnnotation(radarIssue, fileOpened);
-                    if (annotation != null) {
-                        attachedAnnotations.add(annotation);
-                        attached = true;
-                    }
+                    SwingUtilities.invokeLater(new Runnable(){
+                
+                        @Override
+                        public void run() {
+                            try {
+                                IssueLocation issueLocation = radarIssue.getLocation();
+                                Annotation annotation = issueLocation.attachAnnotation(radarIssue, fileOpened);
+                                if (annotation != null) {
+                                    attachedAnnotations.add(annotation);
+                                    attached = true;
+                                }
+                            } catch (DataObjectNotFoundException ex) {
+                                ;
+                            }
+                        }
+
+                    });
+                    
                 }
-            } catch (DataObjectNotFoundException ex) {
-                ;
-            }
+            
         }
 
     }
