@@ -11,7 +11,6 @@ import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
 import org.netbeans.api.project.Sources;
 import org.openide.cookies.EditorCookie;
-import org.openide.cookies.LineCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
@@ -153,7 +152,7 @@ public class IssueLocation {
     public static EditorCookie getEditorCookie(FileObject fileObject) throws DataObjectNotFoundException{
         DataObject dataObject = DataObject.find(fileObject);
         Lookup lookup = dataObject.getLookup();
-        return (EditorCookie) lookup.lookup(LineCookie.class);
+        return (EditorCookie) lookup.lookup(EditorCookie.class);
     }
 
     static BasicPomInfo getBasicPomInfo(String componentKey) {

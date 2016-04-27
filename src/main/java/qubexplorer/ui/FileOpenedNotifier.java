@@ -20,7 +20,7 @@ import qubexplorer.ui.issues.FileObjectOpenedListener;
  * @author Victor
  */
 public class FileOpenedNotifier implements PropertyChangeListener {
-    
+
     private final Map<String, List<FileObjectOpenedListener>> listenersByFilepath = new ConcurrentHashMap<>();
 
     public void init() {
@@ -56,12 +56,18 @@ public class FileOpenedNotifier implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent event) {
-        if ("opened".equals(event.getPropertyName())) {
+        if (TopComponent.Registry.PROP_OPENED.equals(event.getPropertyName())) {
             for (TopComponent newOpenedComponent : getNewOpenedComponents(event)) {
                 FileObject fileObject = getFileObject(newOpenedComponent);
                 if (fileObject != null) {
                     fireFileOpenedNotification(fileObject);
                 }
+            }
+        } else if (TopComponent.Registry.PROP_ACTIVATED.equals(event.getPropertyName())) {
+            TopComponent activatedComponent = (TopComponent) event.getNewValue();
+            FileObject fileObject = getFileObject(activatedComponent);
+            if (fileObject != null) {
+                fireFileOpenedNotification(fileObject);
             }
         }
     }
@@ -81,5 +87,5 @@ public class FileOpenedNotifier implements PropertyChangeListener {
         }
         return fileObject;
     }
-    
+
 }
