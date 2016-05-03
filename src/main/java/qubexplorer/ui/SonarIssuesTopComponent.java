@@ -696,7 +696,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
             LOGGER.log(Level.WARNING, ex.getMessage(), ex);
             Exceptions.printStackTrace(ex);
         } catch (ProjectNotFoundException ex) {
-            LOGGER.log(Level.WARNING, ex.getMessage(), ex);
             String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", ex.getShortProjectKey());
             DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
         }
@@ -789,16 +788,20 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private void tryToAtachEditorAnnotation(RadarIssue issue) throws DataObjectNotFoundException {
         IssueLocation issueLocation = issue.getLocation();
-        FileObject fileObject = issueLocation.getFileObject(projectContext.getProject(), projectContext.getConfiguration());
-        if (fileObject != null) {
-            if (isFileOpen(fileObject)) {
-                Annotation atachedAnnotation = issue.getLocation().attachAnnotation(issue, fileObject);
-                if (atachedAnnotation != null) {
-                    attachedAnnotations.add(atachedAnnotation);
+        try{
+            FileObject fileObject = issueLocation.getFileObject(projectContext.getProject(), projectContext.getConfiguration());
+            if (fileObject != null) {
+                if (isFileOpen(fileObject)) {
+                    Annotation atachedAnnotation = issue.getLocation().attachAnnotation(issue, fileObject);
+                    if (atachedAnnotation != null) {
+                        attachedAnnotations.add(atachedAnnotation);
+                    }
+                } else {
+                    fileOpenedNotifier.registerFileOpenedListener(fileObject, new AnnotationAttacher(issue));
                 }
-            } else {
-                fileOpenedNotifier.registerFileOpenedListener(fileObject, new AnnotationAttacher(issue));
             }
+        }catch(ProjectNotFoundException ex){
+            
         }
     }
 

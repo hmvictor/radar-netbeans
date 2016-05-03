@@ -73,7 +73,11 @@ public final class TaskExecutor {
                 handle = null;
                 if (task.getUserCredentials() != null) {
                     assert task.getServerUrl() != null;
-                    authenticationRepository.saveAuthentication(task.getServerUrl(), task.getProjectContext().getConfiguration().getKey().toString(), task.getUserCredentials());
+                    String contextResourceKey=null;
+                    if (task.getProjectContext() != null && task.getProjectContext().getConfiguration() != null) {
+                        task.getProjectContext().getConfiguration().getKey().toString();
+                    }
+                    authenticationRepository.saveAuthentication(task.getServerUrl(), contextResourceKey, task.getUserCredentials());
                 }
             } catch (ExecutionException ex) {
                 LOGGER.log(Level.INFO, ex.getMessage(), ex);
@@ -83,7 +87,7 @@ public final class TaskExecutor {
                 if (cause instanceof AuthorizationException) {
                     assert task.getServerUrl() != null;
                     String resourceKey = null;
-                    if (task.getProjectContext() != null) {
+                    if (task.getProjectContext() != null && task.getProjectContext().getConfiguration() != null) {
                         resourceKey = task.getProjectContext().getConfiguration().getKey().toString();
                     }
                     UserCredentials auth = authenticationRepository.getAuthentication(task.getServerUrl(), resourceKey);
