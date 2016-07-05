@@ -1,14 +1,26 @@
 package qubexplorer.ui;
 
+import java.util.HashSet;
+import java.util.Set;
+import javax.swing.DefaultComboBoxModel;
 import org.openide.util.NbPreferences;
 
 public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
 
+    private static final String DEFAULT_MODE="Issues";
     private final transient SonarQubeOptionsPanelController controller;
+    private final Set<String> analysisModes=new HashSet<>();
+    
 
     SonarQubeOptionsPanel(SonarQubeOptionsPanelController controller) {
         this.controller = controller;
+        analysisModes.add("Issues");
+        analysisModes.add("Preview");
         initComponents();
+        DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>)analysisModeCombo.getModel();
+        for (String mode : analysisModes) {
+            model.addElement(mode);
+        }
     }
 
     /**
@@ -32,8 +44,6 @@ public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
         serverAddress.setText(org.openide.util.NbBundle.getMessage(SonarQubeOptionsPanel.class, "SonarQubeOptionsPanel.serverAddress.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(SonarQubeOptionsPanel.class, "SonarQubeOptionsPanel.jLabel2.text")); // NOI18N
-
-        analysisModeCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Preview", "Incremental" }));
 
         jLabel3.setFont(jLabel3.getFont().deriveFont((jLabel3.getFont().getStyle() | java.awt.Font.ITALIC), jLabel3.getFont().getSize()-1));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(SonarQubeOptionsPanel.class, "SonarQubeOptionsPanel.jLabel3.text")); // NOI18N
@@ -85,13 +95,17 @@ public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    void load() {
+    protected void load() {
          serverAddress.setText(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"));
-         analysisModeCombo.setSelectedItem(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.analysisMode", "Preview"));
+         String analysisMode = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.analysisMode", DEFAULT_MODE);
+         if(!analysisModes.contains(analysisMode)){
+             analysisMode=DEFAULT_MODE;
+         }
+         analysisModeCombo.setSelectedItem(analysisMode);
          tJvmArguments.setText(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.jvmArguments", ""));
     }
 
-    void store() {
+    protected void store() {
          NbPreferences.forModule(SonarQubeOptionsPanel.class).put("address", serverAddress.getText());
          NbPreferences.forModule(SonarQubeOptionsPanel.class).put("runner.analysisMode", analysisModeCombo.getSelectedItem().toString());
          NbPreferences.forModule(SonarQubeOptionsPanel.class).put("runner.jvmArguments", tJvmArguments.getText());
