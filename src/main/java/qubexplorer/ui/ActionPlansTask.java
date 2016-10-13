@@ -1,7 +1,9 @@
 package qubexplorer.ui;
 
+import java.util.Collections;
 import java.util.List;
 import org.openide.windows.WindowManager;
+import org.sonar.wsclient.base.HttpException;
 import org.sonar.wsclient.issue.ActionPlan;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.task.Task;
@@ -20,7 +22,15 @@ public class ActionPlansTask extends Task<List<ActionPlan>>{
 
     @Override
     public List<ActionPlan> execute() {
-        return sonarQube.getActionPlans(getUserCredentials(), getProjectContext().getConfiguration().getKey());
+        try{
+            return sonarQube.getActionPlans(getUserCredentials(), getProjectContext().getConfiguration().getKey());
+        }catch(HttpException ex){
+            if(ex.status() == 404){
+                return Collections.emptyList();
+            }else{
+                throw ex;
+            }
+        }
     }
 
     @Override
