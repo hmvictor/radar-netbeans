@@ -37,7 +37,7 @@ public class IssueLocation {
         this.lineNumber = lineNumber;
     }
 
-    public String getPath() {
+    public String getComponentPath() {
         String path = componentKey;
         int index = path.lastIndexOf(':');
         if (index != -1) {
@@ -101,23 +101,31 @@ public class IssueLocation {
             throw new ProjectNotFoundException(getShortProjectKey());
         }
         File file;
-        String path = getPath();
-        if (path.contains("/")) {
-            /* It's a relative file path*/
-            file = new File(projectOwner.getProjectDirectory().getPath(), path);
+        String componentPath = getComponentPath();
+        if (isFilePath(componentPath)) {
+            /* It's a relative file path. Relative to project directory?
+            Example: src/main/java/victor/simpleproject/Persona.java */
+            // Use project.directory or sources group? 
+            file = new File(projectOwner.getProjectDirectory().getPath(), componentPath);
         } else {
-            /* It's an element name. Assume is a java file */
-            String filePath = path.replace(".", "/") + DEFAULT_EXTENSION;
+            /* 
+                It's an element name. Assume is a java file. 
+                Example: package.subpackage.ClassA 
+            */
+            String filePath = componentPath.replace(".", "/") + DEFAULT_EXTENSION;
             Sources sources = ProjectUtils.getSources(projectOwner);
             SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
             file = new File(sourceGroups[0].getRootFolder().getPath(), filePath);
         }
         return file;
     }
+
+    private static boolean isFilePath(String componentPath) {
+        return componentPath.contains("/");
+    }
     
     public FileObject getFileObject(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) {
-        File file=getFile(parentProject, projectConfiguration);
-        return FileUtil.toFileObject(file);
+        return FileUtil.toFileObject(getFile(parentProject, projectConfiguration));
     }
 
     public Annotation attachAnnotation(RadarIssue radarIssue, FileObject fileObject) throws DataObjectNotFoundException {
@@ -200,7 +208,7 @@ public class IssueLocation {
 
         @Override
         public int compare(IssueLocation t, IssueLocation t1) {
-            int result = t.getPath().compareTo(t1.getPath());
+            int result = t.getComponentPath().compareTo(t1.getComponentPath());
             if (result != 0) {
                 return result;
             } else {
