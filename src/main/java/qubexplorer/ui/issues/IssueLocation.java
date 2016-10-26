@@ -19,8 +19,10 @@ import org.openide.text.Annotation;
 import org.openide.text.Line;
 import org.openide.util.Lookup;
 import qubexplorer.RadarIssue;
+import qubexplorer.ResourceKey;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.SonarQubeProjectBuilder;
+import qubexplorer.ui.ProjectContext;
 
 /**
  *
@@ -28,66 +30,51 @@ import qubexplorer.SonarQubeProjectBuilder;
  */
 public class IssueLocation {
 
-    private final String componentKey;
+    private final ResourceKey componentKey; 
     private final int lineNumber;
     private static final String DEFAULT_EXTENSION = ".java";
 
     public IssueLocation(String componentKey, int lineNumber) {
-        this.componentKey = componentKey;
         this.lineNumber = lineNumber;
+        this.componentKey=ResourceKey.valueOf(componentKey);
     }
 
     public String getComponentPath() {
-        String path = componentKey;
-        int index = path.lastIndexOf(':');
-        if (index != -1) {
-            path = path.substring(index + 1);
-        }
-        return path;
+        return componentKey.getLastPart();
     }
 
-    public String getName() {
+    public String getSimpleComponentName() {
         String extension = "";
-        char separator;
-        if (componentKey.contains("/")) {
-            separator = '/';
+        char pathSeparator;
+        String componentPath=getComponentPath();
+        if (componentPath.contains("/")) {
+            pathSeparator = '/';
         } else {
             extension = DEFAULT_EXTENSION;
-            separator = '.';
+            pathSeparator = '.';
         }
-        int index = componentKey.lastIndexOf(separator);
-        if (index < componentKey.length() - 1) {
-            return componentKey.substring(index + 1) + extension;
+        int index = componentPath.lastIndexOf(pathSeparator);
+        if (index < componentPath.length() - 1) {
+            return componentPath.substring(index + 1) + extension;
         } else {
             return "";
         }
-    }
-
-    public String getComponentKey() {
-        return componentKey;
     }
 
     public Integer getLineNumber() {
         return lineNumber;
     }
 
-    public String getProjectKey() {
-        String path = componentKey;
-        int index = path.lastIndexOf(':');
-        if (index != -1) {
-            path = path.substring(0, index);
-        }
-        return path;
+    public ResourceKey getProjectKey() {
+        return componentKey.subkey(0, componentKey.getPartsCount()-1);
     }
 
-    public String getShortProjectKey() {
-        String[] tokens = componentKey.split(":");
-        assert tokens.length >= 2;
-        return tokens[0] + ":" + tokens[1];
-    }
+//    public ResourceKey getShortProjectKey() {
+//        return componentKey.subkey(0, 2);
+//    }
 
-    public Project getProjectOwner(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) {
-        FileObject projectDir = findProjectDir(parentProject, projectConfiguration, getShortProjectKey());
+    public Project getProjectOwner(ProjectContext projectContext) {
+        FileObject projectDir = findProjectDir(projectContext, getProjectKey());
         if (projectDir != null) {
             return FileOwnerQuery.getOwner(projectDir);
         } else {
@@ -95,10 +82,10 @@ public class IssueLocation {
         }
     }
 
-    public File getFile(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) {
-        Project projectOwner = getProjectOwner(parentProject, projectConfiguration);
+    public File getFile(ProjectContext projectContext) {
+        Project projectOwner = getProjectOwner(projectContext);
         if (projectOwner == null) {
-            throw new ProjectNotFoundException(getShortProjectKey());
+            throw new ProjectNotFoundException(getProjectKey().toString());
         }
         File file;
         String componentPath = getComponentPath();
@@ -124,8 +111,8 @@ public class IssueLocation {
         return componentPath.contains("/");
     }
     
-    public FileObject getFileObject(Project parentProject, SonarQubeProjectConfiguration projectConfiguration) {
-        return FileUtil.toFileObject(getFile(parentProject, projectConfiguration));
+    public FileObject getFileObject(ProjectContext projectContext) {
+        return FileUtil.toFileObject(getFile(projectContext));
     }
 
     public Annotation attachAnnotation(RadarIssue radarIssue, FileObject fileObject) throws DataObjectNotFoundException {
@@ -151,9 +138,9 @@ public class IssueLocation {
     @Override
     public String toString() {
         if (lineNumber <= 0) {
-            return componentKey;
+            return componentKey.toString();
         } else {
-            return componentKey + " [" + lineNumber + "]";
+            return componentKey.toString() + " [" + lineNumber + "]";
         }
     }
     
@@ -163,45 +150,20 @@ public class IssueLocation {
         return (EditorCookie) lookup.lookup(EditorCookie.class);
     }
 
-    static BasicPomInfo getBasicPomInfo(String componentKey) {
-        String[] tokens = componentKey.split(":");
-        assert tokens.length >= 2;
-        return new BasicPomInfo(tokens[0], tokens[1]);
-    }
-
-    private static FileObject findProjectDir(Project project, SonarQubeProjectConfiguration projectConfiguration, String key) {
-        if (projectConfiguration.getKey().toString().equals(key)) {
-            return project.getProjectDirectory();
+    private static FileObject findProjectDir(ProjectContext projectContext, ResourceKey projectKey) {
+        if (projectContext.getConfiguration().getKey().equals(projectKey)) {
+            return projectContext.getProject().getProjectDirectory();
         }
-        Set<Project> subprojects = ProjectUtils.getContainedProjects(project, true);
+        Set<Project> subprojects = ProjectUtils.getContainedProjects(projectContext.getProject(), true);
         if (subprojects != null) {
             for (Project subproject : subprojects) {
-                SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.getSubconfiguration(projectConfiguration, subproject);
-                if (subprojectInfo.getKey().toString().equals(key)) {
+                SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.getSubconfiguration(projectContext.getConfiguration(), subproject);
+                if (subprojectInfo.getKey().equals(projectKey)) {
                     return subproject.getProjectDirectory();
                 }
             }
         }
         return null;
-    }
-
-    private static class BasicPomInfo {
-
-        private final String groupId;
-        private final String artifactId;
-
-        public BasicPomInfo(String groupId, String artifactId) {
-            this.groupId = groupId;
-            this.artifactId = artifactId;
-        }
-
-        public String getGroupId() {
-            return groupId;
-        }
-
-        public String getArtifactId() {
-            return artifactId;
-        }
     }
 
     public static class IssueLocationComparator implements Comparator<IssueLocation> {

@@ -28,7 +28,7 @@ public class IssuesTableModel extends DefaultTableModel {
     
     public Object[] createRowData(RadarIssue issue){
         IssueLocation issueLocation=issue.getLocation();
-        return new Object[]{issue.severityObject(), issueLocation, issue.message(), issue.rule().getTitle(), issue.severityObject(), issueLocation.getProjectKey(), issueLocation.getComponentPath()};
+        return new Object[]{issue.severityObject(), issueLocation, issue.message(), issue.rule().getTitle(), issue.severityObject(), issueLocation.getProjectKey().toString(), issueLocation.getComponentPath()};
     }
     
     public void setIssues(RadarIssue[] issues) {

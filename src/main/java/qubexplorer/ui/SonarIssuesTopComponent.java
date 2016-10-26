@@ -680,7 +680,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private void openIssueLocation(IssueLocation issueLocation) {
         try {
-            FileObject fileObject = issueLocation.getFileObject(projectContext.getProject(), projectContext.getConfiguration());
+            FileObject fileObject = issueLocation.getFileObject(projectContext);
             if (fileObject == null) {
                 notifyFileObjectNotFound(issueLocation);
             } else {
@@ -702,7 +702,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }
 
     private void notifyFileObjectNotFound(IssueLocation issueLocation) {
-        File file = issueLocation.getFile(projectContext.getProject(), projectContext.getConfiguration());
+        File file = issueLocation.getFile(projectContext);
         String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
         String message = MessageFormat.format(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.text"), file.getPath());
         JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), message, messageTitle, JOptionPane.WARNING_MESSAGE);
@@ -789,7 +789,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private void tryToAtachEditorAnnotation(RadarIssue issue) throws DataObjectNotFoundException {
         IssueLocation issueLocation = issue.getLocation();
         try{
-            FileObject fileObject = issueLocation.getFileObject(projectContext.getProject(), projectContext.getConfiguration());
+            FileObject fileObject = issueLocation.getFileObject(projectContext);
             if (fileObject != null) {
                 if (isFileOpen(fileObject)) {
                     Annotation atachedAnnotation = issue.getLocation().attachAnnotation(issue, fileObject);
