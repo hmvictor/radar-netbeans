@@ -19,6 +19,10 @@ import org.openide.filesystems.FileUtil;
  */
 public class SonarMvnProject implements SonarQubeProjectConfiguration {
 
+    public static final String PROPERTY_NAME = "sonar.projectName";
+    public static final String PROPERTY_VERSION = "sonar.projectVersion";
+    public static final String PROPERTY_KEY = "sonar.projectKey";
+
     private final Model model;
 
     public SonarMvnProject(Project project) throws MvnModelInputException {
@@ -27,11 +31,19 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
 
     @Override
     public String getName() {
+        String projectName = model.getProperties().getProperty(PROPERTY_NAME);
+        if(projectName != null) {
+            return projectName;
+        }
         return model.getName() != null ? model.getName() : model.getArtifactId();
     }
 
     @Override
     public ResourceKey getKey() {
+        String projectKey = model.getProperties().getProperty(PROPERTY_KEY);
+        if(projectKey != null) {
+            return ResourceKey.valueOf(projectKey);
+        }
         String groupId = model.getGroupId();
         if (groupId == null && model.getParent() != null) {
             groupId = model.getParent().getGroupId();
@@ -41,6 +53,10 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
 
     @Override
     public String getVersion() {
+        String projectVersion = model.getProperties().getProperty(PROPERTY_VERSION);
+        if(projectVersion != null) {
+            return projectVersion;
+        }
         String version = model.getVersion();
         if (version == null && model.getParent() != null) {
             version = model.getParent().getVersion();
@@ -63,7 +79,7 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
     public static boolean isMvnProject(Project project) {
         return getPomFileObject(project) != null;
     }
-    
+
     public static FileObject getPomFileObject(Project project) {
         return project.getProjectDirectory().getFileObject("pom.xml");
     }
@@ -71,21 +87,21 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
     public static MavenProject createMavenProject(Project project) throws MvnModelInputException {
         return new MavenProject(createModel(project));
     }
-    
+
     public static File getOutputDirectory(Project project) throws MvnModelInputException {
         MavenProject mavenProject = SonarMvnProject.createMavenProject(project);
         Build build = mavenProject.getBuild();
         String path = null;
-        if(build != null){
-            path=build.getDirectory();
+        if (build != null) {
+            path = build.getDirectory();
         }
         File outputDirectory;
-        if(path != null){
-            outputDirectory=FileUtil.normalizeFile(new File(path));
-        }else{
-            outputDirectory=new File(project.getProjectDirectory().getPath(), "target");
+        if (path != null) {
+            outputDirectory = FileUtil.normalizeFile(new File(path));
+        } else {
+            outputDirectory = new File(project.getProjectDirectory().getPath(), "target");
         }
         return outputDirectory;
     }
-    
+
 }

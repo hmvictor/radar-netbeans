@@ -69,10 +69,6 @@ public class IssueLocation {
         return componentKey.subkey(0, componentKey.getPartsCount()-1);
     }
 
-//    public ResourceKey getShortProjectKey() {
-//        return componentKey.subkey(0, 2);
-//    }
-
     public Project getProjectOwner(ProjectContext projectContext) {
         FileObject projectDir = findProjectDir(projectContext, getProjectKey());
         if (projectDir != null) {
@@ -157,7 +153,7 @@ public class IssueLocation {
         Set<Project> subprojects = ProjectUtils.getContainedProjects(projectContext.getProject(), true);
         if (subprojects != null) {
             for (Project subproject : subprojects) {
-                SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.getSubconfiguration(projectContext.getConfiguration(), subproject);
+                SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.createConfigurationForSubproject(projectContext.getConfiguration(), subproject);
                 if (subprojectInfo.getKey().equals(projectKey)) {
                     return subproject.getProjectDirectory();
                 }

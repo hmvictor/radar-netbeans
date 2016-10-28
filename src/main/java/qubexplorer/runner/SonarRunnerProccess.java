@@ -115,7 +115,7 @@ public class SonarRunnerProccess {
         SonarQubeProjectConfiguration projectInfo = SonarQubeProjectBuilder.getDefaultConfiguration(project);
         Version sonarQubeVersion = new SonarQube(sonarUrl).getVersion(userCredentials);
         Module mainModule = Module.createMainModule(project);
-        assert projectInfo.getKey().getPartsCount() == 2;
+//        assert projectInfo.getKey().getPartsCount() == 2;
         
         //mainModule.loadExternalProperties(properties);
         properties.setProperty("sonar.projectBaseDir", projectHome);
