@@ -21,7 +21,7 @@ import org.openide.util.Lookup;
 import qubexplorer.RadarIssue;
 import qubexplorer.ResourceKey;
 import qubexplorer.SonarQubeProjectConfiguration;
-import qubexplorer.SonarQubeProjectBuilder;
+import qubexplorer.ConfigurationFactory;
 import qubexplorer.ui.ProjectContext;
 
 /**
@@ -153,7 +153,7 @@ public class IssueLocation {
         Set<Project> subprojects = ProjectUtils.getContainedProjects(projectContext.getProject(), true);
         if (subprojects != null) {
             for (Project subproject : subprojects) {
-                SonarQubeProjectConfiguration subprojectInfo = SonarQubeProjectBuilder.createConfigurationForSubproject(projectContext.getConfiguration(), subproject);
+                SonarQubeProjectConfiguration subprojectInfo = projectContext.getConfiguration().createConfiguration(subproject); //SonarQubeProjectBuilder.createConfigurationForSubproject(projectContext.getConfiguration(), subproject);
                 if (subprojectInfo.getKey().equals(projectKey)) {
                     return subproject.getProjectDirectory();
                 }

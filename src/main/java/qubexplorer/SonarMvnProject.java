@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Map;
+import java.util.Properties;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -25,14 +27,18 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
 
     private final Model model;
 
-    public SonarMvnProject(Project project) throws MvnModelInputException {
-        this.model = createModel(project);
+    public SonarMvnProject(Project project) {
+        try {
+            this.model = createModel(project);
+        } catch (MvnModelInputException ex) {
+            throw new SonarQubeProjectException(ex);
+        }
     }
 
     @Override
     public String getName() {
         String projectName = model.getProperties().getProperty(PROPERTY_NAME);
-        if(projectName != null) {
+        if (projectName != null) {
             return projectName;
         }
         return model.getName() != null ? model.getName() : model.getArtifactId();
@@ -41,7 +47,7 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
     @Override
     public ResourceKey getKey() {
         String projectKey = model.getProperties().getProperty(PROPERTY_KEY);
-        if(projectKey != null) {
+        if (projectKey != null) {
             return ResourceKey.valueOf(projectKey);
         }
         String groupId = model.getGroupId();
@@ -54,7 +60,7 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
     @Override
     public String getVersion() {
         String projectVersion = model.getProperties().getProperty(PROPERTY_VERSION);
-        if(projectVersion != null) {
+        if (projectVersion != null) {
             return projectVersion;
         }
         String version = model.getVersion();
@@ -102,6 +108,22 @@ public class SonarMvnProject implements SonarQubeProjectConfiguration {
             outputDirectory = new File(project.getProjectDirectory().getPath(), "target");
         }
         return outputDirectory;
+    }
+
+    @Override
+    public SonarQubeProjectConfiguration createConfiguration(Project subproject) {
+        return new SonarMvnProject(subproject);
+    }
+
+    @Override
+    public Properties getProperties() {
+        Properties properties = new Properties();
+        for (Map.Entry<Object, Object> entry : model.getProperties().entrySet()) {
+            if (entry.getKey().toString().startsWith("sonar.")) {
+                properties.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return properties;
     }
 
 }

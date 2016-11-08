@@ -1,5 +1,8 @@
 package qubexplorer;
 
+import java.util.Properties;
+import org.netbeans.api.project.Project;
+
 
 public class GenericSonarQubeProjectConfiguration implements SonarQubeProjectConfiguration {
     private String name;
@@ -40,6 +43,16 @@ public class GenericSonarQubeProjectConfiguration implements SonarQubeProjectCon
     @Override
     public String getVersion() {
         return version;
+    }
+
+    @Override
+    public SonarQubeProjectConfiguration createConfiguration(Project subproject) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Properties getProperties() {
+        throw new UnsupportedOperationException();
     }
     
 }

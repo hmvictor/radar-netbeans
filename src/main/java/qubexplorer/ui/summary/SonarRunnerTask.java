@@ -90,7 +90,7 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
                 }
                 
             };
-            SonarRunnerProccess sonarRunnerProccess = new SonarRunnerProccess(getServerUrl(), getProjectContext().getProject());
+            SonarRunnerProccess sonarRunnerProccess = new SonarRunnerProccess(getServerUrl(), getProjectContext());
             sonarRunnerProccess.setAnalysisMode(SonarRunnerProccess.AnalysisMode.valueOf(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.analysisMode", "Preview").toUpperCase()));
             String jvmArguments = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.jvmArguments", "");
             sonarRunnerProccess.setJvmArguments(Arrays.asList(jvmArguments.split(" +")));

@@ -7,7 +7,7 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
-import qubexplorer.SonarQubeProjectBuilder;
+import qubexplorer.ConfigurationFactory;
 import qubexplorer.ui.ProjectContext;
 import qubexplorer.ui.SonarQubeOptionsPanel;
 import qubexplorer.ui.task.TaskExecutor;
@@ -33,7 +33,7 @@ public class SonarRunnerAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent ae) {
         String serverUrl = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000");
-        TaskExecutor.execute(new SonarRunnerTask(new ProjectContext(context, SonarQubeProjectBuilder.getDefaultConfiguration(context)), serverUrl));
+        TaskExecutor.execute(new SonarRunnerTask(new ProjectContext(context, ConfigurationFactory.createDefaultConfiguration(context)), serverUrl));
     }
 
 }

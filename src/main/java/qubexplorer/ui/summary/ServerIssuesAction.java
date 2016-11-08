@@ -6,7 +6,7 @@ import org.netbeans.api.project.Project;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle.Messages;
-import qubexplorer.SonarQubeProjectBuilder;
+import qubexplorer.ConfigurationFactory;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
@@ -32,7 +32,7 @@ public final class ServerIssuesAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent ev) {
-        SonarQubeProjectConfiguration configuration = SonarQubeProjectBuilder.getDefaultConfiguration(context);
+        SonarQubeProjectConfiguration configuration = ConfigurationFactory.createDefaultConfiguration(context);
         if (configuration != null) {
             final ProjectContext projectContext = new ProjectContext(context, configuration);
             final SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();

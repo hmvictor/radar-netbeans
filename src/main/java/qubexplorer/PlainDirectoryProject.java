@@ -14,9 +14,13 @@ public class PlainDirectoryProject implements SonarQubeProjectConfiguration {
     private final Project project;
     private Properties properties;
 
-    public PlainDirectoryProject(Project project) throws IOException {
+    public PlainDirectoryProject(Project project){
         this.project = project;
-        loadProjectProperties();
+        try {
+            loadProjectProperties();
+        } catch (IOException ex) {
+             throw new SonarQubeProjectException(ex);
+        }
     }
     
     private void loadProjectProperties() throws IOException {
@@ -27,7 +31,6 @@ public class PlainDirectoryProject implements SonarQubeProjectConfiguration {
                 properties.load(reader);
             }
         }
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -51,4 +54,14 @@ public class PlainDirectoryProject implements SonarQubeProjectConfiguration {
         return properties.getProperty(SonarMvnProject.PROPERTY_VERSION, "1.0");
     }
 
+    @Override
+    public SonarQubeProjectConfiguration createConfiguration(Project subproject) {
+        return new PlainDirectoryProject(subproject);
+    }
+
+    @Override
+    public Properties getProperties() {
+        return properties;
+    }
+    
 }

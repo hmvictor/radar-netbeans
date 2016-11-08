@@ -20,11 +20,11 @@ import qubexplorer.AuthorizationException;
 import qubexplorer.MvnModelInputException;
 import qubexplorer.PassEncoder;
 import qubexplorer.SonarMvnProject;
-import qubexplorer.SonarQubeProjectBuilder;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.UserCredentials;
 import qubexplorer.server.SonarQube;
 import qubexplorer.server.Version;
+import qubexplorer.ui.ProjectContext;
 
 /**
  *
@@ -39,8 +39,8 @@ public class SonarRunnerProccess {
         PREVIEW;
         
     }
-
-    private final Project project;
+    
+    private final ProjectContext projectContext;
     private final String sonarUrl;
     private AnalysisMode analysisMode = AnalysisMode.INCREMENTAL;
     
@@ -58,9 +58,9 @@ public class SonarRunnerProccess {
     private String projectHome;
     private final Properties properties = new Properties();
 
-    public SonarRunnerProccess(String sonarUrl, Project project) {
+    public SonarRunnerProccess(String sonarUrl, ProjectContext projectContext) {
         this.sonarUrl = sonarUrl;
-        this.project = project;
+        this.projectContext=projectContext;
     }
 
     public PrintStreamConsumer getOutConsumer() {
@@ -99,7 +99,7 @@ public class SonarRunnerProccess {
 
     protected Runner createRunnerForProject(UserCredentials userCredentials, ProcessMonitor processMonitor) throws MvnModelInputException {
         ForkedRunner runner = ForkedRunner.create(processMonitor);
-        projectHome = project.getProjectDirectory().getPath();
+        projectHome = projectContext.getProject().getProjectDirectory().getPath();
         configureProperties(userCredentials);
         runner.addProperties(properties);
         if (outConsumer != null) {
@@ -112,45 +112,44 @@ public class SonarRunnerProccess {
     }
     
     private void configureProperties(UserCredentials userCredentials) throws MvnModelInputException{
-        SonarQubeProjectConfiguration projectInfo = SonarQubeProjectBuilder.getDefaultConfiguration(project);
+        SonarQubeProjectConfiguration projectConfiguration = projectContext.getConfiguration();
         Version sonarQubeVersion = new SonarQube(sonarUrl).getVersion(userCredentials);
-        Module mainModule = Module.createMainModule(project);
-//        assert projectInfo.getKey().getPartsCount() == 2;
+        Module mainModule = Module.createMainModule(projectContext);
         
         //mainModule.loadExternalProperties(properties);
         properties.setProperty("sonar.projectBaseDir", projectHome);
         properties.setProperty("sonar.host.url", sonarUrl);
         properties.setProperty("sonar.projectDir", projectHome);
         properties.setProperty("project.home", projectHome);
-        properties.setProperty("sonar.projectName", projectInfo.getName());
-        properties.setProperty("sonar.projectVersion", projectInfo.getVersion());
-        properties.setProperty("sonar.sourceEncoding", FileEncodingQuery.getEncoding(project.getProjectDirectory()).displayName());
-        properties.setProperty("sonar.working.directory", getWorkingDirectory(project));
+//        properties.setProperty("sonar.projectName", projectConfiguration.getName());
+        properties.setProperty("sonar.projectVersion", projectConfiguration.getVersion());
+        properties.setProperty("sonar.sourceEncoding", FileEncodingQuery.getEncoding(projectContext.getProject().getProjectDirectory()).displayName());
+        properties.setProperty("sonar.working.directory", getWorkingDirectory());
         
         //optional properties
         if (userCredentials != null) {
             properties.setProperty("sonar.login", userCredentials.getUsername());
             properties.setProperty("sonar.password", PassEncoder.decodeAsString(userCredentials.getPassword()));
         }
-        String sourceLevel = SourceLevelQuery.getSourceLevel(project.getProjectDirectory());
+        String sourceLevel = SourceLevelQuery.getSourceLevel(projectContext.getProject().getProjectDirectory());
         if (sourceLevel != null) {
             properties.setProperty("sonar.java.source", sourceLevel);
         }
-        if (SonarMvnProject.isMvnProject(project)) {
-            properties.setProperty("sonar.junit.reportsPath", new File(SonarMvnProject.getOutputDirectory(project), "/surefire-reports").getAbsolutePath());
+        if (SonarMvnProject.isMvnProject(projectContext.getProject())) {
+            properties.setProperty("sonar.junit.reportsPath", new File(SonarMvnProject.getOutputDirectory(projectContext.getProject()), "/surefire-reports").getAbsolutePath());
         }
         //end optional
         
         for (VersionConfig versionConfig : getVersionConfigsFor(sonarQubeVersion)) {
             versionConfig.apply(this, properties);
         }
-        
-        mainModule.configureSourcesAndBinariesProperties(sonarQubeVersion, properties);
-        ModulesConfigurationResult result=configureModulesProperties(sonarQubeVersion);
+        mainModule.addModuleProperties(sonarQubeVersion, properties);
+//        mainModule.configureSourcesAndBinariesProperties(sonarQubeVersion, properties);
+        ModulesConfigurationResult result=configureModulesProperties(mainModule, sonarQubeVersion);
         if (!result.hasModulesWithSources() && !mainModule.containsSources()) {
             throw new SourcesNotFoundException();
         }
-        properties.setProperty("sonar.projectKey", result.hasSubmodules() ? projectInfo.getKey().getPart(0) : projectInfo.getKey().toString());
+        properties.setProperty("sonar.projectKey", result.hasSubmodules() ? projectConfiguration.getKey().getPart(0) : projectConfiguration.getKey().toString());
     }
     
     private List<VersionConfig> getVersionConfigsFor(Version sonarQubeVersion){
@@ -163,22 +162,22 @@ public class SonarRunnerProccess {
         return list;
     }
     
-    public String getWorkingDirectory(Project project) throws MvnModelInputException{
+    public String getWorkingDirectory() throws MvnModelInputException{
         String workingDirectory;
-        if (SonarMvnProject.isMvnProject(project)) {
-            workingDirectory = new File(SonarMvnProject.getOutputDirectory(project), "sonar").getAbsolutePath();
+        if (SonarMvnProject.isMvnProject(projectContext.getProject())) {
+            workingDirectory = new File(SonarMvnProject.getOutputDirectory(projectContext.getProject()), "sonar").getAbsolutePath();
         } else {
             workingDirectory = projectHome + "/./.sonar";
         }
         return workingDirectory;
     }
     
-    private ModulesConfigurationResult configureModulesProperties(Version sonarQubeVersion) throws MvnModelInputException{
+    private ModulesConfigurationResult configureModulesProperties(Module mainModule, Version sonarQubeVersion) throws MvnModelInputException{
         int sourcesCounter=0;
         StringBuilder modulesWithSources = new StringBuilder();
         Set<Project> subprojects = getSubprojects();
         for (Project subproject : subprojects) {
-            Module module = Module.createSubmodule(subproject);
+            Module module = mainModule.createSubmodule(subproject); //Module.createSubmodule(new ProjectContext(subproject, projectContext.getConfiguration().createConfiguration(subproject)));
             module.addModuleProperties(sonarQubeVersion, properties);
             if (module.containsSources()) {
                 if (modulesWithSources.length() > 0) {
@@ -195,7 +194,7 @@ public class SonarRunnerProccess {
     }
 
     public Set<Project> getSubprojects() {
-        Set<Project> subprojects = ProjectUtils.getContainedProjects(project, true);
+        Set<Project> subprojects = ProjectUtils.getContainedProjects(projectContext.getProject(), true);
         if (subprojects == null) {
             subprojects = Collections.emptySet();
         }
