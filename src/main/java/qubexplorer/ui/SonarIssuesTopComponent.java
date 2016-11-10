@@ -222,6 +222,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private final List<Annotation> attachedAnnotations = new CopyOnWriteArrayList<>();
     
     private FileOpenedNotifier fileOpenedNotifier=new FileOpenedNotifier();
+    private IssueLocation.ProjectKeyChecker projectKeyChecker;
 
     public SonarIssuesTopComponent() {
         initComponents();
@@ -302,6 +303,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
     }
 
+    public void setProjectKeyChecker(IssueLocation.ProjectKeyChecker projectKeyChecker) {
+        this.projectKeyChecker = projectKeyChecker;
+    }
+    
     public void setActionPlans(List<ActionPlan> plans) {
         dropDownMenu.removeAll();
         JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem(org.openide.util.NbBundle.getMessage(Bundle.class, "SonarIssuesTopComponent.actionPlansCombo.none"));
@@ -680,7 +685,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private void openIssueLocation(IssueLocation issueLocation) {
         try {
-            FileObject fileObject = issueLocation.getFileObject(projectContext);
+            FileObject fileObject = issueLocation.getFileObject(projectContext, projectKeyChecker);
             if (fileObject == null) {
                 notifyFileObjectNotFound(issueLocation);
             } else {
@@ -702,7 +707,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }
 
     private void notifyFileObjectNotFound(IssueLocation issueLocation) {
-        File file = issueLocation.getFile(projectContext);
+        File file = issueLocation.getFile(projectContext, projectKeyChecker);
         String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
         String message = MessageFormat.format(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.text"), file.getPath());
         JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), message, messageTitle, JOptionPane.WARNING_MESSAGE);
@@ -789,7 +794,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private void tryToAtachEditorAnnotation(RadarIssue issue) throws DataObjectNotFoundException {
         IssueLocation issueLocation = issue.getLocation();
         try{
-            FileObject fileObject = issueLocation.getFileObject(projectContext);
+            FileObject fileObject = issueLocation.getFileObject(projectContext, projectKeyChecker);
             if (fileObject != null) {
                 if (isFileOpen(fileObject)) {
                     Annotation atachedAnnotation = issue.getLocation().attachAnnotation(issue, fileObject);

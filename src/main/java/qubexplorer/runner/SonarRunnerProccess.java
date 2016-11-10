@@ -19,6 +19,7 @@ import org.sonar.runner.api.Runner;
 import qubexplorer.AuthorizationException;
 import qubexplorer.MvnModelInputException;
 import qubexplorer.PassEncoder;
+import qubexplorer.ResourceKey;
 import qubexplorer.SonarMvnProject;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.UserCredentials;
@@ -31,26 +32,26 @@ import qubexplorer.ui.ProjectContext;
  * @author Victor
  */
 public class SonarRunnerProccess {
+
     protected static final String JSON_FILENAME = "sonar-report.json";
-    
+
     public enum AnalysisMode {
 
         INCREMENTAL,
         PREVIEW;
-        
+
     }
-    
+
     private final ProjectContext projectContext;
     private final String sonarUrl;
     private AnalysisMode analysisMode = AnalysisMode.INCREMENTAL;
-    
-    
+
     private PrintStreamConsumer outConsumer;
     private PrintStreamConsumer errConsumer;
     private WrapperConsumer wrapper;
     private List<String> jvmArguments = Collections.emptyList();
-    
-    private final List<VersionConfig> versionConfigs=Collections.unmodifiableList(Arrays.asList(new VersionConfigLessThan4(), new VersionConfigLessThan5Point2(), new VersionConfigMoreThan5Point2()));
+
+    private final List<VersionConfig> versionConfigs = Collections.unmodifiableList(Arrays.asList(new VersionConfigLessThan4(), new VersionConfigLessThan5Point2(), new VersionConfigMoreThan5Point2()));
 
     /**
      * This state is modified while running.
@@ -60,7 +61,7 @@ public class SonarRunnerProccess {
 
     public SonarRunnerProccess(String sonarUrl, ProjectContext projectContext) {
         this.sonarUrl = sonarUrl;
-        this.projectContext=projectContext;
+        this.projectContext = new ProjectContext(projectContext.getProject(), new DirtyHackWrapper(projectContext.getConfiguration()));
     }
 
     public PrintStreamConsumer getOutConsumer() {
@@ -110,12 +111,12 @@ public class SonarRunnerProccess {
         runner.addJvmArguments(jvmArguments);
         return runner;
     }
-    
-    private void configureProperties(UserCredentials userCredentials) throws MvnModelInputException{
+
+    private void configureProperties(UserCredentials userCredentials) throws MvnModelInputException {
         SonarQubeProjectConfiguration projectConfiguration = projectContext.getConfiguration();
         Version sonarQubeVersion = new SonarQube(sonarUrl).getVersion(userCredentials);
         Module mainModule = Module.createMainModule(projectContext);
-        
+
         //mainModule.loadExternalProperties(properties);
         properties.setProperty("sonar.projectBaseDir", projectHome);
         properties.setProperty("sonar.host.url", sonarUrl);
@@ -125,7 +126,7 @@ public class SonarRunnerProccess {
         properties.setProperty("sonar.projectVersion", projectConfiguration.getVersion());
         properties.setProperty("sonar.sourceEncoding", FileEncodingQuery.getEncoding(projectContext.getProject().getProjectDirectory()).displayName());
         properties.setProperty("sonar.working.directory", getWorkingDirectory());
-        
+
         //optional properties
         if (userCredentials != null) {
             properties.setProperty("sonar.login", userCredentials.getUsername());
@@ -139,30 +140,30 @@ public class SonarRunnerProccess {
             properties.setProperty("sonar.junit.reportsPath", new File(SonarMvnProject.getOutputDirectory(projectContext.getProject()), "/surefire-reports").getAbsolutePath());
         }
         //end optional
-        
+
         for (VersionConfig versionConfig : getVersionConfigsFor(sonarQubeVersion)) {
             versionConfig.apply(this, properties);
         }
         mainModule.addModuleProperties(sonarQubeVersion, properties);
 //        mainModule.configureSourcesAndBinariesProperties(sonarQubeVersion, properties);
-        ModulesConfigurationResult result=configureModulesProperties(mainModule, sonarQubeVersion);
+        ModulesConfigurationResult result = configureModulesProperties(mainModule, sonarQubeVersion);
         if (!result.hasModulesWithSources() && !mainModule.containsSources()) {
             throw new SourcesNotFoundException();
         }
         properties.setProperty("sonar.projectKey", result.hasSubmodules() ? projectConfiguration.getKey().getPart(0) : projectConfiguration.getKey().toString());
     }
-    
-    private List<VersionConfig> getVersionConfigsFor(Version sonarQubeVersion){
-        List<VersionConfig> list=new LinkedList<>();
+
+    private List<VersionConfig> getVersionConfigsFor(Version sonarQubeVersion) {
+        List<VersionConfig> list = new LinkedList<>();
         for (VersionConfig config : versionConfigs) {
-            if(config.applies(sonarQubeVersion)){
+            if (config.applies(sonarQubeVersion)) {
                 list.add(config);
             }
         }
         return list;
     }
-    
-    public String getWorkingDirectory() throws MvnModelInputException{
+
+    public String getWorkingDirectory() throws MvnModelInputException {
         String workingDirectory;
         if (SonarMvnProject.isMvnProject(projectContext.getProject())) {
             workingDirectory = new File(SonarMvnProject.getOutputDirectory(projectContext.getProject()), "sonar").getAbsolutePath();
@@ -171,9 +172,9 @@ public class SonarRunnerProccess {
         }
         return workingDirectory;
     }
-    
-    private ModulesConfigurationResult configureModulesProperties(Module mainModule, Version sonarQubeVersion) throws MvnModelInputException{
-        int sourcesCounter=0;
+
+    private ModulesConfigurationResult configureModulesProperties(Module mainModule, Version sonarQubeVersion) throws MvnModelInputException {
+        int sourcesCounter = 0;
         StringBuilder modulesWithSources = new StringBuilder();
         Set<Project> subprojects = getSubprojects();
         for (Project subproject : subprojects) {
@@ -249,8 +250,9 @@ public class SonarRunnerProccess {
         }
 
     }
-    
-    private static class ModulesConfigurationResult{
+
+    private static class ModulesConfigurationResult {
+
         private final boolean hasModules;
         private final boolean hasModulesWithSources;
 
@@ -258,14 +260,62 @@ public class SonarRunnerProccess {
             this.hasModules = hasModules;
             this.hasModulesWithSources = hasModulesWithSources;
         }
-        
+
         public boolean hasSubmodules() {
             return hasModules;
         }
 
-        public  boolean hasModulesWithSources() {
+        public boolean hasModulesWithSources() {
             return hasModulesWithSources;
         }
     }
-    
+
+    private static class DirtyHackWrapper implements SonarQubeProjectConfiguration {
+        private SonarQubeProjectConfiguration parent;
+        private final SonarQubeProjectConfiguration wrapped;
+
+        public DirtyHackWrapper(SonarQubeProjectConfiguration parent, SonarQubeProjectConfiguration wrapped) {
+            this.parent = parent;
+            this.wrapped = wrapped;
+        }
+
+        public DirtyHackWrapper(SonarQubeProjectConfiguration wrapped) {
+            this.wrapped = wrapped;
+        }
+        
+        @Override
+        public String getName() {
+            return wrapped.getName();
+        }
+
+        @Override
+        public ResourceKey getKey() {
+            return wrapped.getKey();
+//            if(parent == null) {
+//                return ResourceKey.valueOf(wrapped.getKey().getPart(0));
+//            }else{
+//                ResourceKey wrappedKey = wrapped.getKey();
+//    //            ResourceKey tempKey=ResourceKey.valueOf(wrapped.getName().replaceAll("\\s", "_")); //wrappedKey.getPartsCount() == 1 ? wrappedKey: wrappedKey.subkey(1, 2);
+//                ResourceKey tempKey=wrappedKey.getPartsCount() >= 2 ? wrappedKey.subkey(0, 2): wrappedKey;
+//                return tempKey; //parent.getKey().concat(tempKey); //ResourceKey.valueOf(parent.getKey()+":"+tempKey);
+//            }
+        }
+        
+        @Override
+        public String getVersion() {
+            return wrapped.getVersion();
+        }
+
+        @Override
+        public SonarQubeProjectConfiguration createConfiguration(Project subproject) {
+            return new DirtyHackWrapper(this, wrapped.createConfiguration(subproject));
+        }
+
+        @Override
+        public Properties getProperties() {
+            return wrapped.getProperties();
+        }
+        
+    }
+
 }

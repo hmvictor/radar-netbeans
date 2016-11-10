@@ -57,20 +57,17 @@ public class ResourceKey implements Serializable {
         return parts[parts.length - 1];
     }
 
-//    public String removeLastPart() {
-//        //        String path = _componentKey;
-////        int index = path.lastIndexOf(':');
-////        if (index != -1) {
-////            path = path.substring(0, index);
-////        }
-////        return path;
-//        return toString(0, parts.length -1);
-//    }
-    
     public ResourceKey subkey(int start, int end) {
         return new ResourceKey(Arrays.copyOfRange(parts, start, end));
     }
 
+    public ResourceKey concat(ResourceKey tempKey) {
+        String[] newKeyParts=new String[parts.length+tempKey.parts.length];
+        System.arraycopy(parts, 0, newKeyParts, 0, parts.length);
+        System.arraycopy(tempKey.parts, 0, newKeyParts, parts.length, tempKey.parts.length);
+        return new ResourceKey(newKeyParts);
+    }
+    
     public static ResourceKey valueOf(String key) {
         return new ResourceKey(key.split(":"));
     }

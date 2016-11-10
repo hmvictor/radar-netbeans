@@ -21,7 +21,6 @@ import org.openide.util.Lookup;
 import qubexplorer.RadarIssue;
 import qubexplorer.ResourceKey;
 import qubexplorer.SonarQubeProjectConfiguration;
-import qubexplorer.ConfigurationFactory;
 import qubexplorer.ui.ProjectContext;
 
 /**
@@ -30,13 +29,13 @@ import qubexplorer.ui.ProjectContext;
  */
 public class IssueLocation {
 
-    private final ResourceKey componentKey; 
+    private final ResourceKey componentKey;
     private final int lineNumber;
     private static final String DEFAULT_EXTENSION = ".java";
 
     public IssueLocation(String componentKey, int lineNumber) {
         this.lineNumber = lineNumber;
-        this.componentKey=ResourceKey.valueOf(componentKey);
+        this.componentKey = ResourceKey.valueOf(componentKey);
     }
 
     public String getComponentPath() {
@@ -46,7 +45,7 @@ public class IssueLocation {
     public String getSimpleComponentName() {
         String extension = "";
         char pathSeparator;
-        String componentPath=getComponentPath();
+        String componentPath = getComponentPath();
         if (componentPath.contains("/")) {
             pathSeparator = '/';
         } else {
@@ -66,11 +65,11 @@ public class IssueLocation {
     }
 
     public ResourceKey getProjectKey() {
-        return componentKey.subkey(0, componentKey.getPartsCount()-1);
+        return componentKey.subkey(0, componentKey.getPartsCount() - 1);
     }
 
-    public Project getProjectOwner(ProjectContext projectContext) {
-        FileObject projectDir = findProjectDir(projectContext, getProjectKey());
+    public Project getProjectOwner(ProjectContext projectContext, ProjectKeyChecker projectKeyChecker) {
+        FileObject projectDir = findProjectDir(projectContext, getProjectKey(), projectKeyChecker);
         if (projectDir != null) {
             return FileOwnerQuery.getOwner(projectDir);
         } else {
@@ -78,8 +77,8 @@ public class IssueLocation {
         }
     }
 
-    public File getFile(ProjectContext projectContext) {
-        Project projectOwner = getProjectOwner(projectContext);
+    public File getFile(ProjectContext projectContext, ProjectKeyChecker projectKeyChecker) {
+        Project projectOwner = getProjectOwner(projectContext, projectKeyChecker);
         if (projectOwner == null) {
             throw new ProjectNotFoundException(getProjectKey().toString());
         }
@@ -94,7 +93,7 @@ public class IssueLocation {
             /* 
                 It's an element name. Assume is a java file. 
                 Example: package.subpackage.ClassA 
-            */
+             */
             String filePath = componentPath.replace(".", "/") + DEFAULT_EXTENSION;
             Sources sources = ProjectUtils.getSources(projectOwner);
             SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
@@ -106,9 +105,9 @@ public class IssueLocation {
     private static boolean isFilePath(String componentPath) {
         return componentPath.contains("/");
     }
-    
-    public FileObject getFileObject(ProjectContext projectContext) {
-        return FileUtil.toFileObject(getFile(projectContext));
+
+    public FileObject getFileObject(ProjectContext projectContext, ProjectKeyChecker projectKeyChecker) {
+        return FileUtil.toFileObject(getFile(projectContext, projectKeyChecker));
     }
 
     public Annotation attachAnnotation(RadarIssue radarIssue, FileObject fileObject) throws DataObjectNotFoundException {
@@ -123,7 +122,7 @@ public class IssueLocation {
         }
         return ann;
     }
-    
+
     public Line getLine(EditorCookie editorCookie) {
         Line.Set lineSet = editorCookie.getLineSet();
         int effectiveLineNumber = getLineNumber() <= 0 ? 1 : getLineNumber();
@@ -139,22 +138,25 @@ public class IssueLocation {
             return componentKey.toString() + " [" + lineNumber + "]";
         }
     }
-    
-    public static EditorCookie getEditorCookie(FileObject fileObject) throws DataObjectNotFoundException{
+
+    public static EditorCookie getEditorCookie(FileObject fileObject) throws DataObjectNotFoundException {
         DataObject dataObject = DataObject.find(fileObject);
         Lookup lookup = dataObject.getLookup();
         return (EditorCookie) lookup.lookup(EditorCookie.class);
     }
 
-    private static FileObject findProjectDir(ProjectContext projectContext, ResourceKey projectKey) {
-        if (projectContext.getConfiguration().getKey().equals(projectKey)) {
+    private static FileObject findProjectDir(ProjectContext projectContext, ResourceKey issueProjectKey, ProjectKeyChecker projectKeyChecker) {
+//        ProjectKeyChecker projectKeyChecker=new SonarRunnerChecker();
+        //when sonar runner is used, this has another key
+
+        if (projectKeyChecker.equals(projectContext.getConfiguration(), issueProjectKey, false) ) { //projectContext.getConfiguration().getKey().equals(issueProjectKey)) {
             return projectContext.getProject().getProjectDirectory();
         }
         Set<Project> subprojects = ProjectUtils.getContainedProjects(projectContext.getProject(), true);
         if (subprojects != null) {
             for (Project subproject : subprojects) {
                 SonarQubeProjectConfiguration subprojectInfo = projectContext.getConfiguration().createConfiguration(subproject); //SonarQubeProjectBuilder.createConfigurationForSubproject(projectContext.getConfiguration(), subproject);
-                if (subprojectInfo.getKey().equals(projectKey)) {
+                if (projectKeyChecker.equals(subprojectInfo, issueProjectKey, true) ) { //subprojectInfo.getKey().equals(issueProjectKey)) {
                     return subproject.getProjectDirectory();
                 }
             }
@@ -173,6 +175,12 @@ public class IssueLocation {
                 return Integer.compare(t.getLineNumber(), t1.getLineNumber());
             }
         }
+
+    }
+
+    public static interface ProjectKeyChecker {
+
+        boolean equals(SonarQubeProjectConfiguration configuration, ResourceKey projectKeyIssue, boolean isSubmodule);
 
     }
 

@@ -185,6 +185,7 @@ public class SonarRunnerResult implements IssuesContainer {
             String name = reader.nextName();
             switch (name) {
                 case "key":
+                    //remove project name at the beggining
                     issue.setKey(reader.nextString());
                     break;
                 case "component":

@@ -17,6 +17,8 @@ import org.openide.windows.WindowManager;
 import org.sonar.runner.api.PrintStreamConsumer;
 import org.sonar.runner.api.ProcessMonitor;
 import qubexplorer.MvnModelInputException;
+import qubexplorer.ResourceKey;
+import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.runner.SonarRunnerCancelledException;
 import qubexplorer.runner.SonarRunnerProccess;
 import qubexplorer.runner.SonarRunnerResult;
@@ -24,6 +26,7 @@ import qubexplorer.runner.SourcesNotFoundException;
 import qubexplorer.ui.ProjectContext;
 import qubexplorer.ui.SonarIssuesTopComponent;
 import qubexplorer.ui.SonarQubeOptionsPanel;
+import qubexplorer.ui.issues.IssueLocation;
 import qubexplorer.ui.task.Task;
 import qubexplorer.ui.task.TaskExecutionException;
 
@@ -113,6 +116,7 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
     protected void success(SonarRunnerResult result) {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
         sonarTopComponent.setProjectContext(getProjectContext());
+        sonarTopComponent.setProjectKeyChecker(new SonarRunnerChecker());
         sonarTopComponent.setIssuesContainer(result);
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
@@ -137,6 +141,21 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
         stopAction.setEnabled(false);
         io.getOut().close();
         io.getErr().close();
+    }
+    
+    private static class SonarRunnerChecker implements IssueLocation.ProjectKeyChecker {
+
+        public ResourceKey getShortProjectKey(ResourceKey key) {
+            //remove first part
+            return key.subkey(1, key.getPartsCount());
+        }
+
+        @Override
+        public boolean equals(SonarQubeProjectConfiguration configuration, ResourceKey projectKeyIssue, boolean isSubmodule) {
+            ResourceKey tmpKey = isSubmodule ? getShortProjectKey(projectKeyIssue) : projectKeyIssue;
+            return configuration.getKey().equals(tmpKey);
+        }
+
     }
     
 }

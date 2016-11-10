@@ -1,8 +1,11 @@
 package qubexplorer.ui.summary;
 
 import org.openide.windows.WindowManager;
+import qubexplorer.ConfigurationFactory;
 import qubexplorer.IssuesContainer;
 import qubexplorer.NoSuchProjectException;
+import qubexplorer.ResourceKey;
+import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
@@ -10,6 +13,7 @@ import qubexplorer.ui.AuthenticationRepository;
 import qubexplorer.ui.ProjectChooser;
 import qubexplorer.ui.ProjectContext;
 import qubexplorer.ui.SonarIssuesTopComponent;
+import qubexplorer.ui.issues.IssueLocation;
 import qubexplorer.ui.task.Task;
 import qubexplorer.ui.task.TaskExecutor;
 
@@ -42,6 +46,7 @@ public class SummaryTask extends Task<Summary>{
     protected void success(Summary summary) {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
         sonarTopComponent.setProjectContext(getProjectContext());
+        sonarTopComponent.setProjectKeyChecker(new SimpleChecker());
         sonarTopComponent.setIssuesContainer(issuesContainer);
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
@@ -61,12 +66,23 @@ public class SummaryTask extends Task<Summary>{
             chooser.setServerUrlEnabled(false);
             chooser.loadProjectKeys();
             if(chooser.showDialog() == ProjectChooser.Option.ACCEPT) {
-                ProjectContext newProjectContext = new ProjectContext(getProjectContext().getProject(), chooser.getSelectedProject());
+                SonarQubeProjectConfiguration fixed = chooser.getSelectedProject();
+                SonarQubeProjectConfiguration real = ConfigurationFactory.createDefaultConfiguration(getProjectContext().getProject());
+                ProjectContext newProjectContext = new ProjectContext(getProjectContext().getProject(), new CustomServerIssuesAction.FixedKey(fixed, real));
                 TaskExecutor.execute(new SummaryTask(issuesContainer, newProjectContext, filters));
             }
         }else{
             super.fail(cause);
         }
+    }
+    
+    private static class SimpleChecker implements IssueLocation.ProjectKeyChecker{
+
+        @Override
+        public boolean equals(SonarQubeProjectConfiguration configuration, ResourceKey projectKeyIssue, boolean isSubmodule) {
+            return configuration.getKey().equals(projectKeyIssue);
+        }
+        
     }
     
 }
