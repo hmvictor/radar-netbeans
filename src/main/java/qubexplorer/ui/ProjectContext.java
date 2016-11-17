@@ -16,6 +16,7 @@ public class ProjectContext {
         this.configuration = configuration;
     }
     
+    // TODO: Maybe not used anymore
     public ProjectContext(Project project) {
         this.project = project;
     }

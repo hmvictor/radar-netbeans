@@ -69,6 +69,7 @@ public class SummaryTask extends Task<Summary>{
                 SonarQubeProjectConfiguration fixed = chooser.getSelectedProject();
                 SonarQubeProjectConfiguration real = ConfigurationFactory.createDefaultConfiguration(getProjectContext().getProject());
                 ProjectContext newProjectContext = new ProjectContext(getProjectContext().getProject(), new CustomServerIssuesAction.FixedKey(fixed, real));
+                //final SonarQube sonarQube = new SonarQube(chooser.getSelectedUrl());
                 TaskExecutor.execute(new SummaryTask(issuesContainer, newProjectContext, filters));
             }
         }else{

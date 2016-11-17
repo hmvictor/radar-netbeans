@@ -1,10 +1,6 @@
 package qubexplorer;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.prefs.Preferences;
 import org.netbeans.api.project.Project;
-import org.netbeans.api.project.ProjectUtils;
 
 /**
  *

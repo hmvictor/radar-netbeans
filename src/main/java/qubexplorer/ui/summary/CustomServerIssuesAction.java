@@ -13,11 +13,12 @@ import qubexplorer.ConfigurationFactory;
 import qubexplorer.ResourceKey;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.Summary;
+import qubexplorer.UserCredentials;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.ActionPlansTask;
-import qubexplorer.ui.ProjectChooser;
 import qubexplorer.ui.ProjectContext;
+import qubexplorer.ui.ServerConnectionDialog;
 import qubexplorer.ui.SonarQubeOptionsPanel;
 import qubexplorer.ui.task.TaskExecutor;
 
@@ -37,22 +38,28 @@ public final class CustomServerIssuesAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent ev) {
-        ProjectChooser chooser=new ProjectChooser(WindowManager.getDefault().getMainWindow(), true);
-        chooser.setSelectedUrl(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"));
-        if(chooser.showDialog() == ProjectChooser.Option.ACCEPT) {
-            SonarQubeProjectConfiguration fixed = chooser.getSelectedProject();
+//        ProjectChooser chooser=new ProjectChooser(WindowManager.getDefault().getMainWindow(), true);
+        ServerConnectionDialog serverConnectionDialog=new ServerConnectionDialog(WindowManager.getDefault().getMainWindow(), true);
+        serverConnectionDialog.setSelectedUrl(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"));
+        if(serverConnectionDialog.showDialog() == ServerConnectionDialog.Option.ACCEPT) {
+            SonarQubeProjectConfiguration fixed = serverConnectionDialog.getSelectedProject();
             SonarQubeProjectConfiguration real = ConfigurationFactory.createDefaultConfiguration(context);
             final ProjectContext projectContext = new ProjectContext(context, new FixedKey(fixed, real));
-            final SonarQube sonarQube = new SonarQube(chooser.getSelectedUrl());
-            TaskExecutor.execute(new SummaryTask(sonarQube, projectContext, new IssueFilter[0]){
-
+            final SonarQube sonarQube = new SonarQube(serverConnectionDialog.getSelectedUrl());
+            SummaryTask summaryTask = new SummaryTask(sonarQube, projectContext, new IssueFilter[0]){
+                
                 @Override
                 protected void success(Summary summary) {
                     super.success(summary);
                     TaskExecutor.execute(new ActionPlansTask(sonarQube, projectContext));
                 }
                 
-            });
+            };
+            UserCredentials userCredentials = serverConnectionDialog.getUserCredentials();
+            if(userCredentials != null) {
+                summaryTask.setUserCredentials(userCredentials);
+            }
+            TaskExecutor.execute(summaryTask);
         }
     }
     

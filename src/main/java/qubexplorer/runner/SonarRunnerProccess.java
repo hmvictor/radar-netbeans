@@ -61,7 +61,7 @@ public class SonarRunnerProccess {
 
     public SonarRunnerProccess(String sonarUrl, ProjectContext projectContext) {
         this.sonarUrl = sonarUrl;
-        this.projectContext = new ProjectContext(projectContext.getProject(), new DirtyHackWrapper(projectContext.getConfiguration()));
+        this.projectContext = projectContext;
     }
 
     public PrintStreamConsumer getOutConsumer() {
@@ -267,53 +267,6 @@ public class SonarRunnerProccess {
 
         public boolean hasModulesWithSources() {
             return hasModulesWithSources;
-        }
-    }
-
-    private static class DirtyHackWrapper implements SonarQubeProjectConfiguration {
-        private SonarQubeProjectConfiguration parent;
-        private final SonarQubeProjectConfiguration wrapped;
-
-        public DirtyHackWrapper(SonarQubeProjectConfiguration parent, SonarQubeProjectConfiguration wrapped) {
-            this.parent = parent;
-            this.wrapped = wrapped;
-        }
-
-        public DirtyHackWrapper(SonarQubeProjectConfiguration wrapped) {
-            this.wrapped = wrapped;
-        }
-        
-        @Override
-        public String getName() {
-            return wrapped.getName();
-        }
-
-        @Override
-        public ResourceKey getKey() {
-            return wrapped.getKey();
-//            if(parent == null) {
-//                return ResourceKey.valueOf(wrapped.getKey().getPart(0));
-//            }else{
-//                ResourceKey wrappedKey = wrapped.getKey();
-//    //            ResourceKey tempKey=ResourceKey.valueOf(wrapped.getName().replaceAll("\\s", "_")); //wrappedKey.getPartsCount() == 1 ? wrappedKey: wrappedKey.subkey(1, 2);
-//                ResourceKey tempKey=wrappedKey.getPartsCount() >= 2 ? wrappedKey.subkey(0, 2): wrappedKey;
-//                return tempKey; //parent.getKey().concat(tempKey); //ResourceKey.valueOf(parent.getKey()+":"+tempKey);
-//            }
-        }
-        
-        @Override
-        public String getVersion() {
-            return wrapped.getVersion();
-        }
-
-        @Override
-        public SonarQubeProjectConfiguration createConfiguration(Project subproject) {
-            return new DirtyHackWrapper(this, wrapped.createConfiguration(subproject));
-        }
-
-        @Override
-        public Properties getProperties() {
-            return wrapped.getProperties();
         }
         
     }

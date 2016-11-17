@@ -44,7 +44,6 @@ public class PlainDirectoryProject implements SonarQubeProjectConfiguration {
         if (propertyValue != null) {
             return ResourceKey.valueOf(propertyValue);
         } else {
-//            return new ResourceKey(parentConfig.getKey().getPart(0), getName());
             return new ResourceKey(getName());
         }
     }

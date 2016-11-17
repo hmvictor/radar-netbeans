@@ -146,7 +146,6 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
     private static class SonarRunnerChecker implements IssueLocation.ProjectKeyChecker {
 
         public ResourceKey getShortProjectKey(ResourceKey key) {
-            //remove first part
             return key.subkey(1, key.getPartsCount());
         }
 
