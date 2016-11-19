@@ -136,6 +136,7 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
         user = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
         password = new javax.swing.JPasswordField();
+        credentialsWarning = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.title")); // NOI18N
@@ -189,6 +190,10 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
         password.setColumns(20);
         password.setText(org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.password.text")); // NOI18N
 
+        credentialsWarning.setForeground(new java.awt.Color(204, 0, 0));
+        credentialsWarning.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        org.openide.awt.Mnemonics.setLocalizedText(credentialsWarning, org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.credentialsWarning.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -217,9 +222,13 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
                             .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(user, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(password, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 296, Short.MAX_VALUE)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(password, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(user, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(credentialsWarning, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -233,7 +242,8 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
-                    .addComponent(user, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(user, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(credentialsWarning))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
@@ -242,7 +252,7 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(resourceCombox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 47, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
                     .addComponent(okButton))
@@ -275,6 +285,7 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_resourceComboxItemStateChanged
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel credentialsWarning;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -288,6 +299,7 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
     private javax.swing.JTextField user;
     // End of variables declaration//GEN-END:variables
 
+    /*Is odd on this task to appear an additional prompt for credentials, maybe just show an error message in this dialog. */
     public class Projects2Task extends Task<List<SonarQubeProjectConfiguration>> {
 
         private final SonarQube sonarQube;
@@ -320,6 +332,11 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
             }
         }
 
+        @Override
+        protected void fail(Throwable ex) {
+            super.fail(ex); 
+        }
+        
         @Override
         protected void destroy() {
             loadButton.setEnabled(true);

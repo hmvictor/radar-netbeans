@@ -19,7 +19,6 @@ import org.sonar.runner.api.Runner;
 import qubexplorer.AuthorizationException;
 import qubexplorer.MvnModelInputException;
 import qubexplorer.PassEncoder;
-import qubexplorer.ResourceKey;
 import qubexplorer.SonarMvnProject;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.UserCredentials;
