@@ -109,7 +109,7 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
 
     public void loadProjectKeys() {
         Projects2Task projects2Task = new Projects2Task(new SonarQube(getSelectedUrl()), new ProjectContext(null, null));
-//        projects2Task.setRetryIfNoAuthorization(false);
+        projects2Task.setRetryIfNoAuthorization(false);
         UserCredentials userCredentials = getUserCredentials();
         if (userCredentials != null) {
             projects2Task.setUserCredentials(userCredentials);
@@ -311,6 +311,11 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
             loadButton.setEnabled(false);
         }
 
+        @Override
+        protected void init() {
+            credentialsWarning.setText(" ");
+        }
+        
         @Override
         public List<SonarQubeProjectConfiguration> execute() throws TaskExecutionException {
             return sonarQube.getProjects(getUserCredentials());

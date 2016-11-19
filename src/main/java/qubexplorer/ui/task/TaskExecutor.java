@@ -90,8 +90,7 @@ public final class TaskExecutor {
                 handle.finish();
                 handle = null;
                 Throwable cause = ex.getCause();
-//                task.isRetryIfNoAuthorization()
-                if (cause instanceof AuthorizationException) {
+                if (cause instanceof AuthorizationException && task.isRetryIfNoAuthorization()) {
                     assert task.getServerUrl() != null;
 
                     UserCredentials userCredentials = userCredentialsRepository.getUserCredentials(task.getServerUrl(), getResourceKey(task));

@@ -96,6 +96,15 @@ public class TaskExecutorTest {
         task.waitForDestruction();
         verify(task).success(Boolean.TRUE);
     }
+    
+    @Test(timeout = 5000)
+    public void shouldCallFailAfterAuthFailedButNoRetry() throws Exception {
+        when(task.execute()).thenThrow(new AuthorizationException());
+        task.setRetryIfNoAuthorization(false);
+        TaskExecutor.execute(repository, task);
+        task.waitForDestruction();
+        verify(task).fail(isA(AuthorizationException.class));
+    }
 
     @Test(timeout = 5000)
     public void shouldCallDestroy() throws Exception {
