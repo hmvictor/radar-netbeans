@@ -11,24 +11,25 @@ import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
+import qubexplorer.ResourceKey;
 import qubexplorer.ui.AuthDialog;
-import qubexplorer.ui.AuthenticationRepository;
+import qubexplorer.ui.UserCredentialsRepository;
 
 /**
  *
  * @author Victor
  */
 public final class TaskExecutor {
-    
+
     private TaskExecutor() {
-        
+
     }
 
     public static <T> void execute(Task<T> task) {
-        execute(AuthenticationRepository.getInstance(), task);
+        execute(UserCredentialsRepository.getInstance(), task);
     }
 
-    public static <T> void execute(final AuthenticationRepository repository, final Task<T> task) {
+    public static <T> void execute(final UserCredentialsRepository repository, final Task<T> task) {
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override
@@ -40,15 +41,23 @@ public final class TaskExecutor {
 
     }
 
+    public static ResourceKey getResourceKey(Task task) {
+        if (task.getProjectContext() != null && task.getProjectContext().getConfiguration() != null) {
+            return task.getProjectContext().getConfiguration().getKey();
+        }
+        return null;
+    }
+
     private static class TaskWorker<T> extends SwingWorker<T, Void> {
+
         private static final Logger LOGGER = Logger.getLogger(TaskWorker.class.getName());
 
-        private final AuthenticationRepository authenticationRepository;
+        private final UserCredentialsRepository userCredentialsRepository;
         private final Task<T> task;
         private ProgressHandle handle;
 
-        public TaskWorker(AuthenticationRepository repository, Task<T> task) {
-            this.authenticationRepository = repository;
+        public TaskWorker(UserCredentialsRepository repository, Task<T> task) {
+            this.userCredentialsRepository = repository;
             this.task = task;
             assert SwingUtilities.isEventDispatchThread();
             handle = ProgressHandleFactory.createHandle("Sonar");
@@ -71,34 +80,28 @@ public final class TaskExecutor {
                 task.success(result);
                 handle.finish();
                 handle = null;
+
                 if (task.getUserCredentials() != null) {
                     assert task.getServerUrl() != null;
-                    String contextResourceKey=null;
-                    if (task.getProjectContext() != null && task.getProjectContext().getConfiguration() != null) {
-                        task.getProjectContext().getConfiguration().getKey().toString();
-                    }
-                    authenticationRepository.saveAuthentication(task.getServerUrl(), contextResourceKey, task.getUserCredentials());
+                    userCredentialsRepository.saveUserCredentials(task.getServerUrl(), /* XXX There was a null here */ getResourceKey(task), task.getUserCredentials());
                 }
             } catch (ExecutionException ex) {
                 LOGGER.log(Level.INFO, ex.getMessage(), ex);
                 handle.finish();
                 handle = null;
                 Throwable cause = ex.getCause();
+//                task.isRetryIfNoAuthorization()
                 if (cause instanceof AuthorizationException) {
                     assert task.getServerUrl() != null;
-                    String resourceKey = null;
-                    if (task.getProjectContext() != null && task.getProjectContext().getConfiguration() != null) {
-                        resourceKey = task.getProjectContext().getConfiguration().getKey().toString();
+
+                    UserCredentials userCredentials = userCredentialsRepository.getUserCredentials(task.getServerUrl(), getResourceKey(task));
+                    if (userCredentials == null) {
+                        userCredentials = AuthDialog.showAuthDialog(WindowManager.getDefault().getMainWindow());
                     }
-                    UserCredentials auth = authenticationRepository.getAuthentication(task.getServerUrl(), resourceKey);
-                    if (auth == null) {
-                        auth = AuthDialog.showAuthDialog(WindowManager.getDefault().getMainWindow());
-                    }
-                    if (auth != null) {
+
+                    if (userCredentials != null) {
                         willRetry = true;
-                        task.reset();
-                        task.setUserCredentials(auth);
-                        TaskExecutor.execute(authenticationRepository, task);
+                        retryTask(userCredentials);
                     }
                 } else {
                     task.completed();
@@ -114,6 +117,12 @@ public final class TaskExecutor {
                     handle.finish();
                 }
             }
+        }
+
+        private void retryTask(UserCredentials userCredentials) {
+            task.reset();
+            task.setUserCredentials(userCredentials);
+            TaskExecutor.execute(userCredentialsRepository, task);
         }
 
     }

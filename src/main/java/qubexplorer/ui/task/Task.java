@@ -9,13 +9,22 @@ import qubexplorer.ui.ProjectContext;
  * @author Victor
  */
 public abstract class Task<T> {
-    private UserCredentials userCredentials;
     private final ProjectContext projectContext;
     private final String serverUrl;
+    private UserCredentials userCredentials;
+    private boolean retryIfNoAuthorization=true;
 
     public Task(ProjectContext projectContext, String serverUrl) {
         this.projectContext = projectContext;
         this.serverUrl=serverUrl;
+    }
+
+    public void setRetryIfNoAuthorization(boolean retryIfNoAuthorization) {
+        this.retryIfNoAuthorization = retryIfNoAuthorization;
+    }
+
+    public boolean isRetryIfNoAuthorization() {
+        return retryIfNoAuthorization;
     }
     
     public void setUserCredentials(UserCredentials userCredentials) {

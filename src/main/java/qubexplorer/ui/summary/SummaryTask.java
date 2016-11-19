@@ -9,7 +9,7 @@ import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
-import qubexplorer.ui.AuthenticationRepository;
+import qubexplorer.ui.UserCredentialsRepository;
 import qubexplorer.ui.ProjectContext;
 import qubexplorer.ui.ServerConnectionDialog;
 import qubexplorer.ui.SonarIssuesTopComponent;
@@ -60,7 +60,7 @@ public class SummaryTask extends Task<Summary> {
             assert issuesContainer instanceof SonarQube;
             String serverUrl = ((SonarQube) issuesContainer).getServerUrl();
             if (getUserCredentials() != null) {
-                AuthenticationRepository.getInstance().saveAuthentication(serverUrl, null, getUserCredentials());
+                UserCredentialsRepository.getInstance().saveUserCredentials(serverUrl, null, getUserCredentials());
             }
             ServerConnectionDialog connectionDialog = new ServerConnectionDialog(WindowManager.getDefault().getMainWindow(), true);
             connectionDialog.setSelectedUrl(serverUrl);

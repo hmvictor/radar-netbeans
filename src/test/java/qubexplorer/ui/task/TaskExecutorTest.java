@@ -4,6 +4,7 @@ import java.util.concurrent.CountDownLatch;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.isA;
 import org.mockito.Mock;
@@ -15,7 +16,7 @@ import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
 import qubexplorer.GenericSonarQubeProjectConfiguration;
 import qubexplorer.ResourceKey;
-import qubexplorer.ui.AuthenticationRepository;
+import qubexplorer.ui.UserCredentialsRepository;
 import qubexplorer.ui.ProjectContext;
 
 /**
@@ -29,11 +30,11 @@ public class TaskExecutorTest {
     private TaskImpl<Boolean> task = new TaskImpl<>(new ProjectContext(null, new GenericSonarQubeProjectConfiguration("name", ResourceKey.valueOf("part1:part2"), "1.0")), "http://testhost:9000");
 
     @Mock
-    private AuthenticationRepository repository;
+    private UserCredentialsRepository repository;
 
     @Before
     public void init() {
-        when(repository.getAuthentication(anyString(), anyString())).thenReturn(new UserCredentials("username", new char[0]));
+        when(repository.getUserCredentials(anyString(), (ResourceKey) anyObject())).thenReturn(new UserCredentials("username", new char[0]));
     }
 
     @Test(timeout = 5000)

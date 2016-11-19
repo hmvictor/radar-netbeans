@@ -8,6 +8,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
+import qubexplorer.AuthorizationException;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.UserCredentials;
 import qubexplorer.server.SonarQube;
@@ -55,24 +56,23 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
 
         });
         AutoCompleteDecorator.decorate(resourceCombox, new ObjectToStringConverter() {
-            
+
             @Override
             public String getPreferredStringForItem(Object item) {
-                String represantion="";
-                if(item != null) {
-                    SonarQubeProjectConfiguration project=(SonarQubeProjectConfiguration) item;
-                    represantion=ProjectRenderer.toString(project);
+                String represantion = "";
+                if (item != null) {
+                    SonarQubeProjectConfiguration project = (SonarQubeProjectConfiguration) item;
+                    represantion = ProjectRenderer.toString(project);
                 }
                 return represantion;
             }
-            
+
         });
     }
 
 //    public void setServerUrlEnabled(boolean b) {
 //        url.setEnabled(b);
 //    }
-
     public Option showDialog() {
         validateDialog();
         setLocationRelativeTo(getParent());
@@ -87,19 +87,19 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
     public String getSelectedUrl() {
         return url.getText();
     }
-    
+
     public UserCredentials getUserCredentials() {
         String username = user.getText();
-        return username.isEmpty() ? null: new UserCredentials(username, password.getPassword());
+        return username.isEmpty() ? null : new UserCredentials(username, password.getPassword());
     }
-    
+
     public void setUserCredentials(UserCredentials userCredentials) {
         user.setText(userCredentials.getUsername());
         password.setText(new String(userCredentials.getPassword()));
     }
-    
+
     public SonarQubeProjectConfiguration getSelectedProject() {
-        return resourceCombox.getSelectedItem() == null ? null : ((SonarQubeProjectConfiguration)resourceCombox.getSelectedItem());
+        return resourceCombox.getSelectedItem() == null ? null : ((SonarQubeProjectConfiguration) resourceCombox.getSelectedItem());
     }
 
     public void validateDialog() {
@@ -109,8 +109,9 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
 
     public void loadProjectKeys() {
         Projects2Task projects2Task = new Projects2Task(new SonarQube(getSelectedUrl()), new ProjectContext(null, null));
+//        projects2Task.setRetryIfNoAuthorization(false);
         UserCredentials userCredentials = getUserCredentials();
-        if(userCredentials != null) {
+        if (userCredentials != null) {
             projects2Task.setUserCredentials(userCredentials);
         }
         TaskExecutor.execute(projects2Task);
@@ -324,7 +325,7 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
                 public int compare(SonarQubeProjectConfiguration t, SonarQubeProjectConfiguration t1) {
                     return t.getName().compareToIgnoreCase(t1.getName());
                 }
-                
+
             });
             DefaultComboBoxModel model = (DefaultComboBoxModel) resourceCombox.getModel();
             for (SonarQubeProjectConfiguration sonarProject : result) {
@@ -334,14 +335,18 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
 
         @Override
         protected void fail(Throwable ex) {
-            super.fail(ex); 
+            if (ex instanceof AuthorizationException) {
+                credentialsWarning.setText("Please verify your user or password");
+            } else {
+                super.fail(ex);
+            }
         }
-        
+
         @Override
         protected void destroy() {
             loadButton.setEnabled(true);
         }
-        
+
     }
 
 }
