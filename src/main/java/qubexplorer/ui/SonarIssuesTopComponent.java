@@ -813,7 +813,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private boolean isFileOpen(FileObject fileObject) throws DataObjectNotFoundException {
         DataObject dataObject = DataObject.find(fileObject);
         Lookup lookup = dataObject.getLookup();
-        LineCookie lineCookie = (LineCookie) lookup.lookup(LineCookie.class);
+        LineCookie lineCookie = lookup.lookup(LineCookie.class);
         Line.Set lineSet = lineCookie.getLineSet();
         return !lineSet.getLines().isEmpty();
     }

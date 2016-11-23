@@ -38,7 +38,6 @@ public final class CustomServerIssuesAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent ev) {
-//        ProjectChooser chooser=new ProjectChooser(WindowManager.getDefault().getMainWindow(), true);
         ServerConnectionDialog serverConnectionDialog=new ServerConnectionDialog(WindowManager.getDefault().getMainWindow(), true);
         serverConnectionDialog.setSelectedUrl(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"));
         if(serverConnectionDialog.showDialog() == ServerConnectionDialog.Option.ACCEPT) {

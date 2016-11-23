@@ -177,7 +177,7 @@ public class SonarRunnerProccess {
         StringBuilder modulesWithSources = new StringBuilder();
         Set<Project> subprojects = getSubprojects();
         for (Project subproject : subprojects) {
-            Module module = mainModule.createSubmodule(subproject); //Module.createSubmodule(new ProjectContext(subproject, projectContext.getConfiguration().createConfiguration(subproject)));
+            Module module = mainModule.createSubmodule(subproject);
             module.addModuleProperties(sonarQubeVersion, properties);
             if (module.containsSources()) {
                 if (modulesWithSources.length() > 0) {

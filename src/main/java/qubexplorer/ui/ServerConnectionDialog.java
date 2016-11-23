@@ -70,9 +70,6 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
         });
     }
 
-//    public void setServerUrlEnabled(boolean b) {
-//        url.setEnabled(b);
-//    }
     public Option showDialog() {
         validateDialog();
         setLocationRelativeTo(getParent());
@@ -318,7 +315,7 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
         
         @Override
         public List<SonarQubeProjectConfiguration> execute() throws TaskExecutionException {
-            return sonarQube.getProjects(getUserCredentials());
+            return sonarQube.getProjects(ServerConnectionDialog.this.getUserCredentials());
         }
 
         @Override

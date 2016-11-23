@@ -142,21 +142,18 @@ public class IssueLocation {
     public static EditorCookie getEditorCookie(FileObject fileObject) throws DataObjectNotFoundException {
         DataObject dataObject = DataObject.find(fileObject);
         Lookup lookup = dataObject.getLookup();
-        return (EditorCookie) lookup.lookup(EditorCookie.class);
+        return lookup.lookup(EditorCookie.class);
     }
 
     private static FileObject findProjectDir(ProjectContext projectContext, ResourceKey issueProjectKey, ProjectKeyChecker projectKeyChecker) {
-//        ProjectKeyChecker projectKeyChecker=new SonarRunnerChecker();
-        //when sonar runner is used, this has another key
-
-        if (projectKeyChecker.equals(projectContext.getConfiguration(), issueProjectKey, false) ) { //projectContext.getConfiguration().getKey().equals(issueProjectKey)) {
+        if (projectKeyChecker.equals(projectContext.getConfiguration(), issueProjectKey, false) ) { 
             return projectContext.getProject().getProjectDirectory();
         }
         Set<Project> subprojects = ProjectUtils.getContainedProjects(projectContext.getProject(), true);
         if (subprojects != null) {
             for (Project subproject : subprojects) {
-                SonarQubeProjectConfiguration subprojectInfo = projectContext.getConfiguration().createConfiguration(subproject); //SonarQubeProjectBuilder.createConfigurationForSubproject(projectContext.getConfiguration(), subproject);
-                if (projectKeyChecker.equals(subprojectInfo, issueProjectKey, true) ) { //subprojectInfo.getKey().equals(issueProjectKey)) {
+                SonarQubeProjectConfiguration subprojectInfo = projectContext.getConfiguration().createConfiguration(subproject);
+                if (projectKeyChecker.equals(subprojectInfo, issueProjectKey, true) ) {
                     return subproject.getProjectDirectory();
                 }
             }
