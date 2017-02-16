@@ -4,14 +4,14 @@
 
     <groupId>org.radar</groupId>
     <artifactId>radar-netbeans</artifactId>
-    <version>2.7</version>
+    <version>3.0-SNAPSHOT</version>
     <packaging>nbm</packaging>
 
     <name>radar-netbeans</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <netbeans.api.version>RELEASE80</netbeans.api.version>
+        <netbeans.api.version>RELEASE82</netbeans.api.version>
     </properties>
 
     <repositories>
@@ -203,6 +203,16 @@
             <artifactId>commons-logging</artifactId>
             <version>1.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-openide-util-ui</artifactId>
+            <version>RELEASE82</version>
+        </dependency>
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-netbeans-api-progress-nb</artifactId>
+            <version>RELEASE82</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -227,8 +237,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.5.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
 
