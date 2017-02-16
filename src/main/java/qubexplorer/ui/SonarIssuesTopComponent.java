@@ -116,14 +116,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     private ImageIcon informationIcon = new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"));
 
-    private final Comparator<Severity> severityComparator = Collections.reverseOrder(new Comparator<Severity>() {
-
-        @Override
-        public int compare(Severity t, Severity t1) {
-            return t.compareTo(t1);
-        }
-
-    });
+    private final Comparator<Severity> severityComparator = Collections.reverseOrder(Enum::compareTo);
 
     private final AbstractAction showRuleInfoAction = new AbstractAction("Show Rule Info", informationIcon) {
 
@@ -256,12 +249,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
         ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(0, severityComparator);
         ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(4, severityComparator);
         ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(1, new IssueLocation.IssueLocationComparator());
-        issuesTable.getColumnExt("Severity").addPropertyChangeListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent pce) {
-                if ("visible".equals(pce.getPropertyName()) && pce.getNewValue().equals(Boolean.TRUE)) {
-                    ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(4, severityComparator);
-                }
+        issuesTable.getColumnExt("Severity").addPropertyChangeListener((PropertyChangeEvent pce) -> {
+            if ("visible".equals(pce.getPropertyName()) && pce.getNewValue().equals(Boolean.TRUE)) {
+                ((DefaultRowSorter) issuesTable.getRowSorter()).setComparator(4, severityComparator);
             }
         });
         showRuleInfoAction.setEnabled(false);
@@ -757,15 +747,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
         issuesTable.getColumnExt(
                 "Project Key").setVisible(false);
         issuesTable.getColumnExt("Full Path").setVisible(false);
-        issuesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-
-            @Override
-            public void valueChanged(ListSelectionEvent lse) {
-                int row = issuesTable.getSelectedRow();
-                gotoIssueAction.setEnabled(row != -1);
-                showRuleInfoForIssueAction.setEnabled(row != -1);
-            }
-
+        issuesTable.getSelectionModel().addListSelectionListener((ListSelectionEvent lse) -> {
+            int row = issuesTable.getSelectedRow();
+            gotoIssueAction.setEnabled(row != -1);
+            showRuleInfoForIssueAction.setEnabled(row != -1);
         });
         showIssuesCount();
         filterText.setText("");
@@ -875,22 +860,17 @@ public final class SonarIssuesTopComponent extends TopComponent {
         public void fileOpened(final FileObject fileOpened) {
             
                 if (!attached) {
-                    SwingUtilities.invokeLater(new Runnable(){
-                
-                        @Override
-                        public void run() {
-                            try {
-                                IssueLocation issueLocation = radarIssue.getLocation();
-                                Annotation annotation = issueLocation.attachAnnotation(radarIssue, fileOpened);
-                                if (annotation != null) {
-                                    attachedAnnotations.add(annotation);
-                                    attached = true;
-                                }
-                            } catch (DataObjectNotFoundException ex) {
-                                ;
+                    SwingUtilities.invokeLater(() -> {
+                        try {
+                            IssueLocation issueLocation = radarIssue.getLocation();
+                            Annotation annotation = issueLocation.attachAnnotation(radarIssue, fileOpened);
+                            if (annotation != null) {
+                                attachedAnnotations.add(annotation);
+                                attached = true;
                             }
+                        } catch (DataObjectNotFoundException ex) {
+                            ;
                         }
-
                     });
                     
                 }

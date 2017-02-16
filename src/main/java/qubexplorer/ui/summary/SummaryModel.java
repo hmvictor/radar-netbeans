@@ -93,15 +93,10 @@ public class SummaryModel extends AbstractTreeTableModel {
             return severities[i];
         } else if (parent instanceof Severity) {
             Rule[] rules = getSummary().getRules((Severity) parent).toArray(new Rule[0]);
-            Arrays.sort(rules, new Comparator<Rule>() {
-
-                @Override
-                public int compare(Rule t, Rule t1) {
-                    int count1 = getSummary().getCount(t);
-                    int count2 = getSummary().getCount(t1);
-                    return count2 - count1;
-                }
-
+            Arrays.sort(rules, (Rule t, Rule t1) -> {
+                int count1 = getSummary().getCount(t);
+                int count2 = getSummary().getCount(t1);
+                return count2 - count1;
             });
             return rules[i];
         } else {

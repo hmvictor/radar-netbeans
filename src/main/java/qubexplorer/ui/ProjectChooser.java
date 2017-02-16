@@ -256,14 +256,7 @@ public class ProjectChooser extends javax.swing.JDialog {
         @Override
         protected void success(List<SonarQubeProjectConfiguration> result) {
             resourceCombox.removeAllItems();
-            Collections.sort(result, new Comparator<SonarQubeProjectConfiguration>() {
-
-                @Override
-                public int compare(SonarQubeProjectConfiguration t, SonarQubeProjectConfiguration t1) {
-                    return t.getName().compareToIgnoreCase(t1.getName());
-                }
-                
-            });
+            Collections.sort(result, (SonarQubeProjectConfiguration t, SonarQubeProjectConfiguration t1) -> t.getName().compareToIgnoreCase(t1.getName()));
             DefaultComboBoxModel model = (DefaultComboBoxModel) resourceCombox.getModel();
             for (SonarQubeProjectConfiguration sonarProject : result) {
                 model.addElement(sonarProject);

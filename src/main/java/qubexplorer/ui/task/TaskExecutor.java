@@ -30,13 +30,8 @@ public final class TaskExecutor {
     }
 
     public static <T> void execute(final UserCredentialsRepository repository, final Task<T> task) {
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                new TaskWorker<>(repository, task).execute();
-            }
-
+        SwingUtilities.invokeLater(() -> {
+            new TaskWorker<>(repository, task).execute();
         });
 
     }

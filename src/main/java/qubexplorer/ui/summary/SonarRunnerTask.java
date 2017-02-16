@@ -99,14 +99,7 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
             sonarRunnerProccess.setJvmArguments(Arrays.asList(jvmArguments.split(" +")));
             sonarRunnerProccess.setOutConsumer(out);
             sonarRunnerProccess.setErrConsumer(err);
-            return sonarRunnerProccess.executeRunner(getUserCredentials(), new ProcessMonitor() {
-                
-                @Override
-                public boolean stop() {
-                    return stopped;
-                }
-                
-            });
+            return sonarRunnerProccess.executeRunner(getUserCredentials(), () -> stopped);
         } catch (MvnModelInputException ex) {
             throw new TaskExecutionException(ex);
         }
