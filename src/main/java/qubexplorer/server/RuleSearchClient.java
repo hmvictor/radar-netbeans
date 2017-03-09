@@ -10,8 +10,9 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sonar.wsclient.internal.HttpRequestFactory;
-import org.sonar.wsclient.services.Rule;
+//import org.sonar.wsclient.services.Rule;
 import qubexplorer.PassEncoder;
+import qubexplorer.Rule;
 import qubexplorer.UserCredentials;
 
 /**
@@ -39,7 +40,7 @@ public class RuleSearchClient {
             JsonObject jsonObject = (JsonObject) ((JsonObject)jsonElement).get("rule");
             Rule rule = new Rule();
             rule.setKey(jsonObject.get("key").getAsString());
-            rule.setTitle(jsonObject.get("name").getAsString());
+            rule.setName(jsonObject.get("name").getAsString());
             JsonElement description = jsonObject.get("htmlDesc");
             if(description == null){
                 description=jsonObject.get("description");

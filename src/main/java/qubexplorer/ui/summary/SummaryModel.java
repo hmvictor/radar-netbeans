@@ -1,11 +1,10 @@
 package qubexplorer.ui.summary;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
-import org.sonar.wsclient.services.Rule;
+import qubexplorer.Rule;
 import qubexplorer.Severity;
 import qubexplorer.Summary;
 

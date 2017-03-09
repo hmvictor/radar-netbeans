@@ -1,7 +1,7 @@
 package qubexplorer.ui;
 
 import java.awt.Frame;
-import org.sonar.wsclient.services.Rule;
+import qubexplorer.Rule;
 
 /**
  *
@@ -19,7 +19,7 @@ public class RuleDialog extends javax.swing.JDialog {
     }
     
     public void setRule(Rule rule) {
-        ruleTitle.setText(rule.getTitle());
+        ruleTitle.setText(rule.getName());
         description.setText(rule.getDescription());
         description.setCaretPosition(0);
     }

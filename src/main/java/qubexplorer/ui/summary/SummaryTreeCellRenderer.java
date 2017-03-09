@@ -6,7 +6,7 @@ import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
-import org.sonar.wsclient.services.Rule;
+import qubexplorer.Rule;
 import qubexplorer.Severity;
 import qubexplorer.Summary;
 
@@ -34,7 +34,7 @@ public class SummaryTreeCellRenderer extends DefaultTreeCellRenderer {
             setIcon(new ImageIcon(getClass().getResource("/qubexplorer/ui/images/" + o.toString().toLowerCase() + ".png")));
         }else if(o instanceof Rule) {
             setIcon(null);
-            setText(((Rule)o).getTitle());
+            setText(((Rule)o).getName());
         }else if(o instanceof Summary){
             setIcon(null);
             setText("Issues");

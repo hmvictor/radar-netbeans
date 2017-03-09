@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Objects;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.issue.IssueComment;
-import org.sonar.wsclient.services.Rule;
 import qubexplorer.ui.issues.IssueLocation;
 
 /**
@@ -65,11 +64,6 @@ public class RadarIssue implements Issue{
     @Override
     public Integer line() {
         return issue.line();
-    }
-
-    @Override
-    public Double effortToFix() {
-        return issue.effortToFix();
     }
 
     @Override

@@ -1,7 +1,6 @@
 package qubexplorer;
 
 import java.util.Set;
-import org.sonar.wsclient.services.Rule;
 
 /**
  *

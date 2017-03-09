@@ -1,7 +1,7 @@
 package qubexplorer.ui;
 
 import org.openide.windows.WindowManager;
-import org.sonar.wsclient.services.Rule;
+import qubexplorer.Rule;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.task.Task;
 

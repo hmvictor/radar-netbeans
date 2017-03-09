@@ -31,6 +31,23 @@
     </repositories>
 
     <dependencies>
+        <!--<dependency>
+             ForkedRunner is gone, only EmbeddedRunner 
+            <groupId>org.sonarsource.sonar-runner</groupId>
+            <artifactId>sonar-runner-api</artifactId>
+            <version>2.5.1</version>
+        </dependency>-->
+        <dependency>
+            <groupId>org.codehaus.sonar</groupId>
+            <artifactId>sonar-ws-client</artifactId>
+            <version>4.5.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.sonar.runner</groupId>
+            <artifactId>sonar-runner-api</artifactId>
+            <version>2.4</version>
+            <type>jar</type>
+        </dependency>
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-api-annotations-common</artifactId>
@@ -108,12 +125,6 @@
             <version>${netbeans.api.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.codehaus.sonar.runner</groupId>
-            <artifactId>sonar-runner-api</artifactId>
-            <version>2.4</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-modules-queries</artifactId>
             <version>${netbeans.api.version}</version>
@@ -137,11 +148,6 @@
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-libs-javacapi</artifactId>
             <version>${netbeans.api.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.sonar</groupId>
-            <artifactId>sonar-ws-client</artifactId>
-            <version>4.3.3</version>
         </dependency>
         <dependency>
             <groupId>commons-httpclient</groupId>
@@ -257,8 +263,8 @@
                 <version>2.15</version>
             </plugin>
             <plugin>
-                <artifactId>sonar-maven-plugin</artifactId>
                 <groupId>org.codehaus.mojo</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
                 <version>2.6</version>
             </plugin>
         </plugins>

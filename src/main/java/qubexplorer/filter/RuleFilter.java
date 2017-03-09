@@ -3,7 +3,7 @@ package qubexplorer.filter;
 import java.util.Objects;
 import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.issue.IssueQuery;
-import org.sonar.wsclient.services.Rule;
+import qubexplorer.Rule;
 
 /**
  *
@@ -29,7 +29,7 @@ public class RuleFilter implements IssueFilter{
     
     @Override
     public String getDescription() {
-        return "Rule: "+rule.getTitle();
+        return "Rule: "+rule.getName();
     }
     
 }

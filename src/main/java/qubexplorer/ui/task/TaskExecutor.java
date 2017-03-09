@@ -33,7 +33,6 @@ public final class TaskExecutor {
         SwingUtilities.invokeLater(() -> {
             new TaskWorker<>(repository, task).execute();
         });
-
     }
 
     public static ResourceKey getResourceKey(Task task) {

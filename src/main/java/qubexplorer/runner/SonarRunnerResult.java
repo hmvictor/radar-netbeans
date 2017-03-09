@@ -17,10 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.sonar.wsclient.issue.Issue;
-import org.sonar.wsclient.services.Rule;
 import qubexplorer.IssuesContainer;
 import qubexplorer.RadarIssue;
 import qubexplorer.ResourceKey;
+import qubexplorer.Rule;
 import qubexplorer.Severity;
 import qubexplorer.Summary;
 import qubexplorer.UserCredentials;
@@ -228,14 +228,13 @@ public class SonarRunnerResult implements IssuesContainer {
         reader.beginObject();
         Rule rule=new Rule();
         while (reader.hasNext()) {
-            
             String name = reader.nextName();
             switch (name) {
                 case "key":
                     rule.setKey(reader.nextString());
                     break;
                 case "name":
-                    rule.setTitle(reader.nextString());
+                    rule.setName(reader.nextString());
                     break;
                 default:
                     reader.skipValue();

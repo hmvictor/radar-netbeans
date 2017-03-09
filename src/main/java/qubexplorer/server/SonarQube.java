@@ -29,8 +29,6 @@ import org.sonar.wsclient.issue.IssueQuery;
 import org.sonar.wsclient.issue.Issues;
 import org.sonar.wsclient.services.Resource;
 import org.sonar.wsclient.services.ResourceQuery;
-import org.sonar.wsclient.services.Rule;
-import org.sonar.wsclient.services.RuleQuery;
 import org.sonar.wsclient.services.ServerQuery;
 import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
@@ -42,6 +40,7 @@ import qubexplorer.ResourceKey;
 import qubexplorer.Severity;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.GenericSonarQubeProjectConfiguration;
+import qubexplorer.Rule;
 import qubexplorer.Summary;
 
 /**
@@ -228,29 +227,30 @@ public class SonarQube implements IssuesContainer {
             //try first the newest Rule Search API
             return new RuleSearchClient(serverUrl).getRule(userCredentials, ruleKey);
         } catch (HttpException ex) {
-            if (ex.getMessage().contains("Error 404")) {
-                //fallback to old method
-                return getRuleWithQueryAPI(userCredentials, ruleKey);
-            } else if (ex.status() == UNAUTHORIZED_RESPONSE_STATUS) {
+//            if (ex.getMessage().contains("Error 404")) {
+//                //fallback to old method
+//                return getRuleWithQueryAPI(userCredentials, ruleKey);
+//            } else 
+            if (ex.status() == UNAUTHORIZED_RESPONSE_STATUS) {
                 throw new AuthorizationException(ex);
             }
             throw ex;
         }
     }
 
-    private Rule getRuleWithQueryAPI(UserCredentials userCredentials, String ruleKey) {
-        RuleQuery ruleQuery = new RuleQuery("java");
-        String[] tokens = ruleKey.split(":");
-        ruleQuery.setSearchText(tokens.length == 2 ? tokens[1] : ruleKey);
-        Sonar sonar = createSonar(userCredentials);
-        List<Rule> rules = sonar.findAll(ruleQuery);
-        for (Rule rule : rules) {
-            if (ruleKey.equals(rule.getKey())) {
-                return rule;
-            }
-        }
-        return null;
-    }
+//    private Rule getRuleWithQueryAPI(UserCredentials userCredentials, String ruleKey) {
+//        RuleQuery ruleQuery = new RuleQuery("java");
+//        String[] tokens = ruleKey.split(":");
+//        ruleQuery.setSearchText(tokens.length == 2 ? tokens[1] : ruleKey);
+//        Sonar sonar = createSonar(userCredentials);
+//        List<Rule> rules = sonar.findAll(ruleQuery);
+//        for (Rule rule : rules) {
+//            if (ruleKey.equals(rule.getKey())) {
+//                return rule;
+//            }
+//        }
+//        return null;
+//    }
 
     public List<ResourceKey> getProjectsKeys(UserCredentials userCredentials) {
         try {

@@ -94,11 +94,6 @@ public class SonarRunnerIssue implements Issue{
     }
 
     @Override
-    public Double effortToFix() {
-        return null;
-    }
-
-    @Override
     public String status() {
         return status;
     }
