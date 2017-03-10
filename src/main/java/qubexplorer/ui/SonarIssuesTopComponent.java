@@ -1,5 +1,6 @@
 package qubexplorer.ui;
 
+import qubexplorer.server.ui.SonarQubeFactory;
 import qubexplorer.ui.issues.FileObjectOpenedListener;
 import qubexplorer.ui.issues.IssuesTableModel;
 import qubexplorer.ui.issues.IssuesTask;

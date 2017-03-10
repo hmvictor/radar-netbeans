@@ -1,17 +1,16 @@
-package qubexplorer.ui;
+package qubexplorer.server.ui;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
-import qubexplorer.AuthorizationException;
 import qubexplorer.SonarQubeProjectConfiguration;
-import qubexplorer.UserCredentials;
 import qubexplorer.server.SonarQube;
+import qubexplorer.ui.ProjectContext;
+import qubexplorer.ui.ProjectRenderer;
 import qubexplorer.ui.task.Task;
 import qubexplorer.ui.task.TaskExecutionException;
 import qubexplorer.ui.task.TaskExecutor;
@@ -20,7 +19,7 @@ import qubexplorer.ui.task.TaskExecutor;
  *
  * @author Victor
  */
-public class ServerConnectionDialog extends javax.swing.JDialog {
+public class ProjectChooser extends javax.swing.JDialog {
 
     public enum Option {
 
@@ -33,7 +32,7 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
     /**
      * Creates new form ProyectChooser
      */
-    public ServerConnectionDialog(java.awt.Frame parent, boolean modal) {
+    public ProjectChooser(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
         resourceCombox.setRenderer(new ProjectRenderer());
@@ -56,18 +55,22 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
 
         });
         AutoCompleteDecorator.decorate(resourceCombox, new ObjectToStringConverter() {
-
+            
             @Override
             public String getPreferredStringForItem(Object item) {
-                String represantion = "";
-                if (item != null) {
-                    SonarQubeProjectConfiguration project = (SonarQubeProjectConfiguration) item;
-                    represantion = ProjectRenderer.toString(project);
+                String represantion="";
+                if(item != null) {
+                    SonarQubeProjectConfiguration project=(SonarQubeProjectConfiguration) item;
+                    represantion=ProjectRenderer.toString(project);
                 }
                 return represantion;
             }
-
+            
         });
+    }
+
+    public void setServerUrlEnabled(boolean b) {
+        url.setEnabled(b);
     }
 
     public Option showDialog() {
@@ -84,19 +87,9 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
     public String getSelectedUrl() {
         return url.getText();
     }
-
-    public UserCredentials getUserCredentials() {
-        String username = user.getText();
-        return username.isEmpty() ? null : new UserCredentials(username, password.getPassword());
-    }
-
-    public void setUserCredentials(UserCredentials userCredentials) {
-        user.setText(userCredentials.getUsername());
-        password.setText(new String(userCredentials.getPassword()));
-    }
-
+    
     public SonarQubeProjectConfiguration getSelectedProject() {
-        return resourceCombox.getSelectedItem() == null ? null : ((SonarQubeProjectConfiguration) resourceCombox.getSelectedItem());
+        return resourceCombox.getSelectedItem() == null ? null : ((SonarQubeProjectConfiguration)resourceCombox.getSelectedItem());
     }
 
     public void validateDialog() {
@@ -105,13 +98,7 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
     }
 
     public void loadProjectKeys() {
-        Projects2Task projects2Task = new Projects2Task(new SonarQube(getSelectedUrl()), new ProjectContext(null, null));
-        projects2Task.setRetryIfNoAuthorization(false);
-        UserCredentials userCredentials = getUserCredentials();
-        if (userCredentials != null) {
-            projects2Task.setUserCredentials(userCredentials);
-        }
-        TaskExecutor.execute(projects2Task);
+        TaskExecutor.execute(new ProjectsTask(new SonarQube(getSelectedUrl()), new ProjectContext(null)));
     }
 
     /**
@@ -130,14 +117,9 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
         jButton1 = new javax.swing.JButton();
         okButton = new javax.swing.JButton();
         loadButton = new javax.swing.JButton();
-        jLabel3 = new javax.swing.JLabel();
-        user = new javax.swing.JTextField();
-        jLabel4 = new javax.swing.JLabel();
-        password = new javax.swing.JPasswordField();
-        credentialsWarning = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle(org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.title")); // NOI18N
+        setTitle(org.openide.util.NbBundle.getMessage(ProjectChooser.class, "ProjectChooser.title")); // NOI18N
         setModal(true);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -145,11 +127,11 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(ProjectChooser.class, "ProjectChooser.jLabel1.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.jLabel2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(ProjectChooser.class, "ProjectChooser.jLabel2.text")); // NOI18N
 
-        url.setText(org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.url.text")); // NOI18N
+        url.setText(org.openide.util.NbBundle.getMessage(ProjectChooser.class, "ProjectChooser.url.text")); // NOI18N
 
         resourceCombox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -157,40 +139,26 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.jButton1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(ProjectChooser.class, "ProjectChooser.jButton1.text")); // NOI18N
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.okButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(ProjectChooser.class, "ProjectChooser.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(loadButton, org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.loadButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(loadButton, org.openide.util.NbBundle.getMessage(ProjectChooser.class, "ProjectChooser.loadButton.text")); // NOI18N
         loadButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 loadButtonActionPerformed(evt);
             }
         });
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.jLabel3.text")); // NOI18N
-
-        user.setColumns(20);
-        user.setText(org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.user.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.jLabel4.text")); // NOI18N
-
-        password.setColumns(20);
-        password.setText(org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.password.text")); // NOI18N
-
-        credentialsWarning.setForeground(new java.awt.Color(204, 0, 0));
-        credentialsWarning.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(credentialsWarning, org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.credentialsWarning.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -200,33 +168,21 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(url)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(loadButton))
-                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(resourceCombox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(url, javax.swing.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(loadButton))))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(okButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton1))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(resourceCombox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(password, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(user, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(credentialsWarning, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)))))
+                        .addComponent(jButton1)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -237,20 +193,11 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
                     .addComponent(jLabel1)
                     .addComponent(url, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(loadButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(user, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(credentialsWarning))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(password, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(resourceCombox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 47, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 40, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
                     .addComponent(okButton))
@@ -283,39 +230,28 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_resourceComboxItemStateChanged
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel credentialsWarning;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JButton loadButton;
     private javax.swing.JButton okButton;
-    private javax.swing.JPasswordField password;
     private javax.swing.JComboBox resourceCombox;
     private javax.swing.JTextField url;
-    private javax.swing.JTextField user;
     // End of variables declaration//GEN-END:variables
 
-    /*Is odd on this task to appear an additional prompt for credentials, maybe just show an error message in this dialog. */
-    public class Projects2Task extends Task<List<SonarQubeProjectConfiguration>> {
+    public class ProjectsTask extends Task<List<SonarQubeProjectConfiguration>> {
 
         private final SonarQube sonarQube;
 
-        public Projects2Task(SonarQube sonarQube, ProjectContext projectContext) {
+        public ProjectsTask(SonarQube sonarQube, ProjectContext projectContext) {
             super(projectContext, sonarQube.getServerUrl());
             this.sonarQube = sonarQube;
             loadButton.setEnabled(false);
         }
 
         @Override
-        protected void init() {
-            credentialsWarning.setText(" ");
-        }
-        
-        @Override
         public List<SonarQubeProjectConfiguration> execute() throws TaskExecutionException {
-            return sonarQube.getProjects(ServerConnectionDialog.this.getUserCredentials());
+            return sonarQube.getProjects(getUserCredentials());
         }
 
         @Override
@@ -329,19 +265,10 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
         }
 
         @Override
-        protected void fail(Throwable ex) {
-            if (ex instanceof AuthorizationException) {
-                credentialsWarning.setText("Please verify your user or password");
-            } else {
-                super.fail(ex);
-            }
-        }
-
-        @Override
         protected void destroy() {
             loadButton.setEnabled(true);
         }
-
+        
     }
 
 }

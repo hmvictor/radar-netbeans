@@ -1,4 +1,4 @@
-package qubexplorer.ui;
+package qubexplorer.server.ui;
 
 import java.awt.Component;
 import java.text.DateFormat;

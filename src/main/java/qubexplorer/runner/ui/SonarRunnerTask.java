@@ -1,4 +1,4 @@
-package qubexplorer.ui.summary;
+package qubexplorer.runner.ui;
 
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -15,7 +15,6 @@ import org.openide.windows.IOProvider;
 import org.openide.windows.InputOutput;
 import org.openide.windows.WindowManager;
 import org.sonar.runner.api.PrintStreamConsumer;
-import org.sonar.runner.api.ProcessMonitor;
 import qubexplorer.MvnModelInputException;
 import qubexplorer.ResourceKey;
 import qubexplorer.SonarQubeProjectConfiguration;

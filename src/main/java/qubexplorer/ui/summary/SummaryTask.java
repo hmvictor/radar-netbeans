@@ -1,5 +1,6 @@
 package qubexplorer.ui.summary;
 
+import qubexplorer.server.ui.CustomServerIssuesAction;
 import org.openide.windows.WindowManager;
 import qubexplorer.ConfigurationFactory;
 import qubexplorer.IssuesContainer;
@@ -11,7 +12,7 @@ import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.UserCredentialsRepository;
 import qubexplorer.ui.ProjectContext;
-import qubexplorer.ui.ServerConnectionDialog;
+import qubexplorer.server.ui.ServerConnectionDialog;
 import qubexplorer.ui.SonarIssuesTopComponent;
 import qubexplorer.ui.issues.IssueLocation;
 import qubexplorer.ui.task.Task;
