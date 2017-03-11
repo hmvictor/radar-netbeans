@@ -211,9 +211,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     };
 
-    private final List<Annotation> attachedAnnotations = new CopyOnWriteArrayList<>();
-    
-    private FileOpenedNotifier fileOpenedNotifier=new FileOpenedNotifier();
+    private final IssueEditorAnnotationAttacher attacher=new IssueEditorAnnotationAttacher();
     private IssueLocation.ProjectKeyChecker projectKeyChecker;
 
     public SonarIssuesTopComponent() {
@@ -257,7 +255,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         listIssuesAction.setEnabled(false);
         gotoIssueAction.setEnabled(false);
         showRuleInfoForIssueAction.setEnabled(false);
-        fileOpenedNotifier.init();
+        attacher.init();
     }
 
     public void setProjectContext(ProjectContext projectContext) {
@@ -719,8 +717,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }
 
     public void setIssues(IssueFilter[] filters, RadarIssue... issues) {
-        detachCurrentAnnotations();
-
+        attacher.detachAnnotations();
         IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
 
         model.setIssues(issues);
@@ -753,45 +750,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
         });
         showIssuesCount();
         filterText.setText("");
-        addEditorAnnotations(issues);
-    }
-
-    private void detachCurrentAnnotations() {
-        for (Annotation annotation : attachedAnnotations) {
-            annotation.detach();
-        }
-        attachedAnnotations.clear();
-    }
-
-    private void addEditorAnnotations(RadarIssue[] issues) {
-        for (RadarIssue issue : issues) {
-            try {
-                if (issue.line() != null) {
-                    tryToAtachEditorAnnotation(issue);
-                }
-            } catch (DataObjectNotFoundException ex) {
-                ;
-            }
-        }
-    }
-
-    private void tryToAtachEditorAnnotation(RadarIssue issue) throws DataObjectNotFoundException {
-        IssueLocation issueLocation = issue.getLocation();
-        try{
-            FileObject fileObject = issueLocation.getFileObject(projectContext, projectKeyChecker);
-            if (fileObject != null) {
-                if (isFileOpen(fileObject)) {
-                    Annotation atachedAnnotation = issue.getLocation().attachAnnotation(issue, fileObject);
-                    if (atachedAnnotation != null) {
-                        attachedAnnotations.add(atachedAnnotation);
-                    }
-                } else {
-                    fileOpenedNotifier.registerFileOpenedListener(fileObject, new AnnotationAttacher(issue));
-                }
-            }
-        }catch(ProjectNotFoundException ex){
-            
-        }
+        //if radarEditorAnnotations.enabled{}
+        attacher.attachAnnotations(issues);
     }
 
     private boolean isFileOpen(FileObject fileObject) throws DataObjectNotFoundException {
@@ -840,42 +800,96 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }
 
     public void resetState() {
-        fileOpenedNotifier.unregisterCurrentFileOpenedListeners();
-        detachCurrentAnnotations();
+        attacher.detachAnnotations();
         SimpleSummary emptySummary = new SimpleSummary();
         showSummary(emptySummary);
     }
+    
+    public void activeEditorAnnotations() {
+        IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
+        attacher.attachAnnotations(model.getIssues());
+    }
+    
+    public void deactiveEditorAnnotations() {
+        attacher.detachAnnotations();
+    }
+    
+    private class IssueEditorAnnotationAttacher {
+        private final List<Annotation> attachedAnnotations = new CopyOnWriteArrayList<>();
+        private final FileOpenedNotifier fileOpenedNotifier=new FileOpenedNotifier();
 
-    public class AnnotationAttacher implements FileObjectOpenedListener {
-
-        private final RadarIssue radarIssue;
-        private boolean attached;
-
-        public AnnotationAttacher(RadarIssue radarIssue) {
-            this.radarIssue = radarIssue;
+        public void init() {
+            fileOpenedNotifier.init();
         }
+        
+        public void attachAnnotations(RadarIssue[] issues) {
+            for (RadarIssue issue : issues) {
+                try {
+                    if (issue.line() != null) {
+                        tryToAtachEditorAnnotation(issue);
+                    }
+                } catch (DataObjectNotFoundException ex) {
+                    ;
+                }
+            }
+        }
+        
+        private void tryToAtachEditorAnnotation(RadarIssue issue) throws DataObjectNotFoundException {
+            IssueLocation issueLocation = issue.getLocation();
+            try{
+                FileObject fileObject = issueLocation.getFileObject(projectContext, projectKeyChecker);
+                if (fileObject != null) {
+                    if (isFileOpen(fileObject)) {
+                        Annotation atachedAnnotation = issue.getLocation().attachAnnotation(issue, fileObject);
+                        if (atachedAnnotation != null) {
+                            attachedAnnotations.add(atachedAnnotation);
+                        }
+                    } else {
+                        fileOpenedNotifier.registerFileOpenedListener(fileObject, new FileAnnotationAttacher(issue));
+                    }
+                }
+            }catch(ProjectNotFoundException ex){
 
-        @Override
-        public void fileOpened(final FileObject fileOpened) {
-            
+            }
+        }
+        
+        public void detachAnnotations(){
+            fileOpenedNotifier.unregisterCurrentFileOpenedListeners();
+            attachedAnnotations.forEach((annotation) -> {
+                annotation.detach();
+            });
+            attachedAnnotations.clear();
+        }
+        
+        public class FileAnnotationAttacher implements FileObjectOpenedListener {
+
+            private final RadarIssue issue;
+            private boolean attached;
+
+            public FileAnnotationAttacher(RadarIssue issue) {
+                this.issue = issue;
+            }
+
+            @Override
+            public void fileOpened(final FileObject fileOpened) {
                 if (!attached) {
                     SwingUtilities.invokeLater(() -> {
                         try {
-                            IssueLocation issueLocation = radarIssue.getLocation();
-                            Annotation annotation = issueLocation.attachAnnotation(radarIssue, fileOpened);
-                            if (annotation != null) {
-                                attachedAnnotations.add(annotation);
+                            IssueLocation issueLocation = issue.getLocation();
+                            Annotation attachedAnnotation = issueLocation.attachAnnotation(issue, fileOpened);
+                            if (attachedAnnotation != null) {
+                                attachedAnnotations.add(attachedAnnotation);
                                 attached = true;
                             }
                         } catch (DataObjectNotFoundException ex) {
                             ;
                         }
                     });
-                    
                 }
-            
+            }
+
         }
-
+        
     }
-
+    
 }

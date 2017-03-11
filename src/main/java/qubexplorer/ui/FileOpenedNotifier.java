@@ -35,11 +35,15 @@ public class FileOpenedNotifier implements PropertyChangeListener {
         }
         listeners.add(listener);
     }
-
+    
+    public void unregisterCurrentFileOpenedListeners() {
+        listenersByFilepath.clear();
+    }
+    
     public void fireFileOpenedNotification(FileObject fileOpened) {
-        for (FileObjectOpenedListener listener : getFileOpenedListeners(fileOpened)) {
+        getFileOpenedListeners(fileOpened).forEach((listener) -> {
             listener.fileOpened(fileOpened);
-        }
+        });
     }
 
     public List<FileObjectOpenedListener> getFileOpenedListeners(FileObject fileObject) {
@@ -48,10 +52,6 @@ public class FileOpenedNotifier implements PropertyChangeListener {
             listeners = Collections.emptyList();
         }
         return listeners;
-    }
-
-    public void unregisterCurrentFileOpenedListeners() {
-        listenersByFilepath.clear();
     }
 
     @Override

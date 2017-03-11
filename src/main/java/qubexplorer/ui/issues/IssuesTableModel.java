@@ -40,6 +40,10 @@ public class IssuesTableModel extends DefaultTableModel {
             add(issue);
         }
     }
+
+    public RadarIssue[] getIssues() {
+        return issues;
+    }
     
     public RadarIssue getIssue(int row) {
         return issues[row];
