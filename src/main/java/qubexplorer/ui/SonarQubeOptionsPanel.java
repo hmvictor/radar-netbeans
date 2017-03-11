@@ -5,18 +5,18 @@ import java.util.Set;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import org.openide.util.NbPreferences;
+import qubexplorer.runner.SonarRunnerProccess;
 
 public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
 
-    private static final String DEFAULT_MODE="Issues";
     private final transient SonarQubeOptionsPanelController controller;
     private final Set<String> analysisModes=new HashSet<>();
     
 
     SonarQubeOptionsPanel(SonarQubeOptionsPanelController controller) {
         this.controller = controller;
-        analysisModes.add("Issues");
-        analysisModes.add("Preview");
+        analysisModes.add(SonarRunnerProccess.AnalysisMode.INCREMENTAL.getFriendlyName());
+        analysisModes.add(SonarRunnerProccess.AnalysisMode.PREVIEW.getFriendlyName());
         initComponents();
         DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>)analysisModeCombo.getModel();
         analysisModes.forEach((mode) -> {
@@ -109,9 +109,10 @@ public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
     protected void load() {
          Preferences nbPreferences = NbPreferences.forModule(SonarQubeOptionsPanel.class);
          serverAddress.setText(nbPreferences.get("address", "http://localhost:9000"));
-         String analysisMode = nbPreferences.get("runner.analysisMode", DEFAULT_MODE);
+         SonarRunnerProccess.AnalysisMode defaultAnalysisMode=SonarRunnerProccess.getDefaultAnalysisMode();
+         String analysisMode = nbPreferences.get("runner.analysisMode", defaultAnalysisMode.getFriendlyName());
          if(!analysisModes.contains(analysisMode)){
-             analysisMode=DEFAULT_MODE;
+             analysisMode=defaultAnalysisMode.getFriendlyName();
          }
          analysisModeCombo.setSelectedItem(analysisMode);
          tJvmArguments.setText(nbPreferences.get("runner.jvmArguments", ""));
@@ -120,10 +121,10 @@ public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
 
     protected void store() {
         final Preferences nbPreferences = NbPreferences.forModule(SonarQubeOptionsPanel.class);
-         nbPreferences.put("address", serverAddress.getText());
-         nbPreferences.put("runner.analysisMode", analysisModeCombo.getSelectedItem().toString());
-         nbPreferences.put("runner.jvmArguments", tJvmArguments.getText());
-         nbPreferences.putBoolean("editorAnnotations.enabled", editorAnnotationsEnabled.isSelected());
+        nbPreferences.put("address", serverAddress.getText());
+        nbPreferences.put("runner.analysisMode", analysisModeCombo.getSelectedItem().toString());
+        nbPreferences.put("runner.jvmArguments", tJvmArguments.getText());
+        nbPreferences.putBoolean("editorAnnotations.enabled", editorAnnotationsEnabled.isSelected());
     }
 
     boolean valid() {

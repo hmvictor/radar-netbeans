@@ -93,7 +93,13 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
                 
             };
             SonarRunnerProccess sonarRunnerProccess = new SonarRunnerProccess(getServerUrl(), getProjectContext());
-            sonarRunnerProccess.setAnalysisMode(SonarRunnerProccess.AnalysisMode.valueOf(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.analysisMode", "Preview").toUpperCase()));
+            SonarRunnerProccess.AnalysisMode defaulAnalysisMode = SonarRunnerProccess.getDefaultAnalysisMode();
+            String preferedAnalysisMode = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.analysisMode", defaulAnalysisMode.getFriendlyName());
+            try{
+                sonarRunnerProccess.setAnalysisMode(SonarRunnerProccess.AnalysisMode.valueOfFriendlyName(preferedAnalysisMode));
+            }catch(IllegalArgumentException ex) {
+                sonarRunnerProccess.setAnalysisMode(defaulAnalysisMode);
+            }
             String jvmArguments = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.jvmArguments", "");
             sonarRunnerProccess.setJvmArguments(Arrays.asList(jvmArguments.split(" +")));
             sonarRunnerProccess.setOutConsumer(out);

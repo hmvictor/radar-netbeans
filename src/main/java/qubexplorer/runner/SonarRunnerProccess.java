@@ -36,9 +36,28 @@ public class SonarRunnerProccess {
 
     public enum AnalysisMode {
 
-        INCREMENTAL,
-        PREVIEW;
+        INCREMENTAL("Incremental"),
+        PREVIEW("Preview");
+        
+        private final String friendlyName;
 
+        private AnalysisMode(String friendlyName) {
+            this.friendlyName = friendlyName;
+        }
+        
+        public String getFriendlyName() {
+            return friendlyName;
+        }
+        
+        public static AnalysisMode valueOfFriendlyName(String friendlyName) {
+            for (AnalysisMode value : values()) {
+                if(value.getFriendlyName().equals(friendlyName)) {
+                    return value;
+                }
+            }
+            throw new IllegalArgumentException("No such value for: "+friendlyName);
+        }
+        
     }
 
     private final ProjectContext projectContext;
@@ -222,6 +241,10 @@ public class SonarRunnerProccess {
                 return new SonarRunnerResult(jsonFile);
             }
         }
+    }
+    
+    public static AnalysisMode getDefaultAnalysisMode() {
+        return AnalysisMode.PREVIEW;
     }
 
     private static class WrapperConsumer extends PrintStreamConsumer {
