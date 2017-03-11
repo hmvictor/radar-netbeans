@@ -2,6 +2,7 @@ package qubexplorer.ui;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import org.openide.util.NbPreferences;
 
@@ -18,9 +19,9 @@ public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
         analysisModes.add("Preview");
         initComponents();
         DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>)analysisModeCombo.getModel();
-        for (String mode : analysisModes) {
+        analysisModes.forEach((mode) -> {
             model.addElement(mode);
-        }
+        });
     }
 
     /**
@@ -38,6 +39,7 @@ public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         tJvmArguments = new org.jdesktop.swingx.JXTextField();
+        editorAnnotationsEnabled = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(SonarQubeOptionsPanel.class, "SonarQubeOptionsPanel.jLabel1.text")); // NOI18N
 
@@ -53,6 +55,8 @@ public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
         tJvmArguments.setText(org.openide.util.NbBundle.getMessage(SonarQubeOptionsPanel.class, "SonarQubeOptionsPanel.tJvmArguments.text")); // NOI18N
         tJvmArguments.setPrompt(org.openide.util.NbBundle.getMessage(SonarQubeOptionsPanel.class, "SonarQubeOptionsPanel.tJvmArguments.prompt")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(editorAnnotationsEnabled, org.openide.util.NbBundle.getMessage(SonarQubeOptionsPanel.class, "SonarQubeOptionsPanel.editorAnnotationsEnabled.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -63,9 +67,14 @@ public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                         .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(jLabel4))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(4, 4, 4)
+                        .addComponent(jLabel4)))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(editorAnnotationsEnabled)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(6, 6, 6)
                         .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, 514, Short.MAX_VALUE))
@@ -91,31 +100,39 @@ public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(tJvmArguments, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(131, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(editorAnnotationsEnabled)
+                .addContainerGap(101, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     protected void load() {
-         serverAddress.setText(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("address", "http://localhost:9000"));
-         String analysisMode = NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.analysisMode", DEFAULT_MODE);
+         Preferences nbPreferences = NbPreferences.forModule(SonarQubeOptionsPanel.class);
+         serverAddress.setText(nbPreferences.get("address", "http://localhost:9000"));
+         String analysisMode = nbPreferences.get("runner.analysisMode", DEFAULT_MODE);
          if(!analysisModes.contains(analysisMode)){
              analysisMode=DEFAULT_MODE;
          }
          analysisModeCombo.setSelectedItem(analysisMode);
-         tJvmArguments.setText(NbPreferences.forModule(SonarQubeOptionsPanel.class).get("runner.jvmArguments", ""));
+         tJvmArguments.setText(nbPreferences.get("runner.jvmArguments", ""));
+         editorAnnotationsEnabled.setSelected(nbPreferences.getBoolean("editorAnnotations.enabled", true));
     }
 
     protected void store() {
-         NbPreferences.forModule(SonarQubeOptionsPanel.class).put("address", serverAddress.getText());
-         NbPreferences.forModule(SonarQubeOptionsPanel.class).put("runner.analysisMode", analysisModeCombo.getSelectedItem().toString());
-         NbPreferences.forModule(SonarQubeOptionsPanel.class).put("runner.jvmArguments", tJvmArguments.getText());
+        final Preferences nbPreferences = NbPreferences.forModule(SonarQubeOptionsPanel.class);
+         nbPreferences.put("address", serverAddress.getText());
+         nbPreferences.put("runner.analysisMode", analysisModeCombo.getSelectedItem().toString());
+         nbPreferences.put("runner.jvmArguments", tJvmArguments.getText());
+         nbPreferences.putBoolean("editorAnnotations.enabled", editorAnnotationsEnabled.isSelected());
     }
 
     boolean valid() {
         return true;
     }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox analysisModeCombo;
+    private javax.swing.JCheckBox editorAnnotationsEnabled;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

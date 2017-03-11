@@ -62,6 +62,7 @@ import org.openide.text.Line;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.NbPreferences;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sonar.wsclient.issue.ActionPlan;
@@ -752,8 +753,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
         });
         showIssuesCount();
         filterText.setText("");
-        //if radarEditorAnnotations.enabled{}
-        attacher.attachAnnotations(issues);
+        if(isEditorAnnotationsEnabled()) {
+            attacher.attachAnnotations(issues);
+        }
     }
 
     private void showIssuesCount() {
@@ -794,18 +796,24 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }
 
     public void resetState() {
-        attacher.detachAnnotations();
+        if(isEditorAnnotationsEnabled()){
+            attacher.detachAnnotations();
+        }
         SimpleSummary emptySummary = new SimpleSummary();
         showSummary(emptySummary);
     }
     
-    public void activeEditorAnnotations() {
+    public void refreshEditorAnnotationsStatus() {
         IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
-        attacher.attachAnnotations(model.getIssues());
+        if(isEditorAnnotationsEnabled() && !attacher.isAttached() && model.getRowCount() > 0) {
+            attacher.attachAnnotations(model.getIssues());
+        }else if(!isEditorAnnotationsEnabled() && attacher.isAttached() && model.getRowCount() > 0) {
+            attacher.detachAnnotations();
+        }
     }
     
-    public void deactiveEditorAnnotations() {
-        attacher.detachAnnotations();
+    public boolean isEditorAnnotationsEnabled() {
+        return NbPreferences.forModule(SonarQubeOptionsPanel.class).getBoolean("editorAnnotations.enabled", true);
     }
     
 }

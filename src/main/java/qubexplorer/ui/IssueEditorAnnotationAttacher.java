@@ -25,6 +25,7 @@ public class IssueEditorAnnotationAttacher {
     private final FileOpenedNotifier fileOpenedNotifier = new FileOpenedNotifier();
     private ProjectContext projectContext;
     private IssueLocation.ProjectKeyChecker projectKeyChecker;
+    private boolean attached;
 
     public void init() {
         fileOpenedNotifier.init();
@@ -38,7 +39,12 @@ public class IssueEditorAnnotationAttacher {
         this.projectKeyChecker = projectKeyChecker;
     }
 
+    public boolean isAttached() {
+        return attached;
+    }
+    
     public void attachAnnotations(RadarIssue[] issues) {
+        attached=true;
         for (RadarIssue issue : issues) {
             try {
                 if (issue.line() != null) {
@@ -77,6 +83,7 @@ public class IssueEditorAnnotationAttacher {
     }
 
     public void detachAnnotations() {
+        attached=false;
         fileOpenedNotifier.unregisterCurrentFileOpenedListeners();
         attachedAnnotations.forEach((annotation) -> {
             annotation.detach();
