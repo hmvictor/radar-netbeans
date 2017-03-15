@@ -2,6 +2,7 @@ package qubexplorer.server.ui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
 import java.util.Properties;
 import org.netbeans.api.project.Project;
 import org.openide.awt.ActionID;
@@ -44,7 +45,7 @@ public final class CustomServerIssuesAction implements ActionListener {
             SonarQubeProjectConfiguration real = ConfigurationFactory.createDefaultConfiguration(context);
             final ProjectContext projectContext = new ProjectContext(context, new FixedKey(fixed, real));
             final SonarQube sonarQube = new SonarQube(serverConnectionDialog.getSelectedUrl());
-            SummaryTask summaryTask = new SummaryTask(sonarQube, projectContext, new IssueFilter[0]){
+            SummaryTask summaryTask = new SummaryTask(sonarQube, projectContext, Collections.emptyList()){
                 
                 @Override
                 protected void success(Summary summary) {

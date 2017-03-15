@@ -1,5 +1,6 @@
 package qubexplorer.ui.summary;
 
+import java.util.List;
 import qubexplorer.server.ui.CustomServerIssuesAction;
 import org.openide.windows.WindowManager;
 import qubexplorer.ConfigurationFactory;
@@ -25,9 +26,9 @@ import qubexplorer.ui.task.TaskExecutor;
 public class SummaryTask extends Task<Summary> {
 
     private final IssuesContainer issuesContainer;
-    private final IssueFilter[] filters;
+    private final List<IssueFilter> filters;
 
-    public SummaryTask(IssuesContainer issuesContainer, ProjectContext projectContext, IssueFilter[] filters) {
+    public SummaryTask(IssuesContainer issuesContainer, ProjectContext projectContext, List<IssueFilter> filters) {
         super(projectContext, issuesContainer instanceof SonarQube ? ((SonarQube) issuesContainer).getServerUrl() : null);
         this.issuesContainer = issuesContainer;
         this.filters = filters;

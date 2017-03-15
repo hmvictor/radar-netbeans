@@ -97,7 +97,7 @@ public class SonarQube implements IssuesContainer {
     }
 
     @Override
-    public List<RadarIssue> getIssues(UserCredentials auth, ResourceKey projectKey, IssueFilter... filters) {
+    public List<RadarIssue> getIssues(UserCredentials auth, ResourceKey projectKey, List<IssueFilter> filters) {
         if (!existsProject(auth, projectKey)) {
             throw new NoSuchProjectException(projectKey);
         }
@@ -302,19 +302,19 @@ public class SonarQube implements IssuesContainer {
     }
 
     @Override
-    public Summary getSummary(UserCredentials auth, ResourceKey resourceKey, IssueFilter[] filters) {
+    public Summary getSummary(UserCredentials auth, ResourceKey resourceKey, List<IssueFilter> filters) {
         if (!existsProject(auth, resourceKey)) {
             throw new NoSuchProjectException(resourceKey);
         }
         SimpleSummary simpleSummary = new SimpleSummary();
         for (Severity severity : Severity.values()) {
-            IssueFilter[] tempFilters = new IssueFilter[filters.length + 1];
-            tempFilters[0] = new SeverityFilter(severity);
-            System.arraycopy(filters, 0, tempFilters, 1, filters.length);
+            List<IssueFilter> tempFilters = new LinkedList<>();
+            tempFilters.add(new SeverityFilter(severity));
+            tempFilters.addAll(filters);
             List<RadarIssue> issues = getIssues(auth, resourceKey, tempFilters);
-            for (RadarIssue issue : issues) {
+            issues.forEach((issue) -> {
                 simpleSummary.increment(severity, issue.rule(), 1);
-            }
+            });
         }
         return simpleSummary;
     }

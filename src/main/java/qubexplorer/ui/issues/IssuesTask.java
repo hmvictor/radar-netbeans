@@ -17,9 +17,9 @@ import qubexplorer.ui.task.Task;
 public class IssuesTask extends Task<List<RadarIssue>> {
 
     private final IssuesContainer issuesContainer;
-    private final IssueFilter[] filters;
+    private final List<IssueFilter> filters;
 
-    public IssuesTask(ProjectContext projectContext, IssuesContainer issuesContainer, IssueFilter[] filters) {
+    public IssuesTask(ProjectContext projectContext, IssuesContainer issuesContainer, List<IssueFilter> filters) {
         super(projectContext, issuesContainer instanceof SonarQube ? ((SonarQube) issuesContainer).getServerUrl() : null);
         this.issuesContainer = issuesContainer;
         this.filters = filters;

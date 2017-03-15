@@ -9,14 +9,16 @@ import org.sonar.wsclient.issue.IssueQuery;
  *
  * @author Victor
  */
-public class ActionPlanFilter implements IssueFilter{
+//TODO: Radar 3.0 Deprecated
+public class ActionPlanFilter implements IssueFilter {
+
     private final ActionPlan actionPlan;
 
     public ActionPlanFilter(ActionPlan actionPlan) {
         Objects.requireNonNull(actionPlan, "actionPlan is null");
         this.actionPlan = actionPlan;
     }
-    
+
     @Override
     public void apply(IssueQuery query) {
         query.actionPlans(actionPlan.key());
@@ -26,10 +28,10 @@ public class ActionPlanFilter implements IssueFilter{
     public boolean isValid(Issue issue) {
         return actionPlan.key().equals(issue.actionPlan());
     }
-    
+
     @Override
     public String getDescription() {
-        return "Action Plan: "+actionPlan.name();
+        return "Action Plan: " + actionPlan.name();
     }
-    
+
 }

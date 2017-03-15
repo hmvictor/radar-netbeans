@@ -38,7 +38,7 @@ public class ActionPlansTask extends Task<List<ActionPlan>>{
     @Override
     protected void success(List<ActionPlan> result) {
         SonarIssuesTopComponent issuesTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
-        issuesTopComponent.setActionPlans(result);
+        issuesTopComponent.setActionPlansOptions(result);
         issuesTopComponent.open();
         issuesTopComponent.requestVisible();
     }

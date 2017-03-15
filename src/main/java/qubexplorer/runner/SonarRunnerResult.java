@@ -112,7 +112,7 @@ public class SonarRunnerResult implements IssuesContainer {
             while (reader.hasNext()) {
                 String name = reader.nextName();
                 if ("issues".equals(name)) {
-                    issues = readIssues(reader, new IssueFilter[0]);
+                    issues = readIssues(reader, Collections.emptyList());
                 }else{
                     reader.skipValue();
                 }
@@ -123,7 +123,7 @@ public class SonarRunnerResult implements IssuesContainer {
     }
 
     @Override
-    public List<RadarIssue> getIssues(UserCredentials auth, ResourceKey resourceKey, IssueFilter... filters) {
+    public List<RadarIssue> getIssues(UserCredentials auth, ResourceKey resourceKey, List<IssueFilter> filters) {
         try (JsonReader reader = new JsonReader(new FileReader(file))) {
             List<Issue> issues = null;
             reader.beginObject();
@@ -157,7 +157,7 @@ public class SonarRunnerResult implements IssuesContainer {
         return ruleList;
     }
 
-    private static List<Issue> readIssues(JsonReader reader, IssueFilter[] filters) throws IOException, ParseException {
+    private static List<Issue> readIssues(JsonReader reader, List<IssueFilter> filters) throws IOException, ParseException {
         List<Issue> issues = new LinkedList<>();
         reader.beginArray();
         while (reader.hasNext()) {
@@ -247,7 +247,7 @@ public class SonarRunnerResult implements IssuesContainer {
     }
 
     @Override
-    public Summary getSummary(UserCredentials authentication, ResourceKey resourceKey, IssueFilter[] filters) {
+    public Summary getSummary(UserCredentials authentication, ResourceKey resourceKey, List<IssueFilter> filters) {
         return getSummary();
     }
 

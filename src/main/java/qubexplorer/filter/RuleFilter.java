@@ -9,14 +9,15 @@ import qubexplorer.Rule;
  *
  * @author Victor
  */
-public class RuleFilter implements IssueFilter{
-    private Rule rule;
+public class RuleFilter implements IssueFilter {
+
+    private final Rule rule;
 
     public RuleFilter(Rule rule) {
         Objects.requireNonNull(rule, "rule is null");
-        this.rule=rule;
+        this.rule = rule;
     }
-    
+
     @Override
     public void apply(IssueQuery query) {
         query.rules(rule.getKey());
@@ -26,10 +27,10 @@ public class RuleFilter implements IssueFilter{
     public boolean isValid(Issue issue) {
         return issue.ruleKey().equals(rule.getKey());
     }
-    
+
     @Override
     public String getDescription() {
-        return "Rule: "+rule.getName();
+        return "Rule: " + rule.getName();
     }
-    
+
 }
