@@ -45,15 +45,7 @@ public final class CustomServerIssuesAction implements ActionListener {
             SonarQubeProjectConfiguration real = ConfigurationFactory.createDefaultConfiguration(context);
             final ProjectContext projectContext = new ProjectContext(context, new FixedKey(fixed, real));
             final SonarQube sonarQube = new SonarQube(serverConnectionDialog.getSelectedUrl());
-            SummaryTask summaryTask = new SummaryTask(sonarQube, projectContext, Collections.emptyList()){
-                
-                @Override
-                protected void success(Summary summary) {
-                    super.success(summary);
-                    TaskExecutor.execute(new ActionPlansTask(sonarQube, projectContext));
-                }
-                
-            };
+            SummaryTask summaryTask = new SummaryTask(sonarQube, projectContext, Collections.emptyList());
             UserCredentials userCredentials = serverConnectionDialog.getUserCredentials();
             if(userCredentials != null) {
                 summaryTask.setUserCredentials(userCredentials);

@@ -36,15 +36,7 @@ public final class ServerIssuesAction implements ActionListener {
         if (configuration != null) {
             final ProjectContext projectContext = new ProjectContext(context, configuration);
             final SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
-            TaskExecutor.execute(new SummaryTask(sonarQube, projectContext, Collections.emptyList()) {
-
-                @Override
-                protected void success(Summary summary) {
-                    super.success(summary);
-                    TaskExecutor.execute(new ActionPlansTask(sonarQube, projectContext));
-                }
-
-            });
+            TaskExecutor.execute(new SummaryTask(sonarQube, projectContext, Collections.emptyList()));
         }
     }
 
