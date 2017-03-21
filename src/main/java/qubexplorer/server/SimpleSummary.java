@@ -38,14 +38,6 @@ public class SimpleSummary implements Summary {
         }
     }
 
-    public Map<Rule, Integer> getRuleCounts(Severity severity) {
-        if (countsBySeverity.containsKey(severity)) {
-            return countsBySeverity.get(severity);
-        } else {
-            return new HashMap<>();
-        }
-    }
-
     @Override
     public int getCount(Rule rule) {
         int count = 0;

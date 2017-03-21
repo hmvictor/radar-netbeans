@@ -13,4 +13,8 @@ public interface IssuesContainer {
 
     Summary getSummary(UserCredentials authentication, ResourceKey projectKey, List<IssueFilter> filters);
     
+//    ClassifierSummary<Severity> getSummaryBySeverity(UserCredentials authentication, ResourceKey projectKey, List<IssueFilter> filters);
+//    
+//    ClassifierSummary<IssueType> getSummaryByType(UserCredentials authentication, ResourceKey projectKey, List<IssueFilter> filters);
+    
 }

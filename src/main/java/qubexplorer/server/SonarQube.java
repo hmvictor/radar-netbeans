@@ -32,6 +32,7 @@ import org.sonar.wsclient.services.ResourceQuery;
 import org.sonar.wsclient.services.ServerQuery;
 import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
+import qubexplorer.Classifier;
 import qubexplorer.IssuesContainer;
 import qubexplorer.NoSuchProjectException;
 import qubexplorer.PassEncoder;
@@ -42,6 +43,7 @@ import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.GenericSonarQubeProjectConfiguration;
 import qubexplorer.Rule;
 import qubexplorer.Summary;
+import qubexplorer.ClassifierSummary;
 
 /**
  *
@@ -102,9 +104,9 @@ public class SonarQube implements IssuesContainer {
             throw new NoSuchProjectException(projectKey);
         }
         IssueQuery query = IssueQuery.create().componentRoots(projectKey.toString()).pageSize(PAGE_SIZE).statuses("OPEN");
-        for (IssueFilter filter : filters) {
+        filters.forEach((filter) -> {
             filter.apply(query);
-        }
+        });
         return getIssues(auth, query);
     }
 
@@ -318,6 +320,25 @@ public class SonarQube implements IssuesContainer {
         }
         return simpleSummary;
     }
+    
+    private <T extends Classifier> ClassifierSummary<T> getSummaryEnhanced(Class<T> type, UserCredentials auth, ResourceKey resourceKey, List<IssueFilter> filters) {
+        if (!existsProject(auth, resourceKey)) {
+            throw new NoSuchProjectException(resourceKey);
+        }
+        SimpleClassifierSummary<T> simpleSummary = new SimpleClassifierSummary<>();
+        T[] values=type.getEnumConstants();
+        for (T classifier : values) {
+            List<IssueFilter> tempFilters = new LinkedList<>();
+            tempFilters.add(classifier.createFilter());
+            tempFilters.addAll(filters);
+            List<RadarIssue> issues = getIssues(auth, resourceKey, tempFilters);
+            issues.forEach((issue) -> {
+                simpleSummary.increment(classifier, issue.rule(), 1);
+            });
+        }
+        return simpleSummary;
+    }
+    
 
     private static class ProxySettings {
 
