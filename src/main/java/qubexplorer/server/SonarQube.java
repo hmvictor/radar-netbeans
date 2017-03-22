@@ -226,33 +226,14 @@ public class SonarQube implements IssuesContainer {
 
     public Rule getRule(UserCredentials userCredentials, String ruleKey) {
         try {
-            //try first the newest Rule Search API
             return new RuleSearchClient(serverUrl).getRule(userCredentials, ruleKey);
         } catch (HttpException ex) {
-//            if (ex.getMessage().contains("Error 404")) {
-//                //fallback to old method
-//                return getRuleWithQueryAPI(userCredentials, ruleKey);
-//            } else 
             if (ex.status() == UNAUTHORIZED_RESPONSE_STATUS) {
                 throw new AuthorizationException(ex);
             }
             throw ex;
         }
     }
-
-//    private Rule getRuleWithQueryAPI(UserCredentials userCredentials, String ruleKey) {
-//        RuleQuery ruleQuery = new RuleQuery("java");
-//        String[] tokens = ruleKey.split(":");
-//        ruleQuery.setSearchText(tokens.length == 2 ? tokens[1] : ruleKey);
-//        Sonar sonar = createSonar(userCredentials);
-//        List<Rule> rules = sonar.findAll(ruleQuery);
-//        for (Rule rule : rules) {
-//            if (ruleKey.equals(rule.getKey())) {
-//                return rule;
-//            }
-//        }
-//        return null;
-//    }
 
     public List<ResourceKey> getProjectsKeys(UserCredentials userCredentials) {
         try {
@@ -319,6 +300,11 @@ public class SonarQube implements IssuesContainer {
             });
         }
         return simpleSummary;
+    }
+
+    @Override
+    public ClassifierSummary<Severity> getSummaryBySeverity(UserCredentials authentication, ResourceKey projectKey, List<IssueFilter> filters) {
+        return getSummaryEnhanced(Severity.class, authentication, projectKey, filters);
     }
     
     private <T extends Classifier> ClassifierSummary<T> getSummaryEnhanced(Class<T> type, UserCredentials auth, ResourceKey resourceKey, List<IssueFilter> filters) {

@@ -1,9 +1,6 @@
 package qubexplorer.ui.summary;
 
 import java.awt.Component;
-import java.util.EnumMap;
-import java.util.Map;
-import javax.swing.ImageIcon;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import qubexplorer.Classifier;

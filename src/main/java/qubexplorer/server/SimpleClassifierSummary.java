@@ -2,7 +2,6 @@ package qubexplorer.server;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import qubexplorer.Classifier;
@@ -15,7 +14,7 @@ import qubexplorer.ClassifierSummary;
  */
 public class SimpleClassifierSummary<T extends Classifier> implements ClassifierSummary<T> {
 
-    private Map<Classifier, Map<Rule, Integer>> countsByClassifier=new HashMap<>();
+    private final Map<Classifier, Map<Rule, Integer>> countsByClassifier=new HashMap<>();
 
     public SimpleClassifierSummary() {
         
@@ -82,9 +81,9 @@ public class SimpleClassifierSummary<T extends Classifier> implements Classifier
         }
     }
 
-    @Override
-    public List<T> getClassifierValues() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+//    @Override
+//    public List<T> getClassifierValues() {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
 
 }

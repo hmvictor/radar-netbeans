@@ -97,12 +97,12 @@ public class SimpleClassifierSummaryTest {
 
         @Override
         public Icon getIcon() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            throw new UnsupportedOperationException();
         }
 
         @Override
         public String getUserDescription() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            throw new UnsupportedOperationException();
         }
 
     }

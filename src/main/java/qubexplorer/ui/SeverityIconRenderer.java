@@ -1,14 +1,10 @@
 package qubexplorer.ui;
 
 import java.awt.Component;
-import java.util.EnumMap;
-import java.util.Map;
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import qubexplorer.Classifier;
-import qubexplorer.Severity;
 
 /**
  * Render in the issues table.

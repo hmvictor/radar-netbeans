@@ -17,6 +17,6 @@ public interface ClassifierSummary<T extends Classifier>{
 
     Set<Rule> getRules(T classifier);
     
-    List<T> getClassifierValues();
+//    List<T> getClassifierValues();
     
 }
