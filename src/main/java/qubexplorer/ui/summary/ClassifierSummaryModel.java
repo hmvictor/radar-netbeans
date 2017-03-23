@@ -6,9 +6,9 @@ import java.util.List;
 import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 import qubexplorer.Classifier;
 import qubexplorer.ClassifierSummary;
+import qubexplorer.ClassifierType;
 import qubexplorer.Rule;
 import qubexplorer.Severity;
-import qubexplorer.Summary;
 
 /**
  *
@@ -16,13 +16,13 @@ import qubexplorer.Summary;
  */
 public class ClassifierSummaryModel<T extends Classifier> extends AbstractTreeTableModel {
 
-    private final Class<T> type;
+    private ClassifierType<T> classifierType;
     private boolean skipEmptySeverity = false;
     private List<T> classifiers;
 
-    public ClassifierSummaryModel(Class<T> type, ClassifierSummary summary, boolean skip) {
+    public ClassifierSummaryModel(ClassifierType<T> classifierType, ClassifierSummary summary, boolean skip) {
         super(summary);
-        this.type=type;
+        this.classifierType=classifierType;
         skipEmptySeverity = skip;
         setClassifiers();
     }
@@ -37,17 +37,17 @@ public class ClassifierSummaryModel<T extends Classifier> extends AbstractTreeTa
     }
 
     private void setClassifiers() {
-        T[] enumValues = type.getEnumConstants();
+        List<T> classifierValues = classifierType.getValues();
         if (skipEmptySeverity) {
             List<T> tmp = new LinkedList<>();
-            for (T classifier : enumValues) {
+            for (T classifier : classifierValues) {
                 if (getSummary().getCount(classifier) > 0) {
                     tmp.add(classifier);
                 }
             }
             classifiers = tmp;
         } else {
-            classifiers = Arrays.asList(enumValues);
+            classifiers = classifierValues;
         }
     }
 
@@ -60,7 +60,7 @@ public class ClassifierSummaryModel<T extends Classifier> extends AbstractTreeTa
     public Object getValueAt(Object node, int i) {
         ClassifierSummary<T> summary = getSummary();
         Object value = null;
-        if (node instanceof Summary) {
+        if (node instanceof ClassifierSummary) {
             if (i == 0) {
                 value = "Issues";
             } else {
@@ -93,7 +93,7 @@ public class ClassifierSummaryModel<T extends Classifier> extends AbstractTreeTa
 
     @Override
     public Object getChild(Object parent, int i) {
-        if (parent instanceof Summary) {
+        if (parent instanceof ClassifierSummary) {
             return classifiers.get(i);
         } else if (parent instanceof Classifier) {
             ClassifierSummary<T> summary = getSummary();
@@ -115,7 +115,7 @@ public class ClassifierSummaryModel<T extends Classifier> extends AbstractTreeTa
 
     @Override
     public int getChildCount(Object parent) {
-        if (parent instanceof Summary) {
+        if (parent instanceof ClassifierSummary) {
             return classifiers.size();
         } else if (parent instanceof Classifier) {
             return getSummary().getRules((T) parent).size();
@@ -126,7 +126,7 @@ public class ClassifierSummaryModel<T extends Classifier> extends AbstractTreeTa
 
     @Override
     public int getIndexOfChild(Object parent, Object o1) {
-        if (parent instanceof Summary) {
+        if (parent instanceof ClassifierSummary) {
             return Arrays.asList(classifiers).indexOf(o1);
         } else if (parent instanceof Severity) {
             return -1;

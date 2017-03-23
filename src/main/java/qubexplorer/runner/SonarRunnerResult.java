@@ -17,7 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.sonar.wsclient.issue.Issue;
+import qubexplorer.Classifier;
 import qubexplorer.ClassifierSummary;
+import qubexplorer.ClassifierType;
 import qubexplorer.IssuesContainer;
 import qubexplorer.RadarIssue;
 import qubexplorer.ResourceKey;
@@ -101,7 +103,7 @@ public class SonarRunnerResult implements IssuesContainer {
         try  {
             List<Issue> issues = readIssues();
             Map<String, IntWrapper> countsByRule=new HashMap<>();
-            Map<String, IntWrapper> countsBySeverity=new HashMap<>();
+            Map<Severity, IntWrapper> countsBySeverity=new HashMap<>();
             Map<Severity, Set<Rule>> rulesBySeverity=new EnumMap<>(Severity.class);
             for (Issue issue : issues) {
                 if(countsByRule.containsKey(issue.ruleKey())) {
@@ -109,12 +111,12 @@ public class SonarRunnerResult implements IssuesContainer {
                 }else{
                     countsByRule.put(issue.ruleKey(), new IntWrapper(1));
                 }
-                if(countsBySeverity.containsKey(issue.severity())) {
-                    countsBySeverity.get(issue.severity()).add(1);
-                }else{
-                    countsBySeverity.put(issue.severity(), new IntWrapper(1));
-                }
                 Severity severity = Severity.valueOf(issue.severity().toUpperCase());
+                if(countsBySeverity.containsKey(severity)) {
+                    countsBySeverity.get(severity).add(1);
+                }else{
+                    countsBySeverity.put(severity, new IntWrapper(1));
+                }
                 Set<Rule> ruleSet = rulesBySeverity.get(severity);
                 if(ruleSet == null) {
                     ruleSet=new HashSet<>();
@@ -126,6 +128,40 @@ public class SonarRunnerResult implements IssuesContainer {
                 }
             }
             return new SonarRunnerClassifierSummary<>(countsBySeverity, countsByRule, rulesBySeverity);
+        } catch (IOException | ParseException ex) {
+            throw new SonarRunnerException(ex);
+        }
+    }
+    
+    public <T extends Classifier> SonarRunnerClassifierSummary<T> getClassifierSummary(ClassifierType<T> classifierType) {
+        try  {
+            List<Issue> issues = readIssues();
+            Map<String, IntWrapper> countsByRule=new HashMap<>();
+            Map<T, IntWrapper> countsByClassifier=new HashMap<>();
+            Map<T, Set<Rule>> rulesBySeverity=new HashMap<>();
+            for (Issue issue : issues) {
+                if(countsByRule.containsKey(issue.ruleKey())) {
+                    countsByRule.get(issue.ruleKey()).add(1);
+                }else{
+                    countsByRule.put(issue.ruleKey(), new IntWrapper(1));
+                }
+                T classifier = classifierType.valueOf(issue);
+                if(countsByClassifier.containsKey(classifier)) {
+                    countsByClassifier.get(classifier).add(1);
+                }else{
+                    countsByClassifier.put(classifier, new IntWrapper(1));
+                }
+                Set<Rule> ruleSet = rulesBySeverity.get(classifier);
+                if(ruleSet == null) {
+                    ruleSet=new HashSet<>();
+                    rulesBySeverity.put(classifier, ruleSet);
+                }
+                /* Rule class has no equals method defined based in rule key. */
+                if(!containsRule(ruleSet, issue.ruleKey())){
+                    ruleSet.add(rulesByKey.get(issue.ruleKey()));
+                }
+            }
+            return new SonarRunnerClassifierSummary<>(countsByClassifier, countsByRule, rulesBySeverity);
         } catch (IOException | ParseException ex) {
             throw new SonarRunnerException(ex);
         }
@@ -281,14 +317,14 @@ public class SonarRunnerResult implements IssuesContainer {
         return rule;
     }
 
-    @Override
+//    @Override
     public Summary getSummary(UserCredentials authentication, ResourceKey resourceKey, List<IssueFilter> filters) {
         return getSummary();
     }
 
     @Override
-    public ClassifierSummary<Severity> getSummaryBySeverity(UserCredentials authentication, ResourceKey projectKey, List<IssueFilter> filters) {
-        return getClassifierSummaryBySeverity();
+    public <T extends Classifier> ClassifierSummary<T> getSummary(ClassifierType<T> classifierType, UserCredentials authentication, ResourceKey projectKey, List<IssueFilter> filters) {
+        return getClassifierSummary(classifierType);
     }
     
     static class IntWrapper {

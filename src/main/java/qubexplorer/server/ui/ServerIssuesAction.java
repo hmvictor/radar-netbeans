@@ -9,8 +9,6 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle.Messages;
 import qubexplorer.ConfigurationFactory;
 import qubexplorer.SonarQubeProjectConfiguration;
-import qubexplorer.Summary;
-import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.ProjectContext;
 import qubexplorer.ui.summary.SummaryTask;

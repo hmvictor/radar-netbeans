@@ -3,12 +3,13 @@ package qubexplorer.ui.summary;
 import java.util.List;
 import qubexplorer.server.ui.CustomServerIssuesAction;
 import org.openide.windows.WindowManager;
+import qubexplorer.ClassifierSummary;
 import qubexplorer.ConfigurationFactory;
 import qubexplorer.IssuesContainer;
 import qubexplorer.NoSuchProjectException;
 import qubexplorer.ResourceKey;
+import qubexplorer.Severity;
 import qubexplorer.SonarQubeProjectConfiguration;
-import qubexplorer.Summary;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.UserCredentialsRepository;
@@ -23,7 +24,7 @@ import qubexplorer.ui.task.TaskExecutor;
  *
  * @author Victor
  */
-public class SummaryTask extends Task<Summary> {
+public class SummaryTask extends Task<ClassifierSummary> {
 
     private final IssuesContainer issuesContainer;
     private final List<IssueFilter> filters;
@@ -37,23 +38,23 @@ public class SummaryTask extends Task<Summary> {
     @Override
     protected void init() {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
-        sonarTopComponent.resetState();
+        sonarTopComponent.resetState(Severity.getType());
     }
 
     @Override
-    public Summary execute() {
-        return issuesContainer.getSummary(getUserCredentials(), getProjectContext().getConfiguration().getKey(), filters);
+    public ClassifierSummary execute() {
+        return issuesContainer.getSummary(Severity.getType(), getUserCredentials(), getProjectContext().getConfiguration().getKey(), filters);
     }
 
     @Override
-    protected void success(Summary summary) {
+    protected void success(ClassifierSummary summary) {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
         sonarTopComponent.setProjectContext(getProjectContext());
         sonarTopComponent.setProjectKeyChecker(new SimpleChecker());
         sonarTopComponent.setIssuesContainer(issuesContainer);
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
-        sonarTopComponent.showSummary(summary);
+        sonarTopComponent.showSummary(Severity.getType(), summary);
     }
 
     @Override

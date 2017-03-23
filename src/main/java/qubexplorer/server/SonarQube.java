@@ -44,6 +44,7 @@ import qubexplorer.GenericSonarQubeProjectConfiguration;
 import qubexplorer.Rule;
 import qubexplorer.Summary;
 import qubexplorer.ClassifierSummary;
+import qubexplorer.ClassifierType;
 
 /**
  *
@@ -284,7 +285,7 @@ public class SonarQube implements IssuesContainer {
         return false;
     }
 
-    @Override
+//    @Override
     public Summary getSummary(UserCredentials auth, ResourceKey resourceKey, List<IssueFilter> filters) {
         if (!existsProject(auth, resourceKey)) {
             throw new NoSuchProjectException(resourceKey);
@@ -303,16 +304,12 @@ public class SonarQube implements IssuesContainer {
     }
 
     @Override
-    public ClassifierSummary<Severity> getSummaryBySeverity(UserCredentials authentication, ResourceKey projectKey, List<IssueFilter> filters) {
-        return getSummaryEnhanced(Severity.class, authentication, projectKey, filters);
-    }
-    
-    private <T extends Classifier> ClassifierSummary<T> getSummaryEnhanced(Class<T> type, UserCredentials auth, ResourceKey resourceKey, List<IssueFilter> filters) {
+    public <T extends Classifier> ClassifierSummary<T> getSummary(ClassifierType<T> classifierType, UserCredentials auth, ResourceKey resourceKey, List<IssueFilter> filters) {
         if (!existsProject(auth, resourceKey)) {
             throw new NoSuchProjectException(resourceKey);
         }
         SimpleClassifierSummary<T> simpleSummary = new SimpleClassifierSummary<>();
-        T[] values=type.getEnumConstants();
+        List<T> values=classifierType.getValues();
         for (T classifier : values) {
             List<IssueFilter> tempFilters = new LinkedList<>();
             tempFilters.add(classifier.createFilter());

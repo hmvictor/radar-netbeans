@@ -1,7 +1,10 @@
 package qubexplorer;
 
+import java.util.Arrays;
+import java.util.List;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import org.sonar.wsclient.issue.Issue;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.filter.SeverityFilter;
 
@@ -38,6 +41,26 @@ public enum Severity implements Classifier {
     @Override
     public String getUserDescription() {
         return userDescription;
+    }
+    
+    public static ClassifierType<Severity> getType() {
+        return TYPE;
+    }
+    
+    private static final SeverityType TYPE=new SeverityType();
+
+    private static class SeverityType implements ClassifierType {
+
+        @Override
+        public Severity valueOf(Issue issue) {
+            return Severity.valueOf(issue.severity().toUpperCase());
+        }
+
+        @Override
+        public List<Severity> getValues() {
+            return Arrays.asList(Severity.values());
+        }
+        
     }
     
 }

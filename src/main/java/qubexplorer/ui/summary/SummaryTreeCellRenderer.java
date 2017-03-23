@@ -4,9 +4,9 @@ import java.awt.Component;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import qubexplorer.Classifier;
+import qubexplorer.ClassifierSummary;
 import qubexplorer.Rule;
 import qubexplorer.Severity;
-import qubexplorer.Summary;
 
 /**
  * Render in the tree table
@@ -24,7 +24,7 @@ public class SummaryTreeCellRenderer extends DefaultTreeCellRenderer {
         }else if(o instanceof Rule) {
             setIcon(null);
             setText(((Rule)o).getName());
-        }else if(o instanceof Summary){
+        }else if(o instanceof ClassifierSummary){
             setIcon(null);
             setText("Issues");
         }

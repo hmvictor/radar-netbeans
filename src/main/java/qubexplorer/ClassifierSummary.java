@@ -1,6 +1,5 @@
 package qubexplorer;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -16,7 +15,5 @@ public interface ClassifierSummary<T extends Classifier>{
     int getCount();
 
     Set<Rule> getRules(T classifier);
-    
-//    List<T> getClassifierValues();
     
 }

@@ -17,6 +17,7 @@ import org.openide.windows.WindowManager;
 import org.sonar.runner.api.PrintStreamConsumer;
 import qubexplorer.MvnModelInputException;
 import qubexplorer.ResourceKey;
+import qubexplorer.Severity;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.runner.SonarRunnerCancelledException;
 import qubexplorer.runner.SonarRunnerProccess;
@@ -57,7 +58,7 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
     @Override
     protected void init() {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
-        sonarTopComponent.resetState();
+        sonarTopComponent.resetState(Severity.getType());
         stopAction.setEnabled(true);
         if(io == null) {
             io = IOProvider.getDefault().getIO("Sonar-runner", true, new Action[]{stopAction}, IOContainer.getDefault());
@@ -118,7 +119,7 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
         sonarTopComponent.setIssuesContainer(result);
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
-        sonarTopComponent.showSummary(result.getSummary());
+        sonarTopComponent.showSummary(Severity.getType(), result.getClassifierSummaryBySeverity());
     }
 
     @Override

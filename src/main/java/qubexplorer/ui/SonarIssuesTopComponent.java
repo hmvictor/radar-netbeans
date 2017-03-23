@@ -51,18 +51,21 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.NbPreferences;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import qubexplorer.Classifier;
+import qubexplorer.ClassifierSummary;
+import qubexplorer.ClassifierType;
 import qubexplorer.RadarIssue;
 import qubexplorer.IssuesContainer;
 import qubexplorer.Rule;
 import qubexplorer.Severity;
 import qubexplorer.server.SonarQube;
-import qubexplorer.Summary;
 import qubexplorer.filter.AsigneesFilter;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.filter.RuleFilter;
 import qubexplorer.filter.SeverityFilter;
 import qubexplorer.runner.SonarRunnerResult;
-import qubexplorer.server.SimpleSummary;
+import qubexplorer.server.SimpleClassifierSummary;
+import qubexplorer.ui.summary.ClassifierSummaryModel;
 import qubexplorer.ui.task.TaskExecutor;
 
 /**
@@ -240,8 +243,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
         attacher.setProjectKeyChecker(projectKeyChecker);
     }
 
-    public void setSummary(Summary summary) {
-        tableSummary.setTreeTableModel(new SummaryModel(summary, !showEmptySeverity.isSelected()));
+    public <T extends Classifier> void setSummary(ClassifierType<T> classifierType, ClassifierSummary<T> summary) {
+        tableSummary.setTreeTableModel(new ClassifierSummaryModel(classifierType, summary, !showEmptySeverity.isSelected()));
         DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
         renderer.setHorizontalAlignment(JLabel.RIGHT);
         tableSummary.getColumn(1).setCellRenderer(renderer);
@@ -579,9 +582,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
         if (row != -1) {
             Object selectedNode = tableSummary.getPathForRow(row).getLastPathComponent();
             showRuleInfoAction.setEnabled(selectedNode instanceof Rule);
-            Summary summary = ((SummaryModel) tableSummary.getTreeTableModel()).getSummary();
+            ClassifierSummary summary = ((ClassifierSummaryModel) tableSummary.getTreeTableModel()).getSummary();
             int count;
-            if (selectedNode instanceof Summary) {
+            if (selectedNode instanceof ClassifierSummary) {
                 count = summary.getCount();
             } else if (selectedNode instanceof Severity) {
                 count = summary.getCount((Severity) selectedNode);
@@ -774,8 +777,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
         showRuleInfoForIssueAction.setEnabled(false);
     }
 
-    public void showSummary(Summary summary) {
-        setSummary(summary);
+    public <T extends Classifier> void showSummary(ClassifierType<T> type, ClassifierSummary<T> summary) {
+        setSummary(type, summary);
         if (tabbedPane.getTabCount() == 2) {
             tabbedPane.removeTabAt(1);
         }
@@ -790,12 +793,12 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
     }
 
-    public void resetState() {
+    public <T extends Classifier> void resetState(ClassifierType<T> classifierType) {
         if(isEditorAnnotationsEnabled()){
             attacher.detachAnnotations();
         }
-        SimpleSummary emptySummary = new SimpleSummary();
-        showSummary(emptySummary);
+        SimpleClassifierSummary emptySummary = new SimpleClassifierSummary();
+        showSummary(classifierType, emptySummary);
     }
     
     public void refreshEditorAnnotationsStatus() {

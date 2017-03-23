@@ -11,10 +11,8 @@ public interface IssuesContainer {
     
     List<RadarIssue> getIssues(UserCredentials auth, ResourceKey projectKey, List<IssueFilter> filters);
 
-    Summary getSummary(UserCredentials authentication, ResourceKey projectKey, List<IssueFilter> filters);
+//    Summary getSummary(UserCredentials authentication, ResourceKey projectKey, List<IssueFilter> filters);
     
-    ClassifierSummary<Severity> getSummaryBySeverity(UserCredentials authentication, ResourceKey projectKey, List<IssueFilter> filters);
-//    
-//    ClassifierSummary<IssueType> getSummaryByType(UserCredentials authentication, ResourceKey projectKey, List<IssueFilter> filters);
+    <T extends Classifier> ClassifierSummary<T> getSummary(ClassifierType<T> classifierType, UserCredentials authentication, ResourceKey projectKey, List<IssueFilter> filters);
     
 }
