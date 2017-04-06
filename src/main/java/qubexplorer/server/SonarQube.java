@@ -2,7 +2,6 @@ package qubexplorer.server;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import qubexplorer.filter.SeverityFilter;
 import qubexplorer.filter.IssueFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,11 +37,9 @@ import qubexplorer.NoSuchProjectException;
 import qubexplorer.PassEncoder;
 import qubexplorer.RadarIssue;
 import qubexplorer.ResourceKey;
-import qubexplorer.Severity;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.GenericSonarQubeProjectConfiguration;
 import qubexplorer.Rule;
-import qubexplorer.Summary;
 import qubexplorer.ClassifierSummary;
 import qubexplorer.ClassifierType;
 
@@ -283,24 +280,6 @@ public class SonarQube implements IssuesContainer {
             }
         }
         return false;
-    }
-
-//    @Override
-    public Summary getSummary(UserCredentials auth, ResourceKey resourceKey, List<IssueFilter> filters) {
-        if (!existsProject(auth, resourceKey)) {
-            throw new NoSuchProjectException(resourceKey);
-        }
-        SimpleSummary simpleSummary = new SimpleSummary();
-        for (Severity severity : Severity.values()) {
-            List<IssueFilter> tempFilters = new LinkedList<>();
-            tempFilters.add(new SeverityFilter(severity));
-            tempFilters.addAll(filters);
-            List<RadarIssue> issues = getIssues(auth, resourceKey, tempFilters);
-            issues.forEach((issue) -> {
-                simpleSummary.increment(severity, issue.rule(), 1);
-            });
-        }
-        return simpleSummary;
     }
 
     @Override

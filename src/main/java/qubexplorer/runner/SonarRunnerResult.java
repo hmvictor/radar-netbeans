@@ -25,7 +25,6 @@ import qubexplorer.RadarIssue;
 import qubexplorer.ResourceKey;
 import qubexplorer.Rule;
 import qubexplorer.Severity;
-import qubexplorer.Summary;
 import qubexplorer.UserCredentials;
 import qubexplorer.filter.IssueFilter;
 
@@ -65,40 +64,6 @@ public class SonarRunnerResult implements IssuesContainer {
         }
     }
 
-    public SonarRunnerSummary getSummary() {
-        try  {
-            List<Issue> issues = readIssues();
-            Map<String, IntWrapper> countsByRule=new HashMap<>();
-            Map<String, IntWrapper> countsBySeverity=new HashMap<>();
-            Map<Severity, Set<Rule>> rulesBySeverity=new EnumMap<>(Severity.class);
-            for (Issue issue : issues) {
-                if(countsByRule.containsKey(issue.ruleKey())) {
-                    countsByRule.get(issue.ruleKey()).add(1);
-                }else{
-                    countsByRule.put(issue.ruleKey(), new IntWrapper(1));
-                }
-                if(countsBySeverity.containsKey(issue.severity())) {
-                    countsBySeverity.get(issue.severity()).add(1);
-                }else{
-                    countsBySeverity.put(issue.severity(), new IntWrapper(1));
-                }
-                Severity severity = Severity.valueOf(issue.severity().toUpperCase());
-                Set<Rule> ruleSet = rulesBySeverity.get(severity);
-                if(ruleSet == null) {
-                    ruleSet=new HashSet<>();
-                    rulesBySeverity.put(severity, ruleSet);
-                }
-                /* Rule class has no equals method defined based in rule key. */
-                if(!containsRule(ruleSet, issue.ruleKey())){
-                    ruleSet.add(rulesByKey.get(issue.ruleKey()));
-                }
-            }
-            return new SonarRunnerSummary(countsBySeverity, countsByRule, rulesBySeverity);
-        } catch (IOException | ParseException ex) {
-            throw new SonarRunnerException(ex);
-        }
-    }
-    
     public SonarRunnerClassifierSummary<Severity> getClassifierSummaryBySeverity() {
         try  {
             List<Issue> issues = readIssues();
@@ -315,11 +280,6 @@ public class SonarRunnerResult implements IssuesContainer {
         
         reader.endObject();
         return rule;
-    }
-
-//    @Override
-    public Summary getSummary(UserCredentials authentication, ResourceKey resourceKey, List<IssueFilter> filters) {
-        return getSummary();
     }
 
     @Override

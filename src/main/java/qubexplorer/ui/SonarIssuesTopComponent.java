@@ -6,7 +6,6 @@ import qubexplorer.ui.issues.IssuesTask;
 import qubexplorer.ui.issues.LocationRenderer;
 import qubexplorer.ui.issues.IssueLocation;
 import qubexplorer.ui.summary.SummaryTreeCellRenderer;
-import qubexplorer.ui.summary.SummaryModel;
 import qubexplorer.ProjectNotFoundException;
 import java.awt.Event;
 import java.awt.event.ActionEvent;
@@ -179,7 +178,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         @Override
         public void itemStateChanged(ItemEvent ie) {
-            SummaryModel summaryModel = (SummaryModel) tableSummary.getTreeTableModel();
+            ClassifierSummaryModel summaryModel = (ClassifierSummaryModel) tableSummary.getTreeTableModel();
             summaryModel.setSkipEmptySeverity(!showEmptySeverity.isSelected());
             SwingUtilities.updateComponentTreeUI(tableSummary);
         }
