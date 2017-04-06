@@ -1,9 +1,9 @@
 package qubexplorer.filter;
 
 import java.util.Map;
-import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.issue.IssueQuery;
 import qubexplorer.IssueType;
+import qubexplorer.RadarIssue;
 
 
 public class TypeFilter implements IssueFilter {
@@ -25,7 +25,7 @@ public class TypeFilter implements IssueFilter {
     }
 
     @Override
-    public boolean isValid(Issue issue) {
+    public boolean isValid(RadarIssue issue) {
 //        return issue.type() == type;
         throw new UnsupportedOperationException();
     }

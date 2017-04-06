@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.List;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import org.sonar.wsclient.issue.Issue;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.filter.SeverityFilter;
 
@@ -52,7 +51,7 @@ public enum Severity implements Classifier {
     private static class SeverityType implements ClassifierType {
 
         @Override
-        public Severity valueOf(Issue issue) {
+        public Severity valueOf(RadarIssue issue) {
             return Severity.valueOf(issue.severity().toUpperCase());
         }
 

@@ -3,8 +3,8 @@ package qubexplorer.filter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.issue.IssueQuery;
+import qubexplorer.RadarIssue;
 
 /**
  *
@@ -33,7 +33,7 @@ public class AsigneesFilter implements IssueFilter {
     }
 
     @Override
-    public boolean isValid(Issue issue) {
+    public boolean isValid(RadarIssue issue) {
         return asignees.contains(issue.assignee());
     }
 

@@ -16,7 +16,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.sonar.wsclient.issue.Issue;
 import qubexplorer.Classifier;
 import qubexplorer.ClassifierSummary;
 import qubexplorer.ClassifierType;
@@ -66,11 +65,11 @@ public class SonarRunnerResult implements IssuesContainer {
 
     public SonarRunnerClassifierSummary<Severity> getClassifierSummaryBySeverity() {
         try  {
-            List<Issue> issues = readIssues();
+            List<RadarIssue> issues = readIssues();
             Map<String, IntWrapper> countsByRule=new HashMap<>();
             Map<Severity, IntWrapper> countsBySeverity=new HashMap<>();
             Map<Severity, Set<Rule>> rulesBySeverity=new EnumMap<>(Severity.class);
-            for (Issue issue : issues) {
+            for (RadarIssue issue : issues) {
                 if(countsByRule.containsKey(issue.ruleKey())) {
                     countsByRule.get(issue.ruleKey()).add(1);
                 }else{
@@ -100,11 +99,11 @@ public class SonarRunnerResult implements IssuesContainer {
     
     public <T extends Classifier> SonarRunnerClassifierSummary<T> getClassifierSummary(ClassifierType<T> classifierType) {
         try  {
-            List<Issue> issues = readIssues();
+            List<RadarIssue> issues = readIssues();
             Map<String, IntWrapper> countsByRule=new HashMap<>();
             Map<T, IntWrapper> countsByClassifier=new HashMap<>();
             Map<T, Set<Rule>> rulesBySeverity=new HashMap<>();
-            for (Issue issue : issues) {
+            for (RadarIssue issue : issues) {
                 if(countsByRule.containsKey(issue.ruleKey())) {
                     countsByRule.get(issue.ruleKey()).add(1);
                 }else{
@@ -141,9 +140,9 @@ public class SonarRunnerResult implements IssuesContainer {
         return false;
     }
     
-    private List<Issue> readIssues() throws IOException, ParseException {
+    private List<RadarIssue> readIssues() throws IOException, ParseException {
         try (JsonReader reader = new JsonReader(new FileReader(file))) {
-            List<Issue> issues = null;
+            List<RadarIssue> issues = null;
             reader.beginObject();
             while (reader.hasNext()) {
                 String name = reader.nextName();
@@ -154,14 +153,14 @@ public class SonarRunnerResult implements IssuesContainer {
                 }
             }
             reader.endObject();
-            return issues == null? Collections.<Issue>emptyList(): issues;
+            return issues == null? Collections.<RadarIssue>emptyList(): issues;
         } 
     }
 
     @Override
     public List<RadarIssue> getIssues(UserCredentials auth, ResourceKey resourceKey, List<IssueFilter> filters) {
         try (JsonReader reader = new JsonReader(new FileReader(file))) {
-            List<Issue> issues = null;
+            List<RadarIssue> issues = null;
             reader.beginObject();
             while (reader.hasNext()) {
                 String name = reader.nextName();
@@ -173,8 +172,9 @@ public class SonarRunnerResult implements IssuesContainer {
             }
             reader.endObject();
             List<RadarIssue> tmp=new ArrayList<>(issues.size());
-            for (Issue issue : issues) {
-                tmp.add(new RadarIssue(issue, rulesByKey.get(issue.ruleKey())));
+            for (RadarIssue issue : issues) {
+                issue.setRule(rulesByKey.get(issue.ruleKey()));
+                tmp.add(issue);
             }
             return tmp;
         } catch (IOException | ParseException ex) {
@@ -193,11 +193,11 @@ public class SonarRunnerResult implements IssuesContainer {
         return ruleList;
     }
 
-    private static List<Issue> readIssues(JsonReader reader, List<IssueFilter> filters) throws IOException, ParseException {
-        List<Issue> issues = new LinkedList<>();
+    private static List<RadarIssue> readIssues(JsonReader reader, List<IssueFilter> filters) throws IOException, ParseException {
+        List<RadarIssue> issues = new LinkedList<>();
         reader.beginArray();
         while (reader.hasNext()) {
-            Issue issue = readIssue(reader);
+            RadarIssue issue = readIssue(reader);
             boolean valid=true;
             for(IssueFilter filter:filters) {
                 if(!filter.isValid(issue)){
@@ -213,43 +213,43 @@ public class SonarRunnerResult implements IssuesContainer {
         return issues;
     }
 
-    private static Issue readIssue(JsonReader reader) throws IOException, ParseException {
+    private static RadarIssue readIssue(JsonReader reader) throws IOException, ParseException {
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-        SonarRunnerIssue issue = new SonarRunnerIssue();
+        RadarIssue radarIssue = new RadarIssue();
         reader.beginObject();
         while (reader.hasNext()) {
             String name = reader.nextName();
             switch (name) {
                 case "key":
                     //remove project name at the beggining
-                    issue.setKey(reader.nextString());
+                    radarIssue.setKey(reader.nextString());
                     break;
                 case "component":
-                    issue.setComponentKey(reader.nextString());
+                    radarIssue.setComponentKey(reader.nextString());
                     break;
                 case "line":
                     String line = reader.nextString();
                     if (line != null && !line.trim().isEmpty()) {
-                        issue.setLine(Integer.parseInt(line));
+                        radarIssue.setLine(Integer.parseInt(line));
                     }
                     break;
                 case "message":
-                    issue.setMessage(reader.nextString());
+                    radarIssue.setMessage(reader.nextString());
                     break;
                 case "severity":
-                    issue.setSeverity(reader.nextString());
+                    radarIssue.setSeverity(reader.nextString());
                     break;
                 case "rule":
-                    issue.setRuleKey(reader.nextString());
+                    radarIssue.setRuleKey(reader.nextString());
                     break;
                 case "status":
-                    issue.setStatus(reader.nextString());
+                    radarIssue.setStatus(reader.nextString());
                     break;
                 case "creationDate":
-                    issue.setCreationDate(df.parse(reader.nextString()));
+                    radarIssue.setCreationDate(df.parse(reader.nextString()));
                     break;
                 case "updateDate":
-                    issue.setUpdateDate(df.parse(reader.nextString()));
+                    radarIssue.setUpdateDate(df.parse(reader.nextString()));
                     break;
                 default:
                     reader.skipValue();
@@ -257,7 +257,7 @@ public class SonarRunnerResult implements IssuesContainer {
             }
         }
         reader.endObject();
-        return issue;
+        return radarIssue;
     }
     
     private static Rule readRule(JsonReader reader) throws IOException, ParseException {

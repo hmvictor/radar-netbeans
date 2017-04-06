@@ -1,10 +1,9 @@
 package qubexplorer;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.issue.IssueComment;
 import qubexplorer.ui.issues.IssueLocation;
 
@@ -12,133 +11,157 @@ import qubexplorer.ui.issues.IssueLocation;
  *
  * @author Victor
  */
-public class RadarIssue implements Issue{
-    private final Issue issue;
-    private final Rule rule;
+public class RadarIssue {
 
-    public RadarIssue(Issue issue, Rule rule) {
-        Objects.requireNonNull(issue, "issue is null");
-        Objects.requireNonNull(rule, "rule is null");
-        this.issue = issue;
-        this.rule=rule;
+    private String key;
+    private String componentKey;
+    private Integer line;
+    private String message;
+    private String severity;
+    private String ruleKey;
+    private String status;
+    private Date creationDate;
+    private Date updateDate;
+    private Rule rule;
+
+    public RadarIssue() {
     }
 
-    @Override
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public void setComponentKey(String componentKey) {
+        this.componentKey = componentKey;
+    }
+
+    public void setLine(Integer line) {
+        this.line = line;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setSeverity(String severity) {
+        this.severity = severity;
+    }
+
+    public void setRuleKey(String ruleKey) {
+        this.ruleKey = ruleKey;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    public void setUpdateDate(Date updateDate) {
+        this.updateDate = updateDate;
+    }
+
     public String key() {
-        return issue.key();
+        return key;
     }
 
-    @Override
     public String componentKey() {
-        return issue.componentKey();
+        return componentKey;
     }
 
-    @Override
     public String projectKey() {
-        return issue.projectKey();
+        throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    @Override
     public String ruleKey() {
-        return issue.ruleKey();
+        return ruleKey;
     }
-    
+
+    public String severity() {
+        return severity;
+    }
+
+    public String message() {
+        return message;
+    }
+
+    public Integer line() {
+        return line;
+    }
+
+    public String status() {
+        return status;
+    }
+
+    public String resolution() {
+        return "";
+    }
+
+    public String reporter() {
+        return "";
+    }
+
+    public String assignee() {
+        return "";
+    }
+
+    public String author() {
+        return "";
+    }
+
+    public String actionPlan() {
+        return "";
+    }
+
+    public Date creationDate() {
+        return creationDate;
+    }
+
+    public Date updateDate() {
+        return updateDate;
+    }
+
+    public Date closeDate() {
+        return null;
+    }
+
+    public String attribute(String key) {
+        return "";
+    }
+
+    public Map<String, String> attributes() {
+        return Collections.emptyMap();
+    }
+
+    public List<IssueComment> comments() {
+        return Collections.emptyList();
+    }
+
+    public Long componentId() {
+        return 0L;
+    }
+
+    public String debt() {
+        return "";
+    }
+
+    public void setRule(Rule rule) {
+        this.rule = rule;
+    }
+
     public Rule rule() {
         return rule;
     }
 
-    @Override
-    public String severity() {
-        return issue.severity();
-    }
-    
-    public Severity severityObject(){
+    public Severity severityObject() {
         return Severity.valueOf(severity());
     }
 
-    @Override
-    public String message() {
-        return issue.message();
-    }
-
-    @Override
-    public Integer line() {
-        return issue.line();
-    }
-
-    @Override
-    public String status() {
-        return issue.status();
-    }
-
-    @Override
-    public String resolution() {
-        return issue.resolution();
-    }
-
-    @Override
-    public String reporter() {
-        return issue.reporter();
-    }
-
-    @Override
-    public String assignee() {
-        return issue.assignee();
-    }
-
-    @Override
-    public String author() {
-        return issue.author();
-    }
-
-    @Override
-    public String actionPlan() {
-        return issue.actionPlan();
-    }
-
-    @Override
-    public Date creationDate() {
-        return issue.creationDate();
-    }
-
-    @Override
-    public Date updateDate() {
-        return issue.updateDate();
-    }
-
-    @Override
-    public Date closeDate() {
-        return issue.closeDate();
-    }
-
-    @Override
-    public String attribute(String key) {
-        return issue.attribute(key);
-    }
-
-    @Override
-    public Map<String, String> attributes() {
-        return issue.attributes();
-    }
-
-    @Override
-    public List<IssueComment> comments() {
-        return issue.comments();
-    }
-
     public IssueLocation getLocation() {
-        int lineNumber=issue.line() == null ? 0: issue.line();
-        return new IssueLocation(issue.componentKey(), lineNumber);
-    }
-
-    @Override
-    public Long componentId() {
-        return issue.componentId();
-    }
-
-    @Override
-    public String debt() {
-        return issue.debt();
+        int lineNumber = line() == null ? 0 : line();
+        return new IssueLocation(componentKey(), lineNumber);
     }
 
 }

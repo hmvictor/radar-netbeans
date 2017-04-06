@@ -1,7 +1,6 @@
 package qubexplorer;
 
 import java.util.List;
-import org.sonar.wsclient.issue.Issue;
 
 /**
  *
@@ -9,7 +8,7 @@ import org.sonar.wsclient.issue.Issue;
  */
 public interface ClassifierType<T extends Classifier> {
     
-    T valueOf(Issue issue);
+    T valueOf(RadarIssue issue);
     
     List<T> getValues();
     

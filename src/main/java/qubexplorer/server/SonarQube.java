@@ -121,7 +121,18 @@ public class SonarQube implements IssuesContainer {
                 result = issueClient.find(query);
                 for (Issue issue : result.list()) {
                     Rule rule = searchInCacheOrLoadFromServer(rulesCache, issue.ruleKey(), userCredentials);
-                    issues.add(new RadarIssue(issue, rule));
+                    RadarIssue radarIssue=new RadarIssue();
+                    radarIssue.setComponentKey(issue.componentKey());
+                    radarIssue.setCreationDate(issue.creationDate());
+                    radarIssue.setKey(issue.key());
+                    radarIssue.setLine(issue.line());
+                    radarIssue.setMessage(issue.message());
+                    radarIssue.setRule(rule);
+                    radarIssue.setRuleKey(issue.ruleKey());
+                    radarIssue.setSeverity(issue.severity());
+                    radarIssue.setStatus(issue.status());
+                    radarIssue.setUpdateDate(issue.updateDate());
+                    issues.add(radarIssue);
                 }
                 pageIndex++;
             } while (result.paging().pages() != null && pageIndex <= result.paging().pages());

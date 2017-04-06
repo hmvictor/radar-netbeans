@@ -1,8 +1,8 @@
 package qubexplorer.filter;
 
 import java.util.Objects;
-import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.issue.IssueQuery;
+import qubexplorer.RadarIssue;
 import qubexplorer.Severity;
 
 /**
@@ -24,7 +24,7 @@ public class SeverityFilter implements IssueFilter {
     }
 
     @Override
-    public boolean isValid(Issue issue) {
+    public boolean isValid(RadarIssue issue) {
         return issue.severity().equalsIgnoreCase(severity.toString());
     }
 

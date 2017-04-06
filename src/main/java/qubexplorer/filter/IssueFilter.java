@@ -1,7 +1,7 @@
 package qubexplorer.filter;
 
-import org.sonar.wsclient.issue.Issue;
 import org.sonar.wsclient.issue.IssueQuery;
+import qubexplorer.RadarIssue;
 
 /**
  *
@@ -13,6 +13,6 @@ public interface IssueFilter {
 
     String getDescription();
 
-    boolean isValid(Issue issue);
+    boolean isValid(RadarIssue issue);
 
 }
