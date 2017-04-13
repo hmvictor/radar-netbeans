@@ -21,8 +21,11 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
+import org.jboss.resteasy.client.jaxrs.BasicAuthentication;
+import org.jboss.resteasy.client.jaxrs.ClientHttpEngine;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient4Engine;
 import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
 import qubexplorer.Classifier;
@@ -35,6 +38,7 @@ import qubexplorer.GenericSonarQubeProjectConfiguration;
 import qubexplorer.Rule;
 import qubexplorer.ClassifierSummary;
 import qubexplorer.ClassifierType;
+import qubexplorer.PassEncoder;
 
 /**
  *
@@ -65,11 +69,11 @@ public class SonarQube implements IssuesContainer {
     }
 
     public Version getVersion(UserCredentials userCredentials) {
-        return new Version(getServerStatus().getVersion());
+        return new Version(getServerStatus(userCredentials).getVersion());
     }
     
-    public ServerStatus getServerStatus() {
-        WebTarget systemStatusTarget=getSystemStatusTarget();
+    public ServerStatus getServerStatus(UserCredentials userCredentials) {
+        WebTarget systemStatusTarget=getSystemStatusTarget(userCredentials);
         return systemStatusTarget.request(MediaType.APPLICATION_JSON).get(ServerStatus.class);
     }
 
@@ -90,7 +94,7 @@ public class SonarQube implements IssuesContainer {
 
     private List<RadarIssue> getIssues(UserCredentials userCredentials, Map<String, List<String>> params) {// IssueQuery query) {
         try {
-            WebTarget issuesTarget=getIssuesTarget();
+            WebTarget issuesTarget=getIssuesTarget(userCredentials);
             for (Map.Entry<String, List<String>> entry : params.entrySet()) {
                 issuesTarget=issuesTarget.queryParam(entry.getKey(), (Object[])entry.getValue().toArray(new String[0]));
             }
@@ -144,48 +148,9 @@ public class SonarQube implements IssuesContainer {
         return rule;
     }
 
-    private HttpClient createSonar(UserCredentials userCredentials) {
-        final ProxySettings proxySettings = getProxySettings();
-        DefaultHttpClient httpClient = new DefaultHttpClient();
-        if (proxySettings != null) {
-            if (proxySettings.getUsername() != null) {
-                httpClient.getCredentialsProvider()
-                        .setCredentials(new AuthScope(proxySettings.getHost(), proxySettings.getPort()), new UsernamePasswordCredentials(proxySettings.getUsername(), proxySettings.getPassword()));
-            }
-            HttpHost proxy = new HttpHost(proxySettings.getHost(), proxySettings.getPort());
-            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
-            httpClient.setRoutePlanner(routePlanner);
-        }
-        return httpClient;
-    }
-
-    private ProxySettings getProxySettings() {
-        try {
-            ProxySettings settings = null;
-            URI uri = new URI(serverUrl);
-            String proxyHost = NetworkSettings.getProxyHost(uri);
-            if (proxyHost != null) {
-                int proxyPort = 8080;
-                String stringProxyPort = NetworkSettings.getProxyPort(uri);
-                if (stringProxyPort != null) {
-                    proxyPort = Integer.parseInt(stringProxyPort);
-                }
-                settings = new ProxySettings(proxyHost, proxyPort);
-                String authenticationUsername = NetworkSettings.getAuthenticationUsername(uri);
-                if (authenticationUsername != null) {
-                    settings.setUsername(authenticationUsername);
-                    settings.setKeyForPassword(NetworkSettings.getKeyForAuthenticationPassword(uri));
-                }
-            }
-            return settings;
-        } catch (URISyntaxException ex) {
-            throw new IllegalArgumentException("Wrong URI " + serverUrl, ex);
-        }
-    }
-
     public Rule getRule(UserCredentials userCredentials, String ruleKey) {
         try {
-            WebTarget rulesTarget = getRulesTarget();
+            WebTarget rulesTarget = getRulesTarget(userCredentials);
             return rulesTarget.queryParam("key", ruleKey).request(MediaType.APPLICATION_JSON).get(RuleResult.class).getRule();
         } catch (WebApplicationException ex) {
             if (isError401(ex)) {
@@ -198,7 +163,7 @@ public class SonarQube implements IssuesContainer {
 
     public List<ResourceKey> getProjectsKeys(UserCredentials userCredentials) {
         try {
-            WebTarget resourcesTarget=getResourceTarget();
+            WebTarget resourcesTarget=getResourceTarget(userCredentials);
             List<Resource> resources=resourcesTarget.request(MediaType.APPLICATION_JSON).get(new GenericType<List<Resource>>() {});
             List<ResourceKey> keys = new ArrayList<>(resources.size());
             resources.forEach((r) -> {
@@ -220,7 +185,7 @@ public class SonarQube implements IssuesContainer {
 
     public List<SonarQubeProjectConfiguration> getProjects(UserCredentials userCredentials) {
         try {
-            WebTarget resourcesTarget=getResourceTarget();
+            WebTarget resourcesTarget=getResourceTarget(userCredentials);
             List<Resource> resources = resourcesTarget.request(MediaType.APPLICATION_JSON).get(new GenericType<List<Resource>>() {});
             List<SonarQubeProjectConfiguration> projects = new ArrayList<>(resources.size());
             for (Resource r : resources) {
@@ -264,26 +229,73 @@ public class SonarQube implements IssuesContainer {
         return simpleSummary;
     }
 
-    private WebTarget getResourceTarget() {
-        ResteasyClient client = new ResteasyClientBuilder().build();
+    private WebTarget getResourceTarget(UserCredentials userCredentials) {
+        ResteasyClient client = getClient(userCredentials);
         return client.target(serverUrl+"/api/resources");
     }
-    
-    private WebTarget getRulesTarget() {
-        ResteasyClient client = new ResteasyClientBuilder().build();
+
+    private WebTarget getRulesTarget(UserCredentials userCredentials) {
+        ResteasyClient client = getClient(userCredentials);
         return client.target(serverUrl+"/api/rules/show");
     }
     
-    private WebTarget getIssuesTarget() {
-        ResteasyClient client = new ResteasyClientBuilder().build();
+    private WebTarget getIssuesTarget(UserCredentials userCredentials) {
+        ResteasyClient client = getClient(userCredentials);
         return client.target(serverUrl+"/api/issues/search");
     }
 
-    private WebTarget getSystemStatusTarget() {
-        ResteasyClient client = new ResteasyClientBuilder().build();
+    private WebTarget getSystemStatusTarget(UserCredentials userCredentials) {
+        ResteasyClient client = getClient(userCredentials);
         return client.target(serverUrl+"/api/system/status");
     }
     
+    private ResteasyClient getClient(UserCredentials userCredentials) {
+        ClientHttpEngine httpEngine=new ApacheHttpClient4Engine(createHttpClient());
+        ResteasyClient client = new ResteasyClientBuilder().httpEngine(httpEngine).build();
+        if(userCredentials != null) {
+            client.register(new BasicAuthentication(userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword())));
+        }
+        return client;
+    }
+    
+    private HttpClient createHttpClient() {
+        final ProxySettings proxySettings = getProxySettings();
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        if (proxySettings != null) {
+            if (proxySettings.getUsername() != null) {
+                httpClient.getCredentialsProvider()
+                        .setCredentials(new AuthScope(proxySettings.getHost(), proxySettings.getPort()), new UsernamePasswordCredentials(proxySettings.getUsername(), proxySettings.getPassword()));
+            }
+            HttpHost proxy = new HttpHost(proxySettings.getHost(), proxySettings.getPort());
+            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
+            httpClient.setRoutePlanner(routePlanner);
+        }
+        return httpClient;
+    }
+
+    private ProxySettings getProxySettings() {
+        try {
+            ProxySettings settings = null;
+            URI uri = new URI(serverUrl);
+            String proxyHost = NetworkSettings.getProxyHost(uri);
+            if (proxyHost != null) {
+                int proxyPort = 8080;
+                String stringProxyPort = NetworkSettings.getProxyPort(uri);
+                if (stringProxyPort != null) {
+                    proxyPort = Integer.parseInt(stringProxyPort);
+                }
+                settings = new ProxySettings(proxyHost, proxyPort);
+                String authenticationUsername = NetworkSettings.getAuthenticationUsername(uri);
+                if (authenticationUsername != null) {
+                    settings.setUsername(authenticationUsername);
+                    settings.setKeyForPassword(NetworkSettings.getKeyForAuthenticationPassword(uri));
+                }
+            }
+            return settings;
+        } catch (URISyntaxException ex) {
+            throw new IllegalArgumentException("Wrong URI " + serverUrl, ex);
+        }
+    }
 
     private static class ProxySettings {
 

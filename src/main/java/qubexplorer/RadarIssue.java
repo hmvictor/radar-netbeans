@@ -15,6 +15,7 @@ import qubexplorer.ui.issues.IssueLocation;
 public class RadarIssue {
 
     private String key;
+    @JsonProperty("component")
     private String componentKey;
     private Integer line;
     private String message;

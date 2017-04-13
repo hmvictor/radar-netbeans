@@ -21,7 +21,6 @@ public class IssuesTableModel extends DefaultTableModel {
         super(new Object [][] {}, COLUMN_NAMES);
     }
     
-    
     public void add(RadarIssue issue) {
         addRow(createRowData(issue));
     }
