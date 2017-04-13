@@ -1,14 +1,18 @@
 package qubexplorer;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 /**
  *
  * @author Víctor
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Rule {
     private String key;
     private String name;
+    @JsonProperty("htmlDesc")
     private String description;
 
     public Rule(String key) {

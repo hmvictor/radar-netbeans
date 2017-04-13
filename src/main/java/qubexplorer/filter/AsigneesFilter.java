@@ -1,9 +1,11 @@
 package qubexplorer.filter;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import org.sonar.wsclient.issue.IssueQuery;
 import qubexplorer.RadarIssue;
 
 /**
@@ -23,10 +25,10 @@ public class AsigneesFilter implements IssueFilter {
     }
 
     @Override
-    public void apply(IssueQuery query) {
-        query.assignees(asignees.toArray(new String[0]));
+    public void apply(Map<String, List<String>> params) {
+        params.put("asignees", new ArrayList<>(asignees));
     }
-
+    
     @Override
     public String getDescription() {
         return "Asignees: " + asignees.toString();

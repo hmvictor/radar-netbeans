@@ -4,37 +4,30 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import qubexplorer.filter.IssueFilter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
 import org.netbeans.api.keyring.Keyring;
 import org.openide.util.NetworkSettings;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
-import org.sonar.wsclient.Host;
-import org.sonar.wsclient.Sonar;
-import org.sonar.wsclient.SonarClient;
-import org.sonar.wsclient.base.HttpException;
-import org.sonar.wsclient.connectors.ConnectionException;
-import org.sonar.wsclient.connectors.HttpClient4Connector;
-import org.sonar.wsclient.issue.ActionPlan;
-import org.sonar.wsclient.issue.Issue;
-import org.sonar.wsclient.issue.IssueClient;
-import org.sonar.wsclient.issue.IssueQuery;
-import org.sonar.wsclient.issue.Issues;
-import org.sonar.wsclient.services.Resource;
-import org.sonar.wsclient.services.ResourceQuery;
-import org.sonar.wsclient.services.ServerQuery;
+import org.jboss.resteasy.client.jaxrs.ResteasyClient;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import qubexplorer.UserCredentials;
 import qubexplorer.AuthorizationException;
 import qubexplorer.Classifier;
 import qubexplorer.IssuesContainer;
 import qubexplorer.NoSuchProjectException;
-import qubexplorer.PassEncoder;
 import qubexplorer.RadarIssue;
 import qubexplorer.ResourceKey;
 import qubexplorer.SonarQubeProjectConfiguration;
@@ -72,28 +65,12 @@ public class SonarQube implements IssuesContainer {
     }
 
     public Version getVersion(UserCredentials userCredentials) {
-        Sonar sonar = createSonar(userCredentials);
-        ServerQuery serverQuery = new ServerQuery();
-        return new Version(sonar.find(serverQuery).getVersion());
+        return new Version(getServerStatus().getVersion());
     }
-
-    public double getRulesCompliance(UserCredentials userCredentials, ResourceKey resourceKey) {
-        try {
-            if (!existsProject(userCredentials, resourceKey)) {
-                throw new NoSuchProjectException(resourceKey);
-            }
-            Sonar sonar = createSonar(userCredentials);
-            ResourceQuery query = new ResourceQuery(resourceKey.toString());
-            query.setMetrics(VIOLATIONS_DENSITY_METRICS);
-            Resource r = sonar.find(query);
-            return r.getMeasure(VIOLATIONS_DENSITY_METRICS).getValue();
-        } catch (ConnectionException ex) {
-            if (isError401(ex)) {
-                throw new AuthorizationException(ex);
-            } else {
-                throw ex;
-            }
-        }
+    
+    public ServerStatus getServerStatus() {
+        WebTarget systemStatusTarget=getSystemStatusTarget();
+        return systemStatusTarget.request(MediaType.APPLICATION_JSON).get(ServerStatus.class);
     }
 
     @Override
@@ -101,25 +78,32 @@ public class SonarQube implements IssuesContainer {
         if (!existsProject(auth, projectKey)) {
             throw new NoSuchProjectException(projectKey);
         }
-        IssueQuery query = IssueQuery.create().componentRoots(projectKey.toString()).pageSize(PAGE_SIZE).statuses("OPEN");
+        Map<String, List<String>> params=new HashMap<>();
+        params.put("componentKeys", Arrays.asList(projectKey.toString()));
+        params.put("ps", Arrays.asList("500"));
+        params.put("statuses", Arrays.asList("OPEN"));
         filters.forEach((filter) -> {
-            filter.apply(query);
+            filter.apply(params);
         });
-        return getIssues(auth, query);
+        return getIssues(auth, params);
     }
 
-    private List<RadarIssue> getIssues(UserCredentials userCredentials, IssueQuery query) {
+    private List<RadarIssue> getIssues(UserCredentials userCredentials, Map<String, List<String>> params) {// IssueQuery query) {
         try {
-            SonarClient sonarClient = createSonarClient(userCredentials);
-            IssueClient issueClient = sonarClient.issueClient();
+            WebTarget issuesTarget=getIssuesTarget();
+            for (Map.Entry<String, List<String>> entry : params.entrySet()) {
+                issuesTarget=issuesTarget.queryParam(entry.getKey(), (Object[])entry.getValue().toArray(new String[0]));
+            }
+            IssuesSearchResult issuesSearchResult; 
             List<RadarIssue> issues = new LinkedList<>();
             Map<String, Rule> rulesCache = new HashMap<>();
-            Issues result;
             int pageIndex = 1;
             do {
-                query.pageIndex(pageIndex);
-                result = issueClient.find(query);
-                for (Issue issue : result.list()) {
+//                query.pageIndex(pageIndex);
+//                result = issueClient.find(query);
+                issuesSearchResult = issuesTarget.queryParam("p", pageIndex).request(MediaType.APPLICATION_JSON).get(IssuesSearchResult.class);
+                
+                for (RadarIssue issue : issuesSearchResult.getIssues()) {
                     Rule rule = searchInCacheOrLoadFromServer(rulesCache, issue.ruleKey(), userCredentials);
                     RadarIssue radarIssue=new RadarIssue();
                     radarIssue.setComponentKey(issue.componentKey());
@@ -135,10 +119,10 @@ public class SonarQube implements IssuesContainer {
                     issues.add(radarIssue);
                 }
                 pageIndex++;
-            } while (result.paging().pages() != null && pageIndex <= result.paging().pages());
+            } while (issuesSearchResult.getPaging().getTotal() != null && pageIndex <= Math.ceil(issuesSearchResult.getPaging().getTotal()/issuesSearchResult.getPaging().getPageSize().doubleValue()));
             return issues;
-        } catch (HttpException ex) {
-            if (ex.status() == UNAUTHORIZED_RESPONSE_STATUS) {
+        } catch (WebApplicationException ex) {
+            if (isError401(ex)) {
                 throw new AuthorizationException(ex);
             } else {
                 throw ex;
@@ -160,16 +144,10 @@ public class SonarQube implements IssuesContainer {
         return rule;
     }
 
-    private Sonar createSonar(UserCredentials userCredentials) {
-        Host host = new Host(serverUrl);
-        if (userCredentials != null) {
-            host.setUsername(userCredentials.getUsername());
-            host.setPassword(PassEncoder.decodeAsString(userCredentials.getPassword()));
-        }
-        HttpClient4Connector connector = new HttpClient4Connector(host);
+    private HttpClient createSonar(UserCredentials userCredentials) {
         final ProxySettings proxySettings = getProxySettings();
+        DefaultHttpClient httpClient = new DefaultHttpClient();
         if (proxySettings != null) {
-            DefaultHttpClient httpClient = connector.getHttpClient();
             if (proxySettings.getUsername() != null) {
                 httpClient.getCredentialsProvider()
                         .setCredentials(new AuthScope(proxySettings.getHost(), proxySettings.getPort()), new UsernamePasswordCredentials(proxySettings.getUsername(), proxySettings.getPassword()));
@@ -178,22 +156,7 @@ public class SonarQube implements IssuesContainer {
             DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
             httpClient.setRoutePlanner(routePlanner);
         }
-        return new Sonar(connector);
-    }
-
-    private SonarClient createSonarClient(UserCredentials userCredentials) {
-        SonarClient.Builder builder = SonarClient.builder().url(serverUrl);
-        if (userCredentials != null) {
-            builder.login(userCredentials.getUsername()).password(PassEncoder.decodeAsString(userCredentials.getPassword()));
-        }
-        ProxySettings proxySettings = getProxySettings();
-        if (proxySettings != null) {
-            builder.proxy(proxySettings.getHost(), proxySettings.getPort());
-            if (proxySettings.getUsername() != null) {
-                builder.proxyLogin(proxySettings.getUsername()).proxyPassword(proxySettings.getPassword());
-            }
-        }
-        return builder.build();
+        return httpClient;
     }
 
     private ProxySettings getProxySettings() {
@@ -220,40 +183,11 @@ public class SonarQube implements IssuesContainer {
         }
     }
 
-    public List<ActionPlan> getActionPlans(UserCredentials userCredentials, ResourceKey resourceKey) {
-        try {
-            SonarClient client = createSonarClient(userCredentials);
-            return client.actionPlanClient().find(resourceKey.toString());
-        } catch (HttpException ex) {
-            if (ex.status() == UNAUTHORIZED_RESPONSE_STATUS) {
-                throw new AuthorizationException(ex);
-            } else {
-                throw ex;
-            }
-        }
-    }
-
     public Rule getRule(UserCredentials userCredentials, String ruleKey) {
         try {
-            return new RuleSearchClient(serverUrl).getRule(userCredentials, ruleKey);
-        } catch (HttpException ex) {
-            if (ex.status() == UNAUTHORIZED_RESPONSE_STATUS) {
-                throw new AuthorizationException(ex);
-            }
-            throw ex;
-        }
-    }
-
-    public List<ResourceKey> getProjectsKeys(UserCredentials userCredentials) {
-        try {
-            Sonar sonar = createSonar(userCredentials);
-            List<Resource> resources = sonar.findAll(new ResourceQuery());
-            List<ResourceKey> keys = new ArrayList<>(resources.size());
-            for (Resource r : resources) {
-                keys.add(ResourceKey.valueOf(r.getKey()));
-            }
-            return keys;
-        } catch (ConnectionException ex) {
+            WebTarget rulesTarget = getRulesTarget();
+            return rulesTarget.queryParam("key", ruleKey).request(MediaType.APPLICATION_JSON).get(RuleResult.class).getRule();
+        } catch (WebApplicationException ex) {
             if (isError401(ex)) {
                 throw new AuthorizationException(ex);
             } else {
@@ -262,20 +196,38 @@ public class SonarQube implements IssuesContainer {
         }
     }
 
-    private static boolean isError401(ConnectionException ex) {
-        return ex.getMessage().contains("HTTP error: 401");
+    public List<ResourceKey> getProjectsKeys(UserCredentials userCredentials) {
+        try {
+            WebTarget resourcesTarget=getResourceTarget();
+            List<Resource> resources=resourcesTarget.request(MediaType.APPLICATION_JSON).get(new GenericType<List<Resource>>() {});
+            List<ResourceKey> keys = new ArrayList<>(resources.size());
+            resources.forEach((r) -> {
+                keys.add(ResourceKey.valueOf(r.getKey()));
+            });
+            return keys;
+        } catch (WebApplicationException ex) {
+            if (isError401(ex)) {
+                throw new AuthorizationException(ex);
+            } else {
+                throw ex;
+            }
+        }
+    }
+
+    private static boolean isError401(WebApplicationException ex) {
+        return ex.getResponse().getStatus() == 401;
     }
 
     public List<SonarQubeProjectConfiguration> getProjects(UserCredentials userCredentials) {
         try {
-            Sonar sonar = createSonar(userCredentials);
-            List<Resource> resources = sonar.findAll(new ResourceQuery());
+            WebTarget resourcesTarget=getResourceTarget();
+            List<Resource> resources = resourcesTarget.request(MediaType.APPLICATION_JSON).get(new GenericType<List<Resource>>() {});
             List<SonarQubeProjectConfiguration> projects = new ArrayList<>(resources.size());
             for (Resource r : resources) {
                 projects.add(new GenericSonarQubeProjectConfiguration(r.getName(), ResourceKey.valueOf(r.getKey()), r.getVersion()));
             }
             return projects;
-        } catch (ConnectionException ex) {
+        } catch (WebApplicationException ex) {
             if (isError401(ex)) {
                 throw new AuthorizationException(ex);
             } else {
@@ -310,6 +262,26 @@ public class SonarQube implements IssuesContainer {
             });
         }
         return simpleSummary;
+    }
+
+    private WebTarget getResourceTarget() {
+        ResteasyClient client = new ResteasyClientBuilder().build();
+        return client.target(serverUrl+"/api/resources");
+    }
+    
+    private WebTarget getRulesTarget() {
+        ResteasyClient client = new ResteasyClientBuilder().build();
+        return client.target(serverUrl+"/api/rules/show");
+    }
+    
+    private WebTarget getIssuesTarget() {
+        ResteasyClient client = new ResteasyClientBuilder().build();
+        return client.target(serverUrl+"/api/issues/search");
+    }
+
+    private WebTarget getSystemStatusTarget() {
+        ResteasyClient client = new ResteasyClientBuilder().build();
+        return client.target(serverUrl+"/api/system/status");
     }
     
 

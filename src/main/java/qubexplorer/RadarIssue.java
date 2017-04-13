@@ -1,16 +1,17 @@
 package qubexplorer;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
-import org.sonar.wsclient.issue.IssueComment;
 import qubexplorer.ui.issues.IssueLocation;
 
 /**
  *
  * @author Victor
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RadarIssue {
 
     private String key;
@@ -18,6 +19,7 @@ public class RadarIssue {
     private Integer line;
     private String message;
     private String severity;
+    @JsonProperty("rule")
     private String ruleKey;
     private String status;
     private Date creationDate;
@@ -133,10 +135,6 @@ public class RadarIssue {
 
     public Map<String, String> attributes() {
         return Collections.emptyMap();
-    }
-
-    public List<IssueComment> comments() {
-        return Collections.emptyList();
     }
 
     public Long componentId() {

@@ -1,6 +1,7 @@
 package qubexplorer.filter;
 
-import org.sonar.wsclient.issue.IssueQuery;
+import java.util.List;
+import java.util.Map;
 import qubexplorer.RadarIssue;
 
 /**
@@ -9,7 +10,9 @@ import qubexplorer.RadarIssue;
  */
 public interface IssueFilter {
 
-    void apply(IssueQuery query);
+    void apply(Map<String, List<String>> params);
+
+//    void apply(IssueQuery query);
 
     String getDescription();
 

@@ -1,7 +1,9 @@
 package qubexplorer.filter;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import org.sonar.wsclient.issue.IssueQuery;
 import qubexplorer.RadarIssue;
 import qubexplorer.Rule;
 
@@ -19,10 +21,10 @@ public class RuleFilter implements IssueFilter {
     }
 
     @Override
-    public void apply(IssueQuery query) {
-        query.rules(rule.getKey());
+    public void apply(Map<String, List<String>> params) {
+        params.put("rules", Arrays.asList(rule.getKey()));
     }
-
+    
     @Override
     public boolean isValid(RadarIssue issue) {
         return issue.ruleKey().equals(rule.getKey());
