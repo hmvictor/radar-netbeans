@@ -1,6 +1,7 @@
 package qubexplorer.server;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import qubexplorer.RadarIssue;
 
@@ -32,7 +33,8 @@ public class IssuesSearchResult {
     public static class Paging {
         private Integer pageIndex;
         private Integer pageSize;
-        private Integer total;
+        @JsonProperty("total")
+        private Integer totalNumberOfResults;
 
         public Integer getPageIndex() {
             return pageIndex;
@@ -50,12 +52,16 @@ public class IssuesSearchResult {
             this.pageSize = pageSize;
         }
 
-        public Integer getTotal() {
-            return total;
+        public Integer getTotalNumberOfResults() {
+            return totalNumberOfResults;
         }
 
-        public void setTotal(Integer total) {
-            this.total = total;
+        public void setTotalNumberOfResults(Integer totalNumberOfResults) {
+            this.totalNumberOfResults = totalNumberOfResults;
+        }
+        
+        public int getTotalPageCount() {
+            return (int) Math.ceil(totalNumberOfResults/pageSize.doubleValue());
         }
         
     }

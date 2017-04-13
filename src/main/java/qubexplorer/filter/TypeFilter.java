@@ -1,5 +1,6 @@
 package qubexplorer.filter;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import qubexplorer.IssueType;
@@ -15,7 +16,7 @@ public class TypeFilter implements IssueFilter {
     
     @Override
     public void apply(Map<String, List<String>> params) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        params.put("types", Arrays.asList(type.toString().toUpperCase()));
     }
     
     @Override
@@ -25,13 +26,7 @@ public class TypeFilter implements IssueFilter {
 
     @Override
     public boolean isValid(RadarIssue issue) {
-//        return issue.type() == type;
-        throw new UnsupportedOperationException();
-    }
-
-//    @Override
-    public Map<String, String> getParameters() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return issue.type().equalsIgnoreCase(type.toString());
     }
 
 }

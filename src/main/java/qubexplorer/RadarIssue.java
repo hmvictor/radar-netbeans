@@ -26,6 +26,7 @@ public class RadarIssue {
     private Date creationDate;
     private Date updateDate;
     private Rule rule;
+    private String type;
 
     public RadarIssue() {
     }
@@ -162,5 +163,13 @@ public class RadarIssue {
         int lineNumber = line() == null ? 0 : line();
         return new IssueLocation(componentKey(), lineNumber);
     }
+    
+    public String type() {
+        return type;
+    }
 
+    public void setType(String type) {
+        this.type = type;
+    }
+    
 }

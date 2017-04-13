@@ -46,9 +46,7 @@ import qubexplorer.PassEncoder;
  */
 public class SonarQube implements IssuesContainer {
 
-    private static final String VIOLATIONS_DENSITY_METRICS = "violations_density";
-    private static final int UNAUTHORIZED_RESPONSE_STATUS = 401;
-    private static final int PAGE_SIZE = 500;
+    private static final int MAX_SUPPORTED_PAGE_SIZE = 500;
     private String serverUrl;
 
     public SonarQube(String servelUrl) {
@@ -84,7 +82,7 @@ public class SonarQube implements IssuesContainer {
         }
         Map<String, List<String>> params=new HashMap<>();
         params.put("componentKeys", Arrays.asList(projectKey.toString()));
-        params.put("ps", Arrays.asList("500"));
+        params.put("ps", Arrays.asList(String.valueOf(MAX_SUPPORTED_PAGE_SIZE)));
         params.put("statuses", Arrays.asList("OPEN"));
         filters.forEach((filter) -> {
             filter.apply(params);
@@ -103,10 +101,7 @@ public class SonarQube implements IssuesContainer {
             Map<String, Rule> rulesCache = new HashMap<>();
             int pageIndex = 1;
             do {
-//                query.pageIndex(pageIndex);
-//                result = issueClient.find(query);
                 issuesSearchResult = issuesTarget.queryParam("p", pageIndex).request(MediaType.APPLICATION_JSON).get(IssuesSearchResult.class);
-                
                 for (RadarIssue issue : issuesSearchResult.getIssues()) {
                     Rule rule = searchInCacheOrLoadFromServer(rulesCache, issue.ruleKey(), userCredentials);
                     RadarIssue radarIssue=new RadarIssue();
@@ -123,7 +118,7 @@ public class SonarQube implements IssuesContainer {
                     issues.add(radarIssue);
                 }
                 pageIndex++;
-            } while (issuesSearchResult.getPaging().getTotal() != null && pageIndex <= Math.ceil(issuesSearchResult.getPaging().getTotal()/issuesSearchResult.getPaging().getPageSize().doubleValue()));
+            } while (issuesSearchResult.getPaging().getTotalNumberOfResults() != null && pageIndex <= issuesSearchResult.getPaging().getTotalPageCount());
             return issues;
         } catch (WebApplicationException ex) {
             if (isError401(ex)) {
