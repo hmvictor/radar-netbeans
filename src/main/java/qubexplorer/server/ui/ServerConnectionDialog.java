@@ -8,6 +8,9 @@ import javax.swing.event.DocumentListener;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
 import qubexplorer.AuthorizationException;
+import qubexplorer.ClassifierType;
+import qubexplorer.IssueType;
+import qubexplorer.Severity;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.UserCredentials;
 import qubexplorer.server.SonarQube;
@@ -90,6 +93,14 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
         String username = user.getText();
         return username.isEmpty() ? null : new UserCredentials(username, password.getPassword());
     }
+    
+    public String[] getAsignees() {
+        return asigneesTextfield.getText().split("\\s*,\\s*");
+    }
+    
+    public ClassifierType<?> getClassifierType() {
+        return groupBySeverityButton.isSelected() ? Severity.getType() :  IssueType.getType();
+    }
 
     public void setUserCredentials(UserCredentials userCredentials) {
         user.setText(userCredentials.getUsername());
@@ -124,6 +135,7 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        buttonGroupRetrieval = new javax.swing.ButtonGroup();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         url = new javax.swing.JTextField();
@@ -136,6 +148,10 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
         jLabel4 = new javax.swing.JLabel();
         password = new javax.swing.JPasswordField();
         credentialsWarning = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        asigneesTextfield = new javax.swing.JTextField();
+        groupBySeverityButton = new javax.swing.JRadioButton();
+        groupByTypeButton = new javax.swing.JRadioButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.title")); // NOI18N
@@ -193,6 +209,17 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
         credentialsWarning.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         org.openide.awt.Mnemonics.setLocalizedText(credentialsWarning, org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.credentialsWarning.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.jLabel5.text")); // NOI18N
+
+        asigneesTextfield.setText(org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.asigneesTextfield.text")); // NOI18N
+
+        buttonGroupRetrieval.add(groupBySeverityButton);
+        groupBySeverityButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(groupBySeverityButton, org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.groupBySeverityButton.text")); // NOI18N
+
+        buttonGroupRetrieval.add(groupByTypeButton);
+        org.openide.awt.Mnemonics.setLocalizedText(groupByTypeButton, org.openide.util.NbBundle.getMessage(ServerConnectionDialog.class, "ServerConnectionDialog.groupByTypeButton.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -212,10 +239,6 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton1))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(resourceCombox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -227,7 +250,20 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(user, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
-                                .addComponent(credentialsWarning, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)))))
+                                .addComponent(credentialsWarning, javax.swing.GroupLayout.DEFAULT_SIZE, 319, Short.MAX_VALUE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel5))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(groupBySeverityButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(groupByTypeButton)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(resourceCombox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(asigneesTextfield))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -251,7 +287,15 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(resourceCombox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 47, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel5)
+                    .addComponent(asigneesTextfield, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(groupBySeverityButton)
+                    .addComponent(groupByTypeButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 49, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
                     .addComponent(okButton))
@@ -284,12 +328,17 @@ public class ServerConnectionDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_resourceComboxItemStateChanged
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextField asigneesTextfield;
+    private javax.swing.ButtonGroup buttonGroupRetrieval;
     private javax.swing.JLabel credentialsWarning;
+    private javax.swing.JRadioButton groupBySeverityButton;
+    private javax.swing.JRadioButton groupByTypeButton;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JButton loadButton;
     private javax.swing.JButton okButton;
     private javax.swing.JPasswordField password;

@@ -8,6 +8,7 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle.Messages;
 import qubexplorer.ConfigurationFactory;
+import qubexplorer.Severity;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.ProjectContext;
@@ -34,7 +35,7 @@ public final class ServerIssuesAction implements ActionListener {
         if (configuration != null) {
             final ProjectContext projectContext = new ProjectContext(context, configuration);
             final SonarQube sonarQube = SonarQubeFactory.createForDefaultServerUrl();
-            TaskExecutor.execute(new SummaryTask(sonarQube, projectContext, Collections.emptyList()));
+            TaskExecutor.execute(new SummaryTask(sonarQube, projectContext, Severity.getType(), Collections.emptyList()));
         }
     }
 

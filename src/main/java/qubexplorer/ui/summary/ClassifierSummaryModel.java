@@ -8,7 +8,6 @@ import qubexplorer.Classifier;
 import qubexplorer.ClassifierSummary;
 import qubexplorer.ClassifierType;
 import qubexplorer.Rule;
-import qubexplorer.Severity;
 
 /**
  *
@@ -16,7 +15,7 @@ import qubexplorer.Severity;
  */
 public class ClassifierSummaryModel<T extends Classifier> extends AbstractTreeTableModel {
 
-    private ClassifierType<T> classifierType;
+    private final ClassifierType<T> classifierType;
     private boolean skipEmptySeverity = false;
     private List<T> classifiers;
 
@@ -68,7 +67,7 @@ public class ClassifierSummaryModel<T extends Classifier> extends AbstractTreeTa
             }
         } else if (node instanceof Classifier) {
             if (i == 0) {
-                value = ((Severity) node).name();
+                value = ((Classifier) node).getUserDescription();
             } else {
                 value = summary.getCount((T) node);
             }
@@ -128,7 +127,7 @@ public class ClassifierSummaryModel<T extends Classifier> extends AbstractTreeTa
     public int getIndexOfChild(Object parent, Object o1) {
         if (parent instanceof ClassifierSummary) {
             return Arrays.asList(classifiers).indexOf(o1);
-        } else if (parent instanceof Severity) {
+        } else if (parent instanceof Classifier) {
             return -1;
         } else {
             return -1;

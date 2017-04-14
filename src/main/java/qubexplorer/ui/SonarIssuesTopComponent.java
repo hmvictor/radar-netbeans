@@ -253,9 +253,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
     
     public List<? extends IssueFilter> getSelectedFilters() {
         List<IssueFilter> filters=new LinkedList<>();
-        if(!asignees.getText().trim().isEmpty()) {
-            filters.add(new AsigneesFilter(asignees.getText().split("\\s+,\\s+")));
-        }
+//        if(!asignees.getText().trim().isEmpty()) {
+//            filters.add(new AsigneesFilter(asignees.getText().split("\\s+,\\s+")));
+//        }
         return filters;
     }
 
@@ -308,8 +308,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
         tableSummary.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         jPanel1 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
-        asignees = new javax.swing.JTextField();
-        jButton1 = new javax.swing.JButton();
 
         jMenuItem1.setAction(listIssuesAction);
         org.openide.awt.Mnemonics.setLocalizedText(jMenuItem1, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jMenuItem1.text")); // NOI18N
@@ -411,7 +409,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         showEmptySeverity.setBorderPainted(false);
         showEmptySeverity.setIconTextGap(0);
 
-        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/page_gear.png"))); // NOI18N
+        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/arrow_refresh_small.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jButton2, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jButton2.text")); // NOI18N
         jButton2.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
@@ -461,31 +459,17 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel2.text")); // NOI18N
 
-        asignees.setColumns(15);
-        asignees.setText(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.asignees.text")); // NOI18N
-
-        jButton1.setAction(listIssuesAction);
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jButton1.text")); // NOI18N
-
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(asignees, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 174, Short.MAX_VALUE)
-                .addComponent(jButton1)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(jLabel2)
-                .addComponent(asignees, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addComponent(jButton1)
+            .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout summaryPanelLayout = new javax.swing.GroupLayout(summaryPanel);
@@ -620,14 +604,12 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }//GEN-LAST:event_issuesTableMouseReleased
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTextField asignees;
     private javax.swing.JButton buttonListIssues;
     private javax.swing.JButton buttonRuleInfo;
     private javax.swing.JTextField filterText;
     private javax.swing.JPanel issuesPanel;
     private javax.swing.JPopupMenu issuesPopupMenu;
     private org.jdesktop.swingx.JXTable issuesTable;
-    private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;

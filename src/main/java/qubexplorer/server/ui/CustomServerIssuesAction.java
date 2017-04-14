@@ -2,7 +2,8 @@ package qubexplorer.server.ui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
 import org.netbeans.api.project.Project;
 import org.openide.awt.ActionID;
@@ -14,6 +15,8 @@ import qubexplorer.ConfigurationFactory;
 import qubexplorer.ResourceKey;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.UserCredentials;
+import qubexplorer.filter.AsigneesFilter;
+import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.ProjectContext;
 import qubexplorer.ui.SonarQubeOptionsPanel;
@@ -43,7 +46,12 @@ public final class CustomServerIssuesAction implements ActionListener {
             SonarQubeProjectConfiguration real = ConfigurationFactory.createDefaultConfiguration(context);
             final ProjectContext projectContext = new ProjectContext(context, new FixedKey(fixed, real));
             final SonarQube sonarQube = new SonarQube(serverConnectionDialog.getSelectedUrl());
-            SummaryTask summaryTask = new SummaryTask(sonarQube, projectContext, Collections.emptyList());
+            List<IssueFilter> filters=new LinkedList<>();
+            String[] asignees = serverConnectionDialog.getAsignees();
+            if(asignees.length != 0) {
+                filters.add(new AsigneesFilter(asignees));
+            }
+            SummaryTask summaryTask = new SummaryTask(sonarQube, projectContext, serverConnectionDialog.getClassifierType(), filters);
             UserCredentials userCredentials = serverConnectionDialog.getUserCredentials();
             if(userCredentials != null) {
                 summaryTask.setUserCredentials(userCredentials);

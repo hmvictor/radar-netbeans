@@ -18,7 +18,9 @@ import qubexplorer.ui.task.TaskExecutor;
 /**
  *
  * @author Victor
+ * @deprecated Use ServerConnectionDialog
  */
+@Deprecated
 public class ProjectChooser extends javax.swing.JDialog {
 
     public enum Option {
