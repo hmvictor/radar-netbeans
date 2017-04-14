@@ -12,7 +12,6 @@ public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
     private final transient SonarQubeOptionsPanelController controller;
     private final Set<String> analysisModes=new HashSet<>();
     
-
     SonarQubeOptionsPanel(SonarQubeOptionsPanelController controller) {
         this.controller = controller;
         analysisModes.add(SonarRunnerProccess.AnalysisMode.INCREMENTAL.getFriendlyName());

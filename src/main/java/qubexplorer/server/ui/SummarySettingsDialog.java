@@ -11,7 +11,6 @@ import qubexplorer.Severity;
 public class SummarySettingsDialog extends javax.swing.JDialog {
 
     public enum Option {
-
         ACCEPT,
         CANCEL
     }
@@ -67,9 +66,9 @@ public class SummarySettingsDialog extends javax.swing.JDialog {
         okButton = new javax.swing.JButton();
         credentialsWarning = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
-        assigneesTextfield = new javax.swing.JTextField();
         groupBySeverityButton = new javax.swing.JRadioButton();
         groupByTypeButton = new javax.swing.JRadioButton();
+        assigneesTextfield = new org.jdesktop.swingx.JXTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(org.openide.util.NbBundle.getMessage(SummarySettingsDialog.class, "SummarySettingsDialog.title")); // NOI18N
@@ -100,14 +99,15 @@ public class SummarySettingsDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(SummarySettingsDialog.class, "SummarySettingsDialog.jLabel5.text")); // NOI18N
 
-        assigneesTextfield.setText(org.openide.util.NbBundle.getMessage(SummarySettingsDialog.class, "SummarySettingsDialog.assigneesTextfield.text")); // NOI18N
-
         buttonGroupRetrieval.add(groupBySeverityButton);
         groupBySeverityButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(groupBySeverityButton, org.openide.util.NbBundle.getMessage(SummarySettingsDialog.class, "SummarySettingsDialog.groupBySeverityButton.text")); // NOI18N
 
         buttonGroupRetrieval.add(groupByTypeButton);
         org.openide.awt.Mnemonics.setLocalizedText(groupByTypeButton, org.openide.util.NbBundle.getMessage(SummarySettingsDialog.class, "SummarySettingsDialog.groupByTypeButton.text")); // NOI18N
+
+        assigneesTextfield.setText(org.openide.util.NbBundle.getMessage(SummarySettingsDialog.class, "SummarySettingsDialog.assigneesTextfield.text")); // NOI18N
+        assigneesTextfield.setPrompt(org.openide.util.NbBundle.getMessage(SummarySettingsDialog.class, "SummarySettingsDialog.assigneesTextfield.prompt")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -131,7 +131,7 @@ public class SummarySettingsDialog extends javax.swing.JDialog {
                                 .addComponent(groupByTypeButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(credentialsWarning, javax.swing.GroupLayout.DEFAULT_SIZE, 188, Short.MAX_VALUE))
-                            .addComponent(assigneesTextfield))))
+                            .addComponent(assigneesTextfield, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -171,7 +171,7 @@ public class SummarySettingsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_formWindowClosing
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTextField assigneesTextfield;
+    private org.jdesktop.swingx.JXTextField assigneesTextfield;
     private javax.swing.ButtonGroup buttonGroupRetrieval;
     private javax.swing.JLabel credentialsWarning;
     private javax.swing.JRadioButton groupBySeverityButton;
