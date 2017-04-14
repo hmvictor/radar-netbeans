@@ -16,7 +16,7 @@ import qubexplorer.ResourceKey;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.SummaryOptions;
 import qubexplorer.UserCredentials;
-import qubexplorer.filter.AsigneesFilter;
+import qubexplorer.filter.AssigneesFilter;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.ProjectContext;
@@ -50,7 +50,7 @@ public final class CustomServerIssuesAction implements ActionListener {
             List<IssueFilter> filters=new LinkedList<>();
             String[] asignees = serverConnectionDialog.getAsignees();
             if(asignees.length != 0) {
-                filters.add(new AsigneesFilter(asignees));
+                filters.add(new AssigneesFilter(asignees));
             }
             SummaryTask summaryTask = new SummaryTask(sonarQube, projectContext, new SummaryOptions<>(serverConnectionDialog.getClassifierType(), filters));
             UserCredentials userCredentials = serverConnectionDialog.getUserCredentials();

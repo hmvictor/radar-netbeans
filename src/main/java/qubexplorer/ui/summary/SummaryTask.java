@@ -1,17 +1,14 @@
 package qubexplorer.ui.summary;
 
-import java.util.List;
 import qubexplorer.server.ui.CustomServerIssuesAction;
 import org.openide.windows.WindowManager;
 import qubexplorer.ClassifierSummary;
-import qubexplorer.ClassifierType;
 import qubexplorer.ConfigurationFactory;
 import qubexplorer.IssuesContainer;
 import qubexplorer.NoSuchProjectException;
 import qubexplorer.ResourceKey;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.SummaryOptions;
-import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.UserCredentialsRepository;
 import qubexplorer.ui.ProjectContext;
@@ -28,7 +25,7 @@ import qubexplorer.ui.task.TaskExecutor;
 public class SummaryTask extends Task<ClassifierSummary> {
 
     private final IssuesContainer issuesContainer;
-    private SummaryOptions<?> summaryOptions;
+    private final SummaryOptions<?> summaryOptions;
 
     public SummaryTask(IssuesContainer issuesContainer, ProjectContext projectContext, SummaryOptions<?> summaryOptions) {
         super(projectContext, issuesContainer instanceof SonarQube ? ((SonarQube) issuesContainer).getServerUrl() : null);
@@ -54,9 +51,9 @@ public class SummaryTask extends Task<ClassifierSummary> {
         sonarTopComponent.setProjectContext(getProjectContext());
         sonarTopComponent.setProjectKeyChecker(new SimpleChecker());
         sonarTopComponent.setIssuesContainer(issuesContainer);
+        sonarTopComponent.showSummary(summaryOptions, summary);
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
-        sonarTopComponent.showSummary(summaryOptions, summary);
     }
 
     @Override

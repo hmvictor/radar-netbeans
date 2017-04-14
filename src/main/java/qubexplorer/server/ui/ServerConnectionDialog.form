@@ -64,7 +64,7 @@
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="user" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="separate" max="-2" attributes="0"/>
-                              <Component id="credentialsWarning" pref="319" max="32767" attributes="0"/>
+                              <Component id="credentialsWarning" pref="202" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>
@@ -125,7 +125,7 @@
                   <Component id="groupBySeverityButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="groupByTypeButton" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="49" max="32767" attributes="0"/>
+              <EmptySpace pref="35" max="32767" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jButton1" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="okButton" alignment="3" min="-2" max="-2" attributes="0"/>

@@ -59,12 +59,13 @@ import qubexplorer.Rule;
 import qubexplorer.Severity;
 import qubexplorer.SummaryOptions;
 import qubexplorer.server.SonarQube;
-import qubexplorer.filter.AsigneesFilter;
+import qubexplorer.filter.AssigneesFilter;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.filter.RuleFilter;
 import qubexplorer.filter.SeverityFilter;
 import qubexplorer.runner.SonarRunnerResult;
 import qubexplorer.server.SimpleClassifierSummary;
+import qubexplorer.server.ui.SummarySettingsDialog;
 import qubexplorer.ui.summary.ClassifierSummaryModel;
 import qubexplorer.ui.summary.SummaryTask;
 import qubexplorer.ui.task.TaskExecutor;
@@ -185,15 +186,27 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         @Override
         public void actionPerformed(ActionEvent ae) {
-//            boolean continueRealoding=false;
-//            SummaryOptions summaryOptions=null;
-//            if(hasCustomOptions()) {
-//                //
-//                //openSonarQubeServerDialog
-//            }
-//            if(continueRealoding) {
-//                TaskExecutor.execute(new SummaryTask(issuesContainer, projectContext, classifierType, filters));
-//            }
+            SummaryOptions summaryOptions=null;
+            if(issuesContainer instanceof SonarQube) {
+                SummarySettingsDialog dialog=new SummarySettingsDialog(null, true);
+                dialog.setClassifierType(SonarIssuesTopComponent.this.summaryOptions.getClassifierType());
+                for (IssueFilter filter : SonarIssuesTopComponent.this.summaryOptions.getFilters()) {
+                    if(filter instanceof AssigneesFilter) {
+                        dialog.setAssignees(((AssigneesFilter)filter).getAssignees().toArray(new String[0]));
+                    }
+                }
+                if(dialog.showDialog() == SummarySettingsDialog.Option.ACCEPT) {
+                    List<IssueFilter> filters=new LinkedList<>();
+                    String[] asignees = dialog.getAssignees();
+                    if(asignees.length > 0) {
+                        filters.add(new AssigneesFilter(asignees));
+                    }
+                    summaryOptions=new SummaryOptions(dialog.getClassifierType(), filters);
+                }
+            }
+            if(summaryOptions != null) {
+                TaskExecutor.execute(new SummaryTask(issuesContainer, projectContext, summaryOptions));
+            }
         }
 
     };
@@ -278,6 +291,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     
     public void setIssuesContainer(IssuesContainer issuesContainer) {
         this.issuesContainer = issuesContainer;
+        reloadAction.setEnabled(issuesContainer instanceof SonarQube);
     }
     
     public void setSummaryOptions(SummaryOptions<?> options) {
