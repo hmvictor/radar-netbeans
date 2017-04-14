@@ -57,6 +57,7 @@ import qubexplorer.RadarIssue;
 import qubexplorer.IssuesContainer;
 import qubexplorer.Rule;
 import qubexplorer.Severity;
+import qubexplorer.SummaryOptions;
 import qubexplorer.server.SonarQube;
 import qubexplorer.filter.AsigneesFilter;
 import qubexplorer.filter.IssueFilter;
@@ -65,6 +66,7 @@ import qubexplorer.filter.SeverityFilter;
 import qubexplorer.runner.SonarRunnerResult;
 import qubexplorer.server.SimpleClassifierSummary;
 import qubexplorer.ui.summary.ClassifierSummaryModel;
+import qubexplorer.ui.summary.SummaryTask;
 import qubexplorer.ui.task.TaskExecutor;
 
 /**
@@ -94,7 +96,6 @@ import qubexplorer.ui.task.TaskExecutor;
 })
 public final class SonarIssuesTopComponent extends TopComponent {
 
-    private static final String ACTION_PLAN_PROPERTY = "actionPlan";
     private static final Logger LOGGER = Logger.getLogger(SonarIssuesTopComponent.class.getName());
 
     private transient IssuesContainer issuesContainer;
@@ -103,6 +104,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private ImageIcon informationIcon = new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"));
 
     private final Comparator<Severity> severityComparator = Collections.reverseOrder(Enum::compareTo);
+    
+    private SummaryOptions<?> summaryOptions;
 
     private final AbstractAction showRuleInfoAction = new AbstractAction("Show Rule Info", informationIcon) {
 
@@ -170,6 +173,27 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 RadarIssue issue = model.getIssue(row);
                 showRuleInfo(issue.rule());
             }
+        }
+
+    };
+    
+    private final AbstractAction reloadAction = new AbstractAction("Reload Summary", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/arrow_refresh_small.png"))) {
+
+        {
+            putValue(Action.SHORT_DESCRIPTION, "Reload Summary");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+//            boolean continueRealoding=false;
+//            SummaryOptions summaryOptions=null;
+//            if(hasCustomOptions()) {
+//                //
+//                //openSonarQubeServerDialog
+//            }
+//            if(continueRealoding) {
+//                TaskExecutor.execute(new SummaryTask(issuesContainer, projectContext, classifierType, filters));
+//            }
         }
 
     };
@@ -242,8 +266,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
         attacher.setProjectKeyChecker(projectKeyChecker);
     }
 
-    public <T extends Classifier> void setSummary(ClassifierType<T> classifierType, ClassifierSummary<T> summary) {
-        tableSummary.setTreeTableModel(new ClassifierSummaryModel(classifierType, summary, !showEmptySeverity.isSelected()));
+    public <T extends Classifier> void setSummary(SummaryOptions<T> summaryOptions, ClassifierSummary<T> summary) {
+        setSummaryOptions(summaryOptions);
+        tableSummary.setTreeTableModel(new ClassifierSummaryModel(summaryOptions.getClassifierType(), summary, !showEmptySeverity.isSelected()));
         DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
         renderer.setHorizontalAlignment(JLabel.RIGHT);
         tableSummary.getColumn(1).setCellRenderer(renderer);
@@ -251,16 +276,20 @@ public final class SonarIssuesTopComponent extends TopComponent {
         showRuleInfoAction.setEnabled(false);
     }
     
-    public List<? extends IssueFilter> getSelectedFilters() {
-        List<IssueFilter> filters=new LinkedList<>();
-//        if(!asignees.getText().trim().isEmpty()) {
-//            filters.add(new AsigneesFilter(asignees.getText().split("\\s+,\\s+")));
-//        }
-        return filters;
-    }
-
     public void setIssuesContainer(IssuesContainer issuesContainer) {
         this.issuesContainer = issuesContainer;
+    }
+    
+    public void setSummaryOptions(SummaryOptions<?> options) {
+        this.summaryOptions=options;
+        final StringBuilder builder=new StringBuilder();
+        options.getFilters().forEach((IssueFilter filter) -> {
+            if(builder.length() != 0) {
+                builder.append("; ");
+            }
+            builder.append(filter.getDescription());
+        });
+        summaryOptionsLabel.setText(builder.toString());
     }
 
     public void showRuleInfo(Rule rule) {
@@ -306,8 +335,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         tableSummary.getTableHeader().setReorderingAllowed(false);
         tableSummary.setTreeCellRenderer(new SummaryTreeCellRenderer());
         tableSummary.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        jPanel1 = new javax.swing.JPanel();
-        jLabel2 = new javax.swing.JLabel();
+        summaryOptionsLabel = new javax.swing.JLabel();
 
         jMenuItem1.setAction(listIssuesAction);
         org.openide.awt.Mnemonics.setLocalizedText(jMenuItem1, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jMenuItem1.text")); // NOI18N
@@ -409,6 +437,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         showEmptySeverity.setBorderPainted(false);
         showEmptySeverity.setIconTextGap(0);
 
+        jButton2.setAction(reloadAction);
         jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/qubexplorer/ui/images/arrow_refresh_small.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jButton2, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jButton2.text")); // NOI18N
         jButton2.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
@@ -433,7 +462,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 .addComponent(showEmptySeverity)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton2)
-                .addContainerGap(128, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         tableSummary.setRootVisible(true);
@@ -455,22 +484,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         });
         jScrollPane1.setViewportView(tableSummary);
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jPanel1.border.title"))); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.jLabel2.text")); // NOI18N
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-            .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE)
-        );
+        org.openide.awt.Mnemonics.setLocalizedText(summaryOptionsLabel, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.summaryOptionsLabel.text")); // NOI18N
 
         javax.swing.GroupLayout summaryPanelLayout = new javax.swing.GroupLayout(summaryPanel);
         summaryPanel.setLayout(summaryPanelLayout);
@@ -478,19 +492,19 @@ public final class SonarIssuesTopComponent extends TopComponent {
             summaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(summaryPanelLayout.createSequentialGroup()
                 .addComponent(sidebar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1)
                 .addContainerGap())
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(summaryOptionsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 474, Short.MAX_VALUE)
         );
         summaryPanelLayout.setVerticalGroup(
             summaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(summaryPanelLayout.createSequentialGroup()
                 .addGroup(summaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(sidebar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 343, Short.MAX_VALUE)
+                    .addComponent(sidebar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(summaryOptionsLabel))
         );
 
         tabbedPane.addTab(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.summaryPanel.TabConstraints.tabTitle"), summaryPanel); // NOI18N
@@ -612,18 +626,17 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private org.jdesktop.swingx.JXTable issuesTable;
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JMenuItem ruleInfoMenuItem;
     private javax.swing.JToggleButton showEmptySeverity;
     private javax.swing.JTextField shownCount;
     private javax.swing.JPanel sidebar;
+    private javax.swing.JLabel summaryOptionsLabel;
     private javax.swing.JPanel summaryPanel;
     private javax.swing.JPopupMenu summaryPopupMenu;
     private javax.swing.JTabbedPane tabbedPane;
@@ -648,7 +661,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         } else if (treeTableNode instanceof Rule) {
             filters.add(new RuleFilter((Rule) treeTableNode));
         }
-        filters.addAll(getSelectedFilters());
+        filters.addAll(summaryOptions.getFilters());
         TaskExecutor.execute(new IssuesTask(projectContext, issuesContainer, filters));
     }
 
@@ -758,8 +771,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
         showRuleInfoForIssueAction.setEnabled(false);
     }
 
-    public <T extends Classifier> void showSummary(ClassifierType<T> type, ClassifierSummary<T> summary) {
-        setSummary(type, summary);
+    public <T extends Classifier> void showSummary(SummaryOptions<T> summaryOptions, ClassifierSummary<T> summary) {
+        setSummary(summaryOptions, summary);
         if (tabbedPane.getTabCount() == 2) {
             tabbedPane.removeTabAt(1);
         }
@@ -774,12 +787,12 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
     }
 
-    public <T extends Classifier> void resetState(ClassifierType<T> classifierType) {
-        if(isEditorAnnotationsEnabled()){
+    public <T extends Classifier> void resetState() {
+        if(isEditorAnnotationsEnabled()) {
             attacher.detachAnnotations();
         }
         SimpleClassifierSummary emptySummary = new SimpleClassifierSummary();
-        showSummary(classifierType, emptySummary);
+        showSummary(summaryOptions, emptySummary);
     }
     
     public void refreshEditorAnnotationsStatus() {

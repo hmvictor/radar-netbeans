@@ -10,6 +10,7 @@ import qubexplorer.IssuesContainer;
 import qubexplorer.NoSuchProjectException;
 import qubexplorer.ResourceKey;
 import qubexplorer.SonarQubeProjectConfiguration;
+import qubexplorer.SummaryOptions;
 import qubexplorer.filter.IssueFilter;
 import qubexplorer.server.SonarQube;
 import qubexplorer.ui.UserCredentialsRepository;
@@ -27,25 +28,24 @@ import qubexplorer.ui.task.TaskExecutor;
 public class SummaryTask extends Task<ClassifierSummary> {
 
     private final IssuesContainer issuesContainer;
-    private final List<IssueFilter> filters;
-    private final ClassifierType classifierType;
+    private SummaryOptions<?> summaryOptions;
 
-    public SummaryTask(IssuesContainer issuesContainer, ProjectContext projectContext, ClassifierType classifierType, List<IssueFilter> filters) {
+    public SummaryTask(IssuesContainer issuesContainer, ProjectContext projectContext, SummaryOptions<?> summaryOptions) {
         super(projectContext, issuesContainer instanceof SonarQube ? ((SonarQube) issuesContainer).getServerUrl() : null);
         this.issuesContainer = issuesContainer;
-        this.classifierType=classifierType;
-        this.filters = filters;
+        this.summaryOptions=summaryOptions;
     }
 
     @Override
     protected void init() {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
-        sonarTopComponent.resetState(classifierType);
+        sonarTopComponent.setSummaryOptions(summaryOptions);
+        sonarTopComponent.resetState();
     }
 
     @Override
     public ClassifierSummary execute() {
-        return issuesContainer.getSummary(classifierType, getUserCredentials(), getProjectContext().getConfiguration().getKey(), filters);
+        return issuesContainer.getSummary(summaryOptions.getClassifierType(), getUserCredentials(), getProjectContext().getConfiguration().getKey(), summaryOptions.getFilters());
     }
 
     @Override
@@ -56,7 +56,7 @@ public class SummaryTask extends Task<ClassifierSummary> {
         sonarTopComponent.setIssuesContainer(issuesContainer);
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
-        sonarTopComponent.showSummary(classifierType, summary);
+        sonarTopComponent.showSummary(summaryOptions, summary);
     }
 
     @Override
@@ -74,7 +74,7 @@ public class SummaryTask extends Task<ClassifierSummary> {
                 SonarQubeProjectConfiguration fixed = connectionDialog.getSelectedProject();
                 SonarQubeProjectConfiguration real = ConfigurationFactory.createDefaultConfiguration(getProjectContext().getProject());
                 ProjectContext newProjectContext = new ProjectContext(getProjectContext().getProject(), new CustomServerIssuesAction.FixedKey(fixed, real));
-                TaskExecutor.execute(new SummaryTask(new SonarQube(connectionDialog.getSelectedUrl()), newProjectContext, classifierType, filters));
+                TaskExecutor.execute(new SummaryTask(new SonarQube(connectionDialog.getSelectedUrl()), newProjectContext, summaryOptions));
             }
         } else {
             super.fail(cause);

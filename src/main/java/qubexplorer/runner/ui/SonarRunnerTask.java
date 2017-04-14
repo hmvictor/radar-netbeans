@@ -3,6 +3,7 @@ package qubexplorer.runner.ui;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -19,6 +20,7 @@ import qubexplorer.MvnModelInputException;
 import qubexplorer.ResourceKey;
 import qubexplorer.Severity;
 import qubexplorer.SonarQubeProjectConfiguration;
+import qubexplorer.SummaryOptions;
 import qubexplorer.runner.SonarRunnerCancelledException;
 import qubexplorer.runner.SonarRunnerProccess;
 import qubexplorer.runner.SonarRunnerResult;
@@ -58,7 +60,7 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
     @Override
     protected void init() {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
-        sonarTopComponent.resetState(Severity.getType());
+        sonarTopComponent.resetState();
         stopAction.setEnabled(true);
         if(io == null) {
             io = IOProvider.getDefault().getIO("Sonar-runner", true, new Action[]{stopAction}, IOContainer.getDefault());
@@ -119,7 +121,8 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
         sonarTopComponent.setIssuesContainer(result);
         sonarTopComponent.open();
         sonarTopComponent.requestVisible();
-        sonarTopComponent.showSummary(Severity.getType(), result.getClassifierSummaryBySeverity());
+        SummaryOptions summaryOptions=new SummaryOptions(Severity.getType(), Collections.emptyList());
+        sonarTopComponent.showSummary(summaryOptions, result.getClassifierSummaryBySeverity());
     }
 
     @Override

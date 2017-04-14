@@ -12,8 +12,6 @@ public interface IssueFilter {
 
     void apply(Map<String, List<String>> params);
 
-//    void apply(IssueQuery query);
-
     String getDescription();
 
     boolean isValid(RadarIssue issue);

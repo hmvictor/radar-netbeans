@@ -14,6 +14,7 @@ import org.openide.windows.WindowManager;
 import qubexplorer.ConfigurationFactory;
 import qubexplorer.ResourceKey;
 import qubexplorer.SonarQubeProjectConfiguration;
+import qubexplorer.SummaryOptions;
 import qubexplorer.UserCredentials;
 import qubexplorer.filter.AsigneesFilter;
 import qubexplorer.filter.IssueFilter;
@@ -51,7 +52,7 @@ public final class CustomServerIssuesAction implements ActionListener {
             if(asignees.length != 0) {
                 filters.add(new AsigneesFilter(asignees));
             }
-            SummaryTask summaryTask = new SummaryTask(sonarQube, projectContext, serverConnectionDialog.getClassifierType(), filters);
+            SummaryTask summaryTask = new SummaryTask(sonarQube, projectContext, new SummaryOptions<>(serverConnectionDialog.getClassifierType(), filters));
             UserCredentials userCredentials = serverConnectionDialog.getUserCredentials();
             if(userCredentials != null) {
                 summaryTask.setUserCredentials(userCredentials);
