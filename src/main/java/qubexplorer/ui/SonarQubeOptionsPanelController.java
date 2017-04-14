@@ -2,13 +2,11 @@ package qubexplorer.ui;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.prefs.Preferences;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-import org.openide.util.NbPreferences;
 import org.openide.windows.WindowManager;
 
 @OptionsPanelController.SubRegistration(

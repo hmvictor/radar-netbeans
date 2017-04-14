@@ -1,6 +1,5 @@
 package qubexplorer.server;
 
-import java.util.Arrays;
 import java.util.Objects;
 import javax.swing.Icon;
 import static org.hamcrest.CoreMatchers.is;

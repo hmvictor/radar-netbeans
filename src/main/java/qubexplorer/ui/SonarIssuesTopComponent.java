@@ -52,7 +52,6 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import qubexplorer.Classifier;
 import qubexplorer.ClassifierSummary;
-import qubexplorer.ClassifierType;
 import qubexplorer.RadarIssue;
 import qubexplorer.IssuesContainer;
 import qubexplorer.Rule;
