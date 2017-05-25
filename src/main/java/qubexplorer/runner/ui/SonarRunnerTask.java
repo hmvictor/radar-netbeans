@@ -60,6 +60,7 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
     @Override
     protected void init() {
         SonarIssuesTopComponent sonarTopComponent = (SonarIssuesTopComponent) WindowManager.getDefault().findTopComponent("SonarIssuesTopComponent");
+        sonarTopComponent.setSummaryOptions(new SummaryOptions<>(Severity.getType(), Collections.emptyList()));
         sonarTopComponent.resetState();
         stopAction.setEnabled(true);
         if(io == null) {

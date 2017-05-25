@@ -54,10 +54,16 @@ public final class TaskExecutor {
             this.userCredentialsRepository = repository;
             this.task = task;
             assert SwingUtilities.isEventDispatchThread();
-            handle = ProgressHandleFactory.createHandle("Sonar");
+            handle = ProgressHandle.createHandle("Sonar");
             handle.start();
             handle.switchToIndeterminate();
-            this.task.init();
+            try{
+                this.task.init();
+            }catch(Throwable t){
+                handle.finish();
+                handle=null;
+                throw t;
+            }
         }
 
         @Override
