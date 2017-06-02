@@ -81,7 +81,6 @@ import qubexplorer.ui.task.TaskExecutor;
         autostore = false)
 @TopComponent.Description(
         preferredID = "SonarIssuesTopComponent",
-        //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_ALWAYS)
 @TopComponent.Registration(mode = "output", openAtStartup = false)
 @ActionID(category = "Window", id = "qubexplorer.ui.SonarTopComponent")
@@ -150,7 +149,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         @Override
         public void actionPerformed(ActionEvent ae) {
             IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
-            int row = issuesTable.getSelectedRow();
+            int row = SonarIssuesTopComponent.this.clickedRow;
             if (row != -1) {
                 openIssueLocation(model.getIssueLocation(issuesTable.getRowSorter().convertRowIndexToModel(row)));
             }
@@ -166,7 +165,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         @Override
         public void actionPerformed(ActionEvent ae) {
-            int row = issuesTable.getSelectedRow();
+            int row = SonarIssuesTopComponent.this.clickedRow;
             if (row != -1) {
                 row = issuesTable.getRowSorter().convertRowIndexToModel(row);
                 IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
@@ -227,7 +226,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     public SonarIssuesTopComponent() {
         initComponents();
         showEmptySeverity.addItemListener(skipEmptySeverities);
-        issuesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        issuesTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         issuesTable.getColumn("").setResizable(false);
         issuesTable.getColumnModel().getColumn(0).setPreferredWidth(16);
         issuesTable.getColumnModel().getColumn(0).setMaxWidth(16);
@@ -262,8 +261,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
         });
         showRuleInfoAction.setEnabled(false);
         listIssuesAction.setEnabled(false);
-        gotoIssueAction.setEnabled(false);
-        showRuleInfoForIssueAction.setEnabled(false);
         attacher.init();
     }
 
@@ -534,25 +531,12 @@ public final class SonarIssuesTopComponent extends TopComponent {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private int clickedRow=-1;
+    
     private void issuesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMouseClicked
-        if (evt.isPopupTrigger()) {
-            int row = issuesTable.rowAtPoint(evt.getPoint());
-            if (row != -1) {
-                issuesTable.changeSelection(row, row, false, false);
-                issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
-            }
-            return;
-        }
-        if (evt.getClickCount() == 2) {
-            int row = issuesTable.rowAtPoint(evt.getPoint());
-            if (row != -1) {
-                if (issuesTable.getSelectedRow() != row) {
-                    issuesTable.changeSelection(row, row, false, false);
-                }
-                if (gotoIssueAction.isEnabled()) {
-                    gotoIssueAction.actionPerformed(new ActionEvent(issuesTable, Event.ACTION_EVENT, "Go to Source"));
-                }
-            }
+        clickedRow=issuesTable.rowAtPoint(evt.getPoint());
+        if (evt.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(evt) && clickedRow != -1) {
+            gotoIssueAction.actionPerformed(new ActionEvent(issuesTable, Event.ACTION_EVENT, "Go to Source"));
         }
     }//GEN-LAST:event_issuesTableMouseClicked
 
@@ -561,7 +545,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
             triggerPopupMenu(evt);
             return;
         }
-
         if (evt.getClickCount() != 2) {
             return;
         }
@@ -611,22 +594,16 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }//GEN-LAST:event_tableSummaryValueChanged
 
     private void issuesTableMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMousePressed
-        if (evt.isPopupTrigger()) {
-            int row = issuesTable.rowAtPoint(evt.getPoint());
-            if (row != -1) {
-                issuesTable.changeSelection(row, row, false, false);
-                issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
-            }
+        clickedRow=issuesTable.rowAtPoint(evt.getPoint());
+        if (evt.isPopupTrigger() && clickedRow != -1) {
+            issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_issuesTableMousePressed
 
     private void issuesTableMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMouseReleased
-        if (evt.isPopupTrigger()) {
-            int row = issuesTable.rowAtPoint(evt.getPoint());
-            if (row != -1) {
-                issuesTable.changeSelection(row, row, false, false);
-                issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
-            }
+        clickedRow=issuesTable.rowAtPoint(evt.getPoint());
+        if (evt.isPopupTrigger() && clickedRow != -1) {
+            issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_issuesTableMouseReleased
 
@@ -751,11 +728,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
         issuesTable.getColumnExt(
                 "Project Key").setVisible(false);
         issuesTable.getColumnExt("Full Path").setVisible(false);
-        issuesTable.getSelectionModel().addListSelectionListener((ListSelectionEvent lse) -> {
-            int row = issuesTable.getSelectedRow();
-            gotoIssueAction.setEnabled(row != -1);
-            showRuleInfoForIssueAction.setEnabled(row != -1);
-        });
         showIssuesCount();
         filterText.setText("");
         if(isEditorAnnotationsEnabled()) {
@@ -780,8 +752,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
             tabbedPane.add("Issues", issuesPanel);
         }
         tabbedPane.setSelectedIndex(1);
-        gotoIssueAction.setEnabled(false);
-        showRuleInfoForIssueAction.setEnabled(false);
     }
 
     public <T extends Classifier> void showSummary(SummaryOptions<T> summaryOptions, ClassifierSummary<T> summary) {
