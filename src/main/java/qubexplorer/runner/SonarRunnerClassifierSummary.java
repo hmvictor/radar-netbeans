@@ -58,9 +58,4 @@ public class SonarRunnerClassifierSummary<T extends Classifier> implements Class
         }
     }
 
-//    @Override
-//    public List<T> getClassifierValues() {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//    }
-    
 }

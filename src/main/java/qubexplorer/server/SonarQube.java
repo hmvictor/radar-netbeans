@@ -90,7 +90,7 @@ public class SonarQube implements IssuesContainer {
         return getIssues(auth, params);
     }
 
-    private List<RadarIssue> getIssues(UserCredentials userCredentials, Map<String, List<String>> params) {// IssueQuery query) {
+    private List<RadarIssue> getIssues(UserCredentials userCredentials, Map<String, List<String>> params) {
         try {
             WebTarget issuesTarget=getIssuesTarget(userCredentials);
             for (Map.Entry<String, List<String>> entry : params.entrySet()) {

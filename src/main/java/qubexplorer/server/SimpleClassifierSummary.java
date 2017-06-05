@@ -81,9 +81,4 @@ public class SimpleClassifierSummary<T extends Classifier> implements Classifier
         }
     }
 
-//    @Override
-//    public List<T> getClassifierValues() {
-//        throw new UnsupportedOperationException("Not supported yet.");
-//    }
-
 }
