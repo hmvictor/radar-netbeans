@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
@@ -70,9 +69,9 @@ public class SonarQube implements IssuesContainer {
     public Version getVersion(UserCredentials userCredentials) {
         return new Version(getServerStatus(userCredentials).getVersion());
     }
-    
+
     public ServerStatus getServerStatus(UserCredentials userCredentials) {
-        WebTarget systemStatusTarget=getSystemStatusTarget(userCredentials);
+        WebTarget systemStatusTarget = getSystemStatusTarget(userCredentials);
         return systemStatusTarget.request(MediaType.APPLICATION_JSON).get(ServerStatus.class);
     }
 
@@ -81,7 +80,7 @@ public class SonarQube implements IssuesContainer {
         if (!existsProject(auth, projectKey)) {
             throw new NoSuchProjectException(projectKey);
         }
-        Map<String, List<String>> params=new HashMap<>();
+        Map<String, List<String>> params = new HashMap<>();
         params.put("componentKeys", Arrays.asList(projectKey.toString()));
         params.put("ps", Arrays.asList(String.valueOf(MAX_SUPPORTED_PAGE_SIZE)));
         params.put("statuses", Arrays.asList("OPEN"));
@@ -93,11 +92,11 @@ public class SonarQube implements IssuesContainer {
 
     private List<RadarIssue> getIssues(UserCredentials userCredentials, Map<String, List<String>> params) {
         try {
-            WebTarget issuesTarget=getIssuesTarget(userCredentials);
+            WebTarget issuesTarget = getIssuesTarget(userCredentials);
             for (Map.Entry<String, List<String>> entry : params.entrySet()) {
-                issuesTarget=issuesTarget.queryParam(entry.getKey(), (Object[])entry.getValue().toArray(new String[0]));
+                issuesTarget = issuesTarget.queryParam(entry.getKey(), (Object[]) entry.getValue().toArray(new String[0]));
             }
-            IssuesSearchResult issuesSearchResult; 
+            IssuesSearchResult issuesSearchResult;
             List<RadarIssue> issues = new LinkedList<>();
             Map<String, Rule> rulesCache = new HashMap<>();
             int pageIndex = 1;
@@ -105,7 +104,7 @@ public class SonarQube implements IssuesContainer {
                 issuesSearchResult = issuesTarget.queryParam("p", pageIndex).request(MediaType.APPLICATION_JSON).get(IssuesSearchResult.class);
                 for (RadarIssue issue : issuesSearchResult.getIssues()) {
                     Rule rule = searchInCacheOrLoadFromServer(rulesCache, issue.ruleKey(), userCredentials);
-                    RadarIssue radarIssue=new RadarIssue();
+                    RadarIssue radarIssue = new RadarIssue();
                     radarIssue.setComponentKey(issue.componentKey());
                     radarIssue.setCreationDate(issue.creationDate());
                     radarIssue.setKey(issue.key());
@@ -160,16 +159,21 @@ public class SonarQube implements IssuesContainer {
     public List<ResourceKey> getProjectsKeys(UserCredentials userCredentials) {
         try {
             List<ResourceKey> keys = new ArrayList<>();
-            if(getVersion(userCredentials).compareTo(6, 3) >= 0) {
-                WebTarget componentsTarget= getProjectComponentsTarget(userCredentials);
-                ComponentSearchResult searchResult = componentsTarget.request(MediaType.APPLICATION_JSON).get(ComponentSearchResult.class);
-                List<Component> components=searchResult.getComponents();
-                components.forEach((c) -> {
-                    keys.add(ResourceKey.valueOf(c.getKey()));
+            if (getVersion(userCredentials).compareTo(6, 3) >= 0) {
+                WebTarget componentsTarget = getProjectComponentsTarget(userCredentials);
+                ComponentSearchResult searchResult;
+                int pageIndex = 1;
+                do {
+                    searchResult = componentsTarget.queryParam("p", pageIndex).request(MediaType.APPLICATION_JSON).get(ComponentSearchResult.class);
+                    searchResult.getComponents().forEach((c) -> {
+                        keys.add(ResourceKey.valueOf(c.getKey()));
+                    });
+                    pageIndex++;
+                } while (searchResult.getPaging().getTotalNumberOfResults() != null && pageIndex <= searchResult.getPaging().getTotalPageCount());
+            } else {
+                WebTarget resourcesTarget = getProjectsTarget(userCredentials);
+                List<Resource> resources = resourcesTarget.request(MediaType.APPLICATION_JSON).get(new GenericType<List<Resource>>() {
                 });
-            }else{
-                WebTarget resourcesTarget= getProjectsTarget(userCredentials);
-                List<Resource> resources=resourcesTarget.request(MediaType.APPLICATION_JSON).get(new GenericType<List<Resource>>() {});
                 resources.forEach((r) -> {
                     keys.add(ResourceKey.valueOf(r.getKey()));
                 });
@@ -191,16 +195,21 @@ public class SonarQube implements IssuesContainer {
     public List<SonarQubeProjectConfiguration> getProjects(UserCredentials userCredentials) {
         try {
             List<SonarQubeProjectConfiguration> projects = new ArrayList<>();
-            if(getVersion(userCredentials).compareTo(6, 3) >= 0) {
-                WebTarget componentsTarget= getProjectComponentsTarget(userCredentials);
-                ComponentSearchResult searchResult = componentsTarget.request(MediaType.APPLICATION_JSON).get(ComponentSearchResult.class);
-                List<Component> components=searchResult.getComponents();
-                components.forEach((c) -> {
-                    projects.add(new GenericSonarQubeProjectConfiguration(c.getName(), ResourceKey.valueOf(c.getKey()), c.getVersion()));
+            if (getVersion(userCredentials).compareTo(6, 3) >= 0) {
+                WebTarget componentsTarget = getProjectComponentsTarget(userCredentials);
+                ComponentSearchResult searchResult;
+                int pageIndex = 1;
+                do {
+                    searchResult = componentsTarget.queryParam("p", pageIndex).request(MediaType.APPLICATION_JSON).get(ComponentSearchResult.class);
+                    searchResult.getComponents().forEach((c) -> {
+                        projects.add(new GenericSonarQubeProjectConfiguration(c.getName(), ResourceKey.valueOf(c.getKey()), c.getVersion()));
+                    });
+                    pageIndex++;
+                } while (searchResult.getPaging().getTotalNumberOfResults() != null && pageIndex <= searchResult.getPaging().getTotalPageCount());
+            } else {
+                WebTarget resourcesTarget = getProjectsTarget(userCredentials);
+                List<Resource> resources = resourcesTarget.request(MediaType.APPLICATION_JSON).get(new GenericType<List<Resource>>() {
                 });
-            }else{
-                WebTarget resourcesTarget= getProjectsTarget(userCredentials);
-                List<Resource> resources = resourcesTarget.request(MediaType.APPLICATION_JSON).get(new GenericType<List<Resource>>() {});
                 resources.forEach((r) -> {
                     projects.add(new GenericSonarQubeProjectConfiguration(r.getName(), ResourceKey.valueOf(r.getKey()), r.getVersion()));
                 });
@@ -230,7 +239,7 @@ public class SonarQube implements IssuesContainer {
             throw new NoSuchProjectException(resourceKey);
         }
         SimpleClassifierSummary<T> simpleSummary = new SimpleClassifierSummary<>();
-        List<T> values=classifierType.getValues();
+        List<T> values = classifierType.getValues();
         for (T classifier : values) {
             List<IssueFilter> tempFilters = new LinkedList<>();
             tempFilters.add(classifier.createFilter());
@@ -245,38 +254,38 @@ public class SonarQube implements IssuesContainer {
 
     private WebTarget getProjectsTarget(UserCredentials userCredentials) {
         ResteasyClient client = getClient(userCredentials);
-        return client.target(serverUrl+"/api/resources");
+        return client.target(serverUrl + "/api/resources");
     }
-    
+
     private WebTarget getProjectComponentsTarget(UserCredentials userCredentials) {
         ResteasyClient client = getClient(userCredentials);
-        return client.target(serverUrl+"/api/components/search").queryParam("qualifiers", "TRK");
+        return client.target(serverUrl + "/api/components/search").queryParam("qualifiers", "TRK");
     }
 
     private WebTarget getRulesTarget(UserCredentials userCredentials) {
         ResteasyClient client = getClient(userCredentials);
-        return client.target(serverUrl+"/api/rules/show");
+        return client.target(serverUrl + "/api/rules/show");
     }
-    
+
     private WebTarget getIssuesTarget(UserCredentials userCredentials) {
         ResteasyClient client = getClient(userCredentials);
-        return client.target(serverUrl+"/api/issues/search");
+        return client.target(serverUrl + "/api/issues/search");
     }
 
     private WebTarget getSystemStatusTarget(UserCredentials userCredentials) {
         ResteasyClient client = getClient(userCredentials);
-        return client.target(serverUrl+"/api/system/status");
+        return client.target(serverUrl + "/api/system/status");
     }
-    
+
     private ResteasyClient getClient(UserCredentials userCredentials) {
-        ClientHttpEngine httpEngine=new ApacheHttpClient4Engine(createHttpClient());
+        ClientHttpEngine httpEngine = new ApacheHttpClient4Engine(createHttpClient());
         ResteasyClient client = new ResteasyClientBuilder().httpEngine(httpEngine).build();
-        if(userCredentials != null) {
+        if (userCredentials != null) {
             client.register(new BasicAuthentication(userCredentials.getUsername(), PassEncoder.decodeAsString(userCredentials.getPassword())));
         }
         return client;
     }
-    
+
     private HttpClient createHttpClient() {
         final ProxySettings proxySettings = getProxySettings();
         DefaultHttpClient httpClient = new DefaultHttpClient();
