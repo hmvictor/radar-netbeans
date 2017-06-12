@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
@@ -158,12 +159,21 @@ public class SonarQube implements IssuesContainer {
 
     public List<ResourceKey> getProjectsKeys(UserCredentials userCredentials) {
         try {
-            WebTarget resourcesTarget=getResourceTarget(userCredentials);
-            List<Resource> resources=resourcesTarget.request(MediaType.APPLICATION_JSON).get(new GenericType<List<Resource>>() {});
-            List<ResourceKey> keys = new ArrayList<>(resources.size());
-            resources.forEach((r) -> {
-                keys.add(ResourceKey.valueOf(r.getKey()));
-            });
+            List<ResourceKey> keys = new ArrayList<>();
+            if(getVersion(userCredentials).compareTo(6, 3) >= 0) {
+                WebTarget componentsTarget= getProjectComponentsTarget(userCredentials);
+                ComponentSearchResult searchResult = componentsTarget.request(MediaType.APPLICATION_JSON).get(ComponentSearchResult.class);
+                List<Component> components=searchResult.getComponents();
+                components.forEach((c) -> {
+                    keys.add(ResourceKey.valueOf(c.getKey()));
+                });
+            }else{
+                WebTarget resourcesTarget= getProjectsTarget(userCredentials);
+                List<Resource> resources=resourcesTarget.request(MediaType.APPLICATION_JSON).get(new GenericType<List<Resource>>() {});
+                resources.forEach((r) -> {
+                    keys.add(ResourceKey.valueOf(r.getKey()));
+                });
+            }
             return keys;
         } catch (WebApplicationException ex) {
             if (isError401(ex)) {
@@ -180,11 +190,20 @@ public class SonarQube implements IssuesContainer {
 
     public List<SonarQubeProjectConfiguration> getProjects(UserCredentials userCredentials) {
         try {
-            WebTarget resourcesTarget=getResourceTarget(userCredentials);
-            List<Resource> resources = resourcesTarget.request(MediaType.APPLICATION_JSON).get(new GenericType<List<Resource>>() {});
-            List<SonarQubeProjectConfiguration> projects = new ArrayList<>(resources.size());
-            for (Resource r : resources) {
-                projects.add(new GenericSonarQubeProjectConfiguration(r.getName(), ResourceKey.valueOf(r.getKey()), r.getVersion()));
+            List<SonarQubeProjectConfiguration> projects = new ArrayList<>();
+            if(getVersion(userCredentials).compareTo(6, 3) >= 0) {
+                WebTarget componentsTarget= getProjectComponentsTarget(userCredentials);
+                ComponentSearchResult searchResult = componentsTarget.request(MediaType.APPLICATION_JSON).get(ComponentSearchResult.class);
+                List<Component> components=searchResult.getComponents();
+                components.forEach((c) -> {
+                    projects.add(new GenericSonarQubeProjectConfiguration(c.getName(), ResourceKey.valueOf(c.getKey()), c.getVersion()));
+                });
+            }else{
+                WebTarget resourcesTarget= getProjectsTarget(userCredentials);
+                List<Resource> resources = resourcesTarget.request(MediaType.APPLICATION_JSON).get(new GenericType<List<Resource>>() {});
+                resources.forEach((r) -> {
+                    projects.add(new GenericSonarQubeProjectConfiguration(r.getName(), ResourceKey.valueOf(r.getKey()), r.getVersion()));
+                });
             }
             return projects;
         } catch (WebApplicationException ex) {
@@ -224,9 +243,14 @@ public class SonarQube implements IssuesContainer {
         return simpleSummary;
     }
 
-    private WebTarget getResourceTarget(UserCredentials userCredentials) {
+    private WebTarget getProjectsTarget(UserCredentials userCredentials) {
         ResteasyClient client = getClient(userCredentials);
         return client.target(serverUrl+"/api/resources");
+    }
+    
+    private WebTarget getProjectComponentsTarget(UserCredentials userCredentials) {
+        ResteasyClient client = getClient(userCredentials);
+        return client.target(serverUrl+"/api/components/search").queryParam("qualifiers", "TRK");
     }
 
     private WebTarget getRulesTarget(UserCredentials userCredentials) {

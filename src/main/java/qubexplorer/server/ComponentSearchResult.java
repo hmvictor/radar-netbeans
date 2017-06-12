@@ -1,18 +1,17 @@
 package qubexplorer.server;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
-import qubexplorer.RadarIssue;
 
 /**
  *
  * @author Víctor
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class IssuesSearchResult {
+public class ComponentSearchResult {
+
     private Paging paging;
-    private List<RadarIssue> issues;
+    private List<Component> components;
 
     public Paging getPaging() {
         return paging;
@@ -22,13 +21,12 @@ public class IssuesSearchResult {
         this.paging = paging;
     }
 
-    public List<RadarIssue> getIssues() {
-        return issues;
+    public List<Component> getComponents() {
+        return components;
     }
 
-    public void setIssues(List<RadarIssue> issues) {
-        this.issues = issues;
+    public void setComponents(List<Component> components) {
+        this.components = components;
     }
-    
     
 }
