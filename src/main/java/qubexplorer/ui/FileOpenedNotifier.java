@@ -16,7 +16,10 @@ import org.openide.windows.WindowManager;
 import qubexplorer.ui.issues.FileObjectOpenedListener;
 
 /**
- *
+ * A component to notify when files are opened.
+ * 
+ * Used for attaching editor annotations because the data object is not available if it is not opened in the editor.
+ * 
  * @author Victor
  */
 public class FileOpenedNotifier implements PropertyChangeListener {
@@ -65,9 +68,11 @@ public class FileOpenedNotifier implements PropertyChangeListener {
             }
         } else if (TopComponent.Registry.PROP_ACTIVATED.equals(event.getPropertyName())) {
             TopComponent activatedComponent = (TopComponent) event.getNewValue();
-            FileObject fileObject = getFileObject(activatedComponent);
-            if (fileObject != null) {
-                fireFileOpenedNotification(fileObject);
+            if(activatedComponent != null) {
+                FileObject fileObject = getFileObject(activatedComponent);
+                if (fileObject != null) {
+                    fireFileOpenedNotification(fileObject);
+                }
             }
         }
     }
@@ -80,6 +85,7 @@ public class FileOpenedNotifier implements PropertyChangeListener {
     }
 
     private FileObject getFileObject(TopComponent topComponent) {
+        assert topComponent != null;
         FileObject fileObject = null;
         DataObject dataObject = topComponent.getLookup().lookup(DataObject.class);
         if (dataObject != null) {
