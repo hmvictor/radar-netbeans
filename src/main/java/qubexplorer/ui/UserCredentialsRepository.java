@@ -27,7 +27,7 @@ public class UserCredentialsRepository {
 
     public void saveUserCredentials(String serverUrl, ResourceKey resourceKey, UserCredentials authentication) {
         if (!cache.containsKey(serverUrl)) {
-            cache.put(serverUrl, new HashMap<ResourceKey, UserCredentials>());
+            cache.put(serverUrl, new HashMap<>());
         }
         cache.get(serverUrl).put(null, authentication);
         if (resourceKey != null) {

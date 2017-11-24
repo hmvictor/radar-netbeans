@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -60,19 +61,17 @@ public class FileOpenedNotifier implements PropertyChangeListener {
     @Override
     public void propertyChange(PropertyChangeEvent event) {
         if (TopComponent.Registry.PROP_OPENED.equals(event.getPropertyName())) {
-            for (TopComponent newOpenedComponent : getNewOpenedComponents(event)) {
-                FileObject fileObject = getFileObject(newOpenedComponent);
-                if (fileObject != null) {
+            getNewOpenedComponents(event).forEach((newOpenedComponent) -> {
+                getFileObject(newOpenedComponent).ifPresent((fileObject) -> {
                     fireFileOpenedNotification(fileObject);
-                }
-            }
+                });
+            });
         } else if (TopComponent.Registry.PROP_ACTIVATED.equals(event.getPropertyName())) {
             TopComponent activatedComponent = (TopComponent) event.getNewValue();
             if(activatedComponent != null) {
-                FileObject fileObject = getFileObject(activatedComponent);
-                if (fileObject != null) {
+                getFileObject(activatedComponent).ifPresent((fileObject) -> {
                     fireFileOpenedNotification(fileObject);
-                }
+                });
             }
         }
     }
@@ -84,14 +83,14 @@ public class FileOpenedNotifier implements PropertyChangeListener {
         return newOpenedComponents;
     }
 
-    private FileObject getFileObject(TopComponent topComponent) {
+    private Optional<FileObject> getFileObject(TopComponent topComponent) {
         assert topComponent != null;
         FileObject fileObject = null;
         DataObject dataObject = topComponent.getLookup().lookup(DataObject.class);
         if (dataObject != null) {
             fileObject = dataObject.getPrimaryFile();
         }
-        return fileObject;
+        return Optional.ofNullable(fileObject);
     }
 
 }
