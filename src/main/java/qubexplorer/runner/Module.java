@@ -65,9 +65,7 @@ public class Module {
 
     public void loadExternalProperties(Properties properties) {
         Properties projectProperties = projectContext.getConfiguration().getProperties();
-        for (Map.Entry<Object, Object> entry : projectProperties.entrySet()) {
-            properties.put(entry.getKey(), entry.getValue());
-        }
+        properties.putAll(projectProperties);
     }
 
     private String getPropertyName(String property) {

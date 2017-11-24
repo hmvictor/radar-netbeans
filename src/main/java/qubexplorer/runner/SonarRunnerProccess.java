@@ -135,7 +135,7 @@ public class SonarRunnerProccess {
         Version sonarQubeVersion = new SonarQube(sonarUrl).getVersion(userCredentials);
         Module mainModule = Module.createMainModule(projectContext);
 
-        //mainModule.loadExternalProperties(properties);
+        //TODO: Enable this: mainModule.loadExternalProperties(properties);
         properties.setProperty("sonar.projectBaseDir", projectHome);
         properties.setProperty("sonar.host.url", sonarUrl);
         properties.setProperty("sonar.projectDir", projectHome);
