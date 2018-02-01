@@ -6,8 +6,4 @@ package qubexplorer.runner;
  */
 public class SonarRunnerCancelledException extends SonarRunnerException {
 
-    public SonarRunnerCancelledException() {
-        
-    }
-    
 }

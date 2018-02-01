@@ -58,7 +58,7 @@ public class SonarRunnerResult implements IssuesContainer {
             for (Rule rule : rules) {
                 rulesByKey.put(rule.getKey(), rule);
             }
-        } catch (IOException | ParseException ex) {
+        } catch (IOException ex) {
             throw new SonarRunnerException(ex);
         }
     }
@@ -67,7 +67,7 @@ public class SonarRunnerResult implements IssuesContainer {
         try  {
             List<RadarIssue> issues = readIssues();
             Map<String, IntWrapper> countsByRule=new HashMap<>();
-            Map<Severity, IntWrapper> countsBySeverity=new HashMap<>();
+            Map<Severity, IntWrapper> countsBySeverity=new EnumMap<>(Severity.class);
             Map<Severity, Set<Rule>> rulesBySeverity=new EnumMap<>(Severity.class);
             for (RadarIssue issue : issues) {
                 if(countsByRule.containsKey(issue.ruleKey())) {
@@ -182,7 +182,7 @@ public class SonarRunnerResult implements IssuesContainer {
         }
     }
     
-    private static List<Rule> readRules(JsonReader reader) throws IOException, ParseException {
+    private static List<Rule> readRules(JsonReader reader) throws IOException {
         List<Rule> ruleList = new LinkedList<>();
         reader.beginArray();
         while (reader.hasNext()) {
@@ -260,7 +260,7 @@ public class SonarRunnerResult implements IssuesContainer {
         return radarIssue;
     }
     
-    private static Rule readRule(JsonReader reader) throws IOException, ParseException {
+    private static Rule readRule(JsonReader reader) throws IOException {
         reader.beginObject();
         Rule rule=new Rule();
         while (reader.hasNext()) {

@@ -2,7 +2,6 @@ package qubexplorer.runner;
 
 import java.io.File;
 import java.net.URL;
-import java.util.Map;
 import java.util.Properties;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.project.JavaProjectConstants;
@@ -15,7 +14,6 @@ import org.netbeans.api.project.Sources;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Utilities;
-import qubexplorer.MvnModelInputException;
 import qubexplorer.SonarMvnProject;
 import qubexplorer.SonarQubeProjectConfiguration;
 import qubexplorer.server.Version;
@@ -101,7 +99,7 @@ public class Module {
         }
     }
 
-    public void addModuleProperties(Version sonarQubeVersion, Properties properties) throws MvnModelInputException {
+    public void addModuleProperties(Version sonarQubeVersion, Properties properties) {
         SonarQubeProjectConfiguration projectConfiguration = projectContext.getConfiguration();
         configureSourcesAndBinariesProperties(sonarQubeVersion, properties);
         properties.setProperty(getPropertyName("sonar.projectName"), projectConfiguration.getName());

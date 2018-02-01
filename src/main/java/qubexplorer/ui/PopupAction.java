@@ -31,7 +31,7 @@ public final class PopupAction extends AbstractAction implements ActionListener,
  
     @Override
     public void actionPerformed(ActionEvent e) {
-        
+        /* No need to do something. Required method below. */
     }
  
     @Override
@@ -43,4 +43,5 @@ public final class PopupAction extends AbstractAction implements ActionListener,
         }
         return main;
     }
+    
 }

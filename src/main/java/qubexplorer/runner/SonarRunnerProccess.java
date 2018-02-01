@@ -191,7 +191,7 @@ public class SonarRunnerProccess {
         return workingDirectory;
     }
 
-    private ModulesConfigurationResult configureModulesProperties(Module mainModule, Version sonarQubeVersion) throws MvnModelInputException {
+    private ModulesConfigurationResult configureModulesProperties(Module mainModule, Version sonarQubeVersion) {
         int sourcesCounter = 0;
         StringBuilder modulesWithSources = new StringBuilder();
         Set<Project> subprojects = getSubprojects();

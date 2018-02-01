@@ -16,10 +16,6 @@ public class SimpleClassifierSummary<T extends Classifier> implements Classifier
 
     private final Map<Classifier, Map<Rule, Integer>> countsByClassifier=new HashMap<>();
 
-    public SimpleClassifierSummary() {
-        
-    }
-    
     public void increment(T clasifier, Rule rule, int increment) {
         Map<Rule, Integer> countByRule = countsByClassifier.get(clasifier);
         if(countByRule == null ){

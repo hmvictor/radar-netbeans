@@ -34,7 +34,6 @@ import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.settings.ConvertAsProperties;
@@ -98,13 +97,13 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private static final Logger LOGGER = Logger.getLogger(SonarIssuesTopComponent.class.getName());
 
     private transient IssuesContainer issuesContainer;
-    private ProjectContext projectContext;
+    private transient ProjectContext projectContext;
 
     private ImageIcon informationIcon = new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"));
 
-    private final Comparator<Severity> severityComparator = Collections.reverseOrder(Enum::compareTo);
+    private final transient Comparator<Severity> severityComparator = Collections.reverseOrder(Enum::compareTo);
     
-    private SummaryOptions<?> summaryOptions;
+    private transient SummaryOptions<?> summaryOptions;
 
     private final AbstractAction showRuleInfoAction = new AbstractAction("Show Rule Info", informationIcon) {
 
@@ -137,6 +136,17 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 listIssues(tableSummary.getPathForRow(row).getLastPathComponent());
             }
         }
+        
+        private void listIssues(Object treeTableNode) {
+            List<IssueFilter> filters = new LinkedList<>();
+            if (treeTableNode instanceof Severity) {
+                filters.add(new SeverityFilter((Severity) treeTableNode));
+            } else if (treeTableNode instanceof Rule) {
+                filters.add(new RuleFilter((Rule) treeTableNode));
+            }
+            filters.addAll(summaryOptions.getFilters());
+            TaskExecutor.execute(new IssuesTask(projectContext, issuesContainer, filters));
+        }
 
     };
 
@@ -152,6 +162,29 @@ public final class SonarIssuesTopComponent extends TopComponent {
             int row = SonarIssuesTopComponent.this.clickedRow;
             if (row != -1) {
                 openIssueLocation(model.getIssueLocation(issuesTable.getRowSorter().convertRowIndexToModel(row)));
+            }
+        }
+        
+        private void openIssueLocation(IssueLocation issueLocation) {
+            try {
+                FileObject fileObject = issueLocation.getFileObject(projectContext, projectKeyChecker);
+                if (fileObject == null) {
+                    notifyFileObjectNotFound(issueLocation);
+                } else {
+                    EditorCookie editorCookie = IssueLocation.getEditorCookie(fileObject);
+                    if (editorCookie != null) {
+                        editorCookie.openDocument();
+                        editorCookie.open();
+                        Line line = issueLocation.getLine(editorCookie);
+                        line.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
+                    }
+                }
+            } catch (IOException ex) {
+                LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+                Exceptions.printStackTrace(ex);
+            } catch (ProjectNotFoundException ex) {
+                String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", ex.getShortProjectKey());
+                DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
             }
         }
 
@@ -209,7 +242,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     };
 
-    private final ItemListener skipEmptySeverities = new ItemListener() {
+    private final transient ItemListener skipEmptySeverities = new ItemListener() {
 
         @Override
         public void itemStateChanged(ItemEvent ie) {
@@ -220,8 +253,8 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     };
 
-    private final IssueEditorAnnotationAttacher attacher=new IssueEditorAnnotationAttacher();
-    private IssueLocation.ProjectKeyChecker projectKeyChecker;
+    private final transient IssueEditorAnnotationAttacher attacher=new IssueEditorAnnotationAttacher();
+    private transient IssueLocation.ProjectKeyChecker projectKeyChecker;
 
     public SonarIssuesTopComponent() {
         initComponents();
@@ -644,40 +677,6 @@ public final class SonarIssuesTopComponent extends TopComponent {
         //Do nothing, required method
     }
 
-    private void listIssues(Object treeTableNode) {
-        List<IssueFilter> filters = new LinkedList<>();
-        if (treeTableNode instanceof Severity) {
-            filters.add(new SeverityFilter((Severity) treeTableNode));
-        } else if (treeTableNode instanceof Rule) {
-            filters.add(new RuleFilter((Rule) treeTableNode));
-        }
-        filters.addAll(summaryOptions.getFilters());
-        TaskExecutor.execute(new IssuesTask(projectContext, issuesContainer, filters));
-    }
-
-    private void openIssueLocation(IssueLocation issueLocation) {
-        try {
-            FileObject fileObject = issueLocation.getFileObject(projectContext, projectKeyChecker);
-            if (fileObject == null) {
-                notifyFileObjectNotFound(issueLocation);
-            } else {
-                EditorCookie editorCookie = IssueLocation.getEditorCookie(fileObject);
-                if (editorCookie != null) {
-                    editorCookie.openDocument();
-                    editorCookie.open();
-                    Line line = issueLocation.getLine(editorCookie);
-                    line.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
-                }
-            }
-        } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, ex.getMessage(), ex);
-            Exceptions.printStackTrace(ex);
-        } catch (ProjectNotFoundException ex) {
-            String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", ex.getShortProjectKey());
-            DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
-        }
-    }
-
     private void notifyFileObjectNotFound(IssueLocation issueLocation) {
         File file = issueLocation.getFile(projectContext, projectKeyChecker);
         String messageTitle = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.unexistentFile.title");
@@ -707,7 +706,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         model.setIssues(issues);
         StringBuilder builder = new StringBuilder();
-        filters.forEach((filter) -> {
+        filters.forEach(filter -> {
             if (builder.length() > 0) {
                 builder.append(", ");
             }
@@ -770,7 +769,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
     }
 
-    public <T extends Classifier> void resetState() {
+    public void resetState() {
         if(isEditorAnnotationsEnabled()) {
             attacher.detachAnnotations();
         }

@@ -84,9 +84,9 @@ public class SonarQube implements IssuesContainer {
         params.put("componentKeys", Arrays.asList(projectKey.toString()));
         params.put("ps", Arrays.asList(String.valueOf(MAX_SUPPORTED_PAGE_SIZE)));
         params.put("statuses", Arrays.asList("OPEN"));
-        filters.forEach((filter) -> {
-            filter.apply(params);
-        });
+        filters.forEach(filter -> 
+            filter.apply(params)
+        );
         return getIssues(auth, params);
     }
 
@@ -165,18 +165,18 @@ public class SonarQube implements IssuesContainer {
                 int pageIndex = 1;
                 do {
                     searchResult = componentsTarget.queryParam("p", pageIndex).request(MediaType.APPLICATION_JSON).get(ComponentSearchResult.class);
-                    searchResult.getComponents().forEach((c) -> {
-                        keys.add(ResourceKey.valueOf(c.getKey()));
-                    });
+                    searchResult.getComponents().forEach(c -> 
+                        keys.add(ResourceKey.valueOf(c.getKey()))
+                    );
                     pageIndex++;
                 } while (searchResult.getPaging().getTotalNumberOfResults() != null && pageIndex <= searchResult.getPaging().getTotalPageCount());
             } else {
                 WebTarget resourcesTarget = getProjectsTarget(userCredentials);
                 List<Resource> resources = resourcesTarget.request(MediaType.APPLICATION_JSON).get(new GenericType<List<Resource>>() {
                 });
-                resources.forEach((r) -> {
-                    keys.add(ResourceKey.valueOf(r.getKey()));
-                });
+                resources.forEach(r -> 
+                    keys.add(ResourceKey.valueOf(r.getKey()))
+                );
             }
             return keys;
         } catch (WebApplicationException ex) {
@@ -201,18 +201,18 @@ public class SonarQube implements IssuesContainer {
                 int pageIndex = 1;
                 do {
                     searchResult = componentsTarget.queryParam("p", pageIndex).request(MediaType.APPLICATION_JSON).get(ComponentSearchResult.class);
-                    searchResult.getComponents().forEach((c) -> {
-                        projects.add(new GenericSonarQubeProjectConfiguration(c.getName(), ResourceKey.valueOf(c.getKey()), c.getVersion()));
-                    });
+                    searchResult.getComponents().forEach(c -> 
+                        projects.add(new GenericSonarQubeProjectConfiguration(c.getName(), ResourceKey.valueOf(c.getKey()), c.getVersion()))
+                    );
                     pageIndex++;
                 } while (searchResult.getPaging().getTotalNumberOfResults() != null && pageIndex <= searchResult.getPaging().getTotalPageCount());
             } else {
                 WebTarget resourcesTarget = getProjectsTarget(userCredentials);
                 List<Resource> resources = resourcesTarget.request(MediaType.APPLICATION_JSON).get(new GenericType<List<Resource>>() {
                 });
-                resources.forEach((r) -> {
-                    projects.add(new GenericSonarQubeProjectConfiguration(r.getName(), ResourceKey.valueOf(r.getKey()), r.getVersion()));
-                });
+                resources.forEach(r -> 
+                    projects.add(new GenericSonarQubeProjectConfiguration(r.getName(), ResourceKey.valueOf(r.getKey()), r.getVersion()))
+                );
             }
             return projects;
         } catch (WebApplicationException ex) {
@@ -245,9 +245,9 @@ public class SonarQube implements IssuesContainer {
             tempFilters.add(classifier.createFilter());
             tempFilters.addAll(filters);
             List<RadarIssue> issues = getIssues(auth, resourceKey, tempFilters);
-            issues.forEach((issue) -> {
-                simpleSummary.increment(classifier, issue.rule(), 1);
-            });
+            issues.forEach(issue -> 
+                simpleSummary.increment(classifier, issue.rule(), 1)
+            );
         }
         return simpleSummary;
     }

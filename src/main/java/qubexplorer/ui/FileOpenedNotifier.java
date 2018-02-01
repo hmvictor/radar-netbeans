@@ -45,9 +45,9 @@ public class FileOpenedNotifier implements PropertyChangeListener {
     }
     
     public void fireFileOpenedNotification(FileObject fileOpened) {
-        getFileOpenedListeners(fileOpened).forEach((listener) -> {
-            listener.fileOpened(fileOpened);
-        });
+        getFileOpenedListeners(fileOpened).forEach(listener -> 
+            listener.fileOpened(fileOpened)
+        );
     }
 
     public List<FileObjectOpenedListener> getFileOpenedListeners(FileObject fileObject) {
@@ -61,17 +61,17 @@ public class FileOpenedNotifier implements PropertyChangeListener {
     @Override
     public void propertyChange(PropertyChangeEvent event) {
         if (TopComponent.Registry.PROP_OPENED.equals(event.getPropertyName())) {
-            getNewOpenedComponents(event).forEach((newOpenedComponent) -> {
-                getFileObject(newOpenedComponent).ifPresent((fileObject) -> {
-                    fireFileOpenedNotification(fileObject);
-                });
-            });
+            getNewOpenedComponents(event).forEach(newOpenedComponent -> 
+                getFileObject(newOpenedComponent).ifPresent(fileObject -> 
+                    fireFileOpenedNotification(fileObject)
+                )
+            );
         } else if (TopComponent.Registry.PROP_ACTIVATED.equals(event.getPropertyName())) {
             TopComponent activatedComponent = (TopComponent) event.getNewValue();
             if(activatedComponent != null) {
-                getFileObject(activatedComponent).ifPresent((fileObject) -> {
-                    fireFileOpenedNotification(fileObject);
-                });
+                getFileObject(activatedComponent).ifPresent(fileObject -> 
+                    fireFileOpenedNotification(fileObject)
+                );
             }
         }
     }

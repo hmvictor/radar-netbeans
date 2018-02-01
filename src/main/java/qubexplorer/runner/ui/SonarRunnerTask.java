@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -39,19 +40,7 @@ import qubexplorer.ui.task.TaskExecutionException;
 public class SonarRunnerTask extends Task<SonarRunnerResult>{
     private InputOutput io;
     private boolean stopped=false;
-    private final Action stopAction=new AbstractAction("Stop Sonar-runner", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/stop.png"))) {
-        
-        {
-            putValue(Action.SHORT_DESCRIPTION, "Stops sonar-runner");
-        }
-        
-        @Override
-        public void actionPerformed(ActionEvent ae) {
-            stopped=true;
-            setEnabled(false);
-        }
-        
-    };
+    private final Action stopAction=new StopAction();
 
     public SonarRunnerTask(ProjectContext projectContext, String serverUrl) {
         super(projectContext, serverUrl);
@@ -158,6 +147,21 @@ public class SonarRunnerTask extends Task<SonarRunnerResult>{
             return configuration.getKey().equals(tmpKey);
         }
 
+    }
+
+    private class StopAction extends AbstractAction {
+
+        public StopAction() {
+            super("Stop Sonar-runner", new ImageIcon(SonarRunnerTask.class.getResource("/qubexplorer/ui/images/stop.png")));
+            putValue(Action.SHORT_DESCRIPTION, "Stops sonar-runner");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+            stopped=true;
+            setEnabled(false);
+        }
+        
     }
     
 }

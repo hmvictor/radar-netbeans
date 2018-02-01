@@ -6,7 +6,6 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 import qubexplorer.UserCredentials;
@@ -30,9 +29,9 @@ public final class TaskExecutor {
     }
 
     public static <T> void execute(final UserCredentialsRepository repository, final Task<T> task) {
-        SwingUtilities.invokeLater(() -> {
-            new TaskWorker<>(repository, task).execute();
-        });
+        SwingUtilities.invokeLater(() -> 
+            new TaskWorker<>(repository, task).execute()
+        );
     }
 
     public static ResourceKey getResourceKey(Task task) {

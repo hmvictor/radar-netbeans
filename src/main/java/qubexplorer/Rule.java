@@ -65,10 +65,7 @@ public class Rule {
             return false;
         }
         final Rule other = (Rule) obj;
-        if (!Objects.equals(this.key, other.key)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(this.key, other.key);
     }
     
     

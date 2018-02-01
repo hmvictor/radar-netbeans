@@ -51,7 +51,7 @@ public class IssueEditorAnnotationAttacher {
                     tryToAtachEditorAnnotation(issue);
                 }
             } catch (DataObjectNotFoundException ex) {
-                ;
+                /* Nothing to do on exception */
             }
         }
     }
@@ -71,6 +71,7 @@ public class IssueEditorAnnotationAttacher {
                 }
             }
         } catch (ProjectNotFoundException ex) {
+            /* Nothing to do on exception */
         }
     }
 
@@ -85,9 +86,9 @@ public class IssueEditorAnnotationAttacher {
     public void detachAnnotations() {
         attached=false;
         fileOpenedNotifier.unregisterCurrentFileOpenedListeners();
-        attachedAnnotations.forEach((annotation) -> {
-            annotation.detach();
-        });
+        attachedAnnotations.forEach(annotation -> 
+            annotation.detach()
+        );
         attachedAnnotations.clear();
     }
 
@@ -112,7 +113,7 @@ public class IssueEditorAnnotationAttacher {
                             attached = true;
                         }
                     } catch (DataObjectNotFoundException ex) {
-                        ;
+                        /* Nothing to do on exception */
                     }
                 });
             }

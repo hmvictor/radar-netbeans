@@ -28,9 +28,6 @@ public class RadarIssue {
     private Rule rule;
     private String type;
 
-    public RadarIssue() {
-    }
-
     public void setKey(String key) {
         this.key = key;
     }
