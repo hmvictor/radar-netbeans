@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;

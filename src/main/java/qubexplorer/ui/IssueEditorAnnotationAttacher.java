@@ -86,9 +86,7 @@ public class IssueEditorAnnotationAttacher {
     public void detachAnnotations() {
         attached=false;
         fileOpenedNotifier.unregisterCurrentFileOpenedListeners();
-        attachedAnnotations.forEach(annotation -> 
-            annotation.detach()
-        );
+        attachedAnnotations.forEach(Annotation::detach);
         attachedAnnotations.clear();
     }
 

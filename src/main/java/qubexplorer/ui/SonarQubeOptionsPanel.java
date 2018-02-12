@@ -18,9 +18,7 @@ public final class SonarQubeOptionsPanel extends javax.swing.JPanel {
         analysisModes.add(SonarRunnerProccess.AnalysisMode.PREVIEW.getFriendlyName());
         initComponents();
         DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>)analysisModeCombo.getModel();
-        analysisModes.forEach(mode -> 
-            model.addElement(mode)
-        );
+        analysisModes.forEach(model::addElement);
     }
 
     /**

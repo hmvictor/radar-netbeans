@@ -62,16 +62,12 @@ public class FileOpenedNotifier implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent event) {
         if (TopComponent.Registry.PROP_OPENED.equals(event.getPropertyName())) {
             getNewOpenedComponents(event).forEach(newOpenedComponent -> 
-                getFileObject(newOpenedComponent).ifPresent(fileObject -> 
-                    fireFileOpenedNotification(fileObject)
-                )
+                getFileObject(newOpenedComponent).ifPresent(this::fireFileOpenedNotification)
             );
         } else if (TopComponent.Registry.PROP_ACTIVATED.equals(event.getPropertyName())) {
             TopComponent activatedComponent = (TopComponent) event.getNewValue();
             if(activatedComponent != null) {
-                getFileObject(activatedComponent).ifPresent(fileObject -> 
-                    fireFileOpenedNotification(fileObject)
-                );
+                getFileObject(activatedComponent).ifPresent(this::fireFileOpenedNotification);
             }
         }
     }
