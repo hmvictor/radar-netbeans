@@ -4,7 +4,7 @@
 
     <groupId>org.radar</groupId>
     <artifactId>radar-netbeans</artifactId>
-    <version>3.0.1</version>
+    <version>3.1-SNAPSHOT</version>
     <packaging>nbm</packaging>
 
     <name>radar-netbeans</name>

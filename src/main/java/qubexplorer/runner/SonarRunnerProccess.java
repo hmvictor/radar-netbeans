@@ -135,17 +135,14 @@ public class SonarRunnerProccess {
         Version sonarQubeVersion = new SonarQube(sonarUrl).getVersion(userCredentials);
         Module mainModule = Module.createMainModule(projectContext);
 
-        //TODO: Enable this: mainModule.loadExternalProperties(properties);
         properties.setProperty("sonar.projectBaseDir", projectHome);
         properties.setProperty("sonar.host.url", sonarUrl);
         properties.setProperty("sonar.projectDir", projectHome);
         properties.setProperty("project.home", projectHome);
-//        properties.setProperty("sonar.projectName", projectConfiguration.getName());
         properties.setProperty("sonar.projectVersion", projectConfiguration.getVersion());
         properties.setProperty("sonar.sourceEncoding", FileEncodingQuery.getEncoding(projectContext.getProject().getProjectDirectory()).displayName());
         properties.setProperty("sonar.working.directory", getWorkingDirectory());
 
-        //optional properties
         if (userCredentials != null) {
             properties.setProperty("sonar.login", userCredentials.getUsername());
             properties.setProperty("sonar.password", PassEncoder.decodeAsString(userCredentials.getPassword()));
@@ -157,13 +154,11 @@ public class SonarRunnerProccess {
         if (SonarMvnProject.isMvnProject(projectContext.getProject())) {
             properties.setProperty("sonar.junit.reportsPath", new File(SonarMvnProject.getOutputDirectory(projectContext.getProject()), "/surefire-reports").getAbsolutePath());
         }
-        //end optional
 
         for (VersionConfig versionConfig : getVersionConfigsFor(sonarQubeVersion)) {
             versionConfig.apply(this, properties);
         }
         mainModule.addModuleProperties(sonarQubeVersion, properties);
-//        mainModule.configureSourcesAndBinariesProperties(sonarQubeVersion, properties);
         ModulesConfigurationResult result = configureModulesProperties(mainModule, sonarQubeVersion);
         if (!result.hasModulesWithSources() && !mainModule.containsSources()) {
             throw new SourcesNotFoundException();

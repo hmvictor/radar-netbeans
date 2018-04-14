@@ -17,6 +17,11 @@ public interface SonarQubeProjectConfiguration {
 
     SonarQubeProjectConfiguration createConfiguration(Project subproject);
 
+    /**
+     * Get user defined sonar properties.
+     * 
+     * @return 
+     */
     Properties getProperties();
 
 }

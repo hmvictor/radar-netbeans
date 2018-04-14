@@ -2,6 +2,7 @@ package qubexplorer.runner;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Map;
 import java.util.Properties;
 import org.netbeans.api.java.classpath.ClassPath;
 import org.netbeans.api.java.project.JavaProjectConstants;
@@ -25,12 +26,12 @@ import qubexplorer.ui.ProjectContext;
  */
 public class Module {
 
-    private final ProjectContext projectContext;
     private final ProjectContext parentProjectContext;
+    private final ProjectContext moduleProjectContext;
 
     private Module(ProjectContext parentProjectContext, ProjectContext projectContext) {
         this.parentProjectContext = parentProjectContext;
-        this.projectContext = projectContext;
+        this.moduleProjectContext = projectContext;
     }
 
     public boolean isRootProject() {
@@ -38,7 +39,7 @@ public class Module {
     }
 
     public String getName() {
-        return isRootProject() ? null : projectContext.getProject().getProjectDirectory().getNameExt();
+        return isRootProject() ? null : moduleProjectContext.getProject().getProjectDirectory().getNameExt();
     }
 
     public boolean containsSources() {
@@ -46,7 +47,7 @@ public class Module {
     }
 
     public SourceGroup getMainSourceGroup() {
-        Sources sources = ProjectUtils.getSources(projectContext.getProject());
+        Sources sources = ProjectUtils.getSources(moduleProjectContext.getProject());
         SourceGroup[] sourceGroups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
         SourceGroup mainSourceGroup = null;
         if (sourceGroups != null && sourceGroups.length != 0) {
@@ -61,11 +62,6 @@ public class Module {
         return mainSourceGroup;
     }
 
-    public void loadExternalProperties(Properties properties) {
-        Properties projectProperties = projectContext.getConfiguration().getProperties();
-        properties.putAll(projectProperties);
-    }
-
     private String getPropertyName(String property) {
         if (!isRootProject()) {
             return getName() + "." + property;
@@ -77,10 +73,10 @@ public class Module {
         SourceGroup mainSourceGroup = getMainSourceGroup();
         if (mainSourceGroup != null) {
             String sourcePath = mainSourceGroup.getRootFolder().getPath();
-            if (SonarMvnProject.isMvnProject(projectContext.getProject()) && sonarQubeVersion.compareTo(4, 5) >= 0) {
+            if (SonarMvnProject.isMvnProject(moduleProjectContext.getProject()) && sonarQubeVersion.compareTo(4, 5) >= 0) {
                 sourcePath = "pom.xml," + sourcePath;
             }
-            ClassPath classPath = ClassPath.getClassPath(projectContext.getProject().getProjectDirectory(), ClassPath.COMPILE);
+            ClassPath classPath = ClassPath.getClassPath(moduleProjectContext.getProject().getProjectDirectory(), ClassPath.COMPILE);
             if (classPath != null) {
                 properties.setProperty(getPropertyName("sonar.java.libraries"), getLibrariesPath(classPath));
             }
@@ -99,18 +95,37 @@ public class Module {
         }
     }
 
+    /**
+     * Add sonar properties, including those defined by the user in external configuration.
+     * 
+     * @param sonarQubeVersion
+     * @param properties 
+     */
     public void addModuleProperties(Version sonarQubeVersion, Properties properties) {
-        SonarQubeProjectConfiguration projectConfiguration = projectContext.getConfiguration();
+        SonarQubeProjectConfiguration projectConfiguration = moduleProjectContext.getConfiguration();
         configureSourcesAndBinariesProperties(sonarQubeVersion, properties);
         properties.setProperty(getPropertyName("sonar.projectName"), projectConfiguration.getName());
         properties.setProperty(getPropertyName("sonar.projectKey"), projectConfiguration.getKey().toString());
         if (containsSources()) {
-            properties.setProperty(getPropertyName("sonar.projectBaseDir"), projectContext.getProject().getProjectDirectory().getPath());
+            properties.setProperty(getPropertyName("sonar.projectBaseDir"), moduleProjectContext.getProject().getProjectDirectory().getPath());
         }
+        loadUserDefinedProperties(properties);
+    }
+    
+    /**
+     * Load user-defined sonar properties.
+     * 
+     * @param properties 
+     */
+    private void loadUserDefinedProperties(Properties properties) {
+        Properties moduleProperties = moduleProjectContext.getConfiguration().getProperties();
+        moduleProperties.entrySet().forEach((entry) -> {
+            properties.put(getPropertyName((String) entry.getKey()), entry.getValue());
+        });
     }
 
     public Module createSubmodule(Project subproject) {
-        return new Module(projectContext, new ProjectContext(subproject, projectContext.getConfiguration().createConfiguration(subproject)));
+        return new Module(moduleProjectContext, new ProjectContext(subproject, moduleProjectContext.getConfiguration().createConfiguration(subproject)));
     }
 
     public static Module createMainModule(ProjectContext projectContext) {
