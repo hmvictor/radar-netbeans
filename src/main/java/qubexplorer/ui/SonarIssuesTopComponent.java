@@ -11,6 +11,7 @@ import java.awt.Event;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
@@ -29,12 +30,14 @@ import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import org.jdesktop.swingx.JXTreeTable;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.DialogDisplayer;
@@ -157,9 +160,11 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
 
         @Override
-        public void actionPerformed(ActionEvent ae) {
+        public void actionPerformed(ActionEvent actionEvent) {
+//            actionEvent.
+            //this action can be invoked from mouse or key
             IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
-            int row = SonarIssuesTopComponent.this.clickedRow;
+            int row = SonarIssuesTopComponent.this.issuesTableClickedRow;
             if (row != -1) {
                 openIssueLocation(model.getIssueLocation(issuesTable.getRowSorter().convertRowIndexToModel(row)));
             }
@@ -198,7 +203,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         @Override
         public void actionPerformed(ActionEvent ae) {
-            int row = SonarIssuesTopComponent.this.clickedRow;
+            int row = SonarIssuesTopComponent.this.issuesTableClickedRow;
             if (row != -1) {
                 row = issuesTable.getRowSorter().convertRowIndexToModel(row);
                 IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
@@ -405,6 +410,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
         });
         jScrollPane2.setViewportView(issuesTable);
         issuesTable.getColumnModel().getColumn(0).setCellRenderer(new SeverityIconRenderer());
+        KeyStroke enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+        //issuesTable.getInputMap(JXTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(enter, "gotoIssue");
+        //issuesTable.getActionMap().put("gotoIssue", gotoIssueAction);
 
         filterText.setText(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.filterText.text")); // NOI18N
 
@@ -526,6 +534,9 @@ public final class SonarIssuesTopComponent extends TopComponent {
             }
         });
         jScrollPane1.setViewportView(tableSummary);
+        KeyStroke enterSummary = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+        tableSummary.getInputMap(JXTreeTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(enterSummary, "listIssues");
+        tableSummary.getActionMap().put("listIssues", listIssuesAction);
 
         org.openide.awt.Mnemonics.setLocalizedText(summaryOptionsLabel, org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.summaryOptionsLabel.text")); // NOI18N
 
@@ -564,13 +575,14 @@ public final class SonarIssuesTopComponent extends TopComponent {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private int clickedRow=-1;
+    private int issuesTableClickedRow=-1;
     
     private void issuesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMouseClicked
-        clickedRow=issuesTable.rowAtPoint(evt.getPoint());
-        if (evt.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(evt) && clickedRow != -1) {
+        issuesTableClickedRow=issuesTable.rowAtPoint(evt.getPoint());
+        if (evt.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(evt) && issuesTableClickedRow != -1) {
             gotoIssueAction.actionPerformed(new ActionEvent(issuesTable, Event.ACTION_EVENT, "Go to Source"));
         }
+        issuesTableClickedRow=-1;
     }//GEN-LAST:event_issuesTableMouseClicked
 
     private void tableSummaryMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableSummaryMouseClicked
@@ -627,15 +639,15 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }//GEN-LAST:event_tableSummaryValueChanged
 
     private void issuesTableMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMousePressed
-        clickedRow=issuesTable.rowAtPoint(evt.getPoint());
-        if (evt.isPopupTrigger() && clickedRow != -1) {
+        issuesTableClickedRow=issuesTable.rowAtPoint(evt.getPoint());
+        if (evt.isPopupTrigger() && issuesTableClickedRow != -1) {
             issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_issuesTableMousePressed
 
     private void issuesTableMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMouseReleased
-        clickedRow=issuesTable.rowAtPoint(evt.getPoint());
-        if (evt.isPopupTrigger() && clickedRow != -1) {
+        issuesTableClickedRow=issuesTable.rowAtPoint(evt.getPoint());
+        if (evt.isPopupTrigger() && issuesTableClickedRow != -1) {
             issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_issuesTableMouseReleased

@@ -99,7 +99,7 @@
                 <EventHandler event="mouseReleased" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="issuesTableMouseReleased"/>
               </Events>
               <AuxValues>
-                <AuxValue name="JavaCodeGenerator_AddingCodePost" type="java.lang.String" value="issuesTable.getColumnModel().getColumn(0).setCellRenderer(new SeverityIconRenderer());"/>
+                <AuxValue name="JavaCodeGenerator_AddingCodePost" type="java.lang.String" value="issuesTable.getColumnModel().getColumn(0).setCellRenderer(new SeverityIconRenderer());&#xd;&#xa;KeyStroke enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);&#xd;&#xa;//issuesTable.getInputMap(JXTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(enter, &quot;gotoIssue&quot;);&#xd;&#xa;//issuesTable.getActionMap().put(&quot;gotoIssue&quot;, gotoIssueAction);&#xd;&#xa;"/>
               </AuxValues>
             </Component>
           </SubComponents>
@@ -353,6 +353,7 @@
                     <EventHandler event="valueChanged" listener="javax.swing.event.TreeSelectionListener" parameters="javax.swing.event.TreeSelectionEvent" handler="tableSummaryValueChanged"/>
                   </Events>
                   <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_AddingCodePost" type="java.lang.String" value="KeyStroke enterSummary = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);&#xd;&#xa;tableSummary.getInputMap(JXTreeTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(enterSummary, &quot;listIssues&quot;);&#xd;&#xa;tableSummary.getActionMap().put(&quot;listIssues&quot;, listIssuesAction);"/>
                     <AuxValue name="JavaCodeGenerator_CreateCodePost" type="java.lang.String" value="tableSummary.getTableHeader().setReorderingAllowed(false);&#xd;&#xa;tableSummary.setTreeCellRenderer(new SummaryTreeCellRenderer());&#xd;&#xa;tableSummary.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);"/>
                   </AuxValues>
                 </Component>
