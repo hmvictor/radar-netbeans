@@ -37,6 +37,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import org.jdesktop.swingx.JXTable;
 import org.jdesktop.swingx.JXTreeTable;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.settings.ConvertAsProperties;
@@ -105,7 +106,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
     private ImageIcon informationIcon = new ImageIcon(getClass().getResource("/qubexplorer/ui/images/information.png"));
 
     private final transient Comparator<Severity> severityComparator = Collections.reverseOrder(Enum::compareTo);
-    
+
     private transient SummaryOptions<?> summaryOptions;
 
     private final AbstractAction showRuleInfoAction = new AbstractAction("Show Rule Info", informationIcon) {
@@ -139,7 +140,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
                 listIssues(tableSummary.getPathForRow(row).getLastPathComponent());
             }
         }
-        
+
         private void listIssues(Object treeTableNode) {
             List<IssueFilter> filters = new LinkedList<>();
             if (treeTableNode instanceof Severity) {
@@ -161,35 +162,10 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         @Override
         public void actionPerformed(ActionEvent actionEvent) {
-//            actionEvent.
-            //this action can be invoked from mouse or key
             IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
-            int row = SonarIssuesTopComponent.this.issuesTableClickedRow;
-            if (row != -1) {
+            Integer row = (Integer) issuesTable.getClientProperty("lastClickedRow");
+            if (row != null && row != -1) {
                 openIssueLocation(model.getIssueLocation(issuesTable.getRowSorter().convertRowIndexToModel(row)));
-            }
-        }
-        
-        private void openIssueLocation(IssueLocation issueLocation) {
-            try {
-                FileObject fileObject = issueLocation.getFileObject(projectContext, projectKeyChecker);
-                if (fileObject == null) {
-                    notifyFileObjectNotFound(issueLocation);
-                } else {
-                    EditorCookie editorCookie = IssueLocation.getEditorCookie(fileObject);
-                    if (editorCookie != null) {
-                        editorCookie.openDocument();
-                        editorCookie.open();
-                        Line line = issueLocation.getLine(editorCookie);
-                        line.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
-                    }
-                }
-            } catch (IOException ex) {
-                LOGGER.log(Level.WARNING, ex.getMessage(), ex);
-                Exceptions.printStackTrace(ex);
-            } catch (ProjectNotFoundException ex) {
-                String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", ex.getShortProjectKey());
-                DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
             }
         }
 
@@ -203,17 +179,16 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         @Override
         public void actionPerformed(ActionEvent ae) {
-            int row = SonarIssuesTopComponent.this.issuesTableClickedRow;
-            if (row != -1) {
-                row = issuesTable.getRowSorter().convertRowIndexToModel(row);
+            Integer row = (Integer) issuesTable.getClientProperty("lastClickedRow");
+            if (row != null && row != -1) {
                 IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
-                RadarIssue issue = model.getIssue(row);
+                RadarIssue issue = model.getIssue(issuesTable.getRowSorter().convertRowIndexToModel(row));
                 showRuleInfo(issue.rule());
             }
         }
 
     };
-    
+
     private final AbstractAction reloadAction = new AbstractAction("Reload Summary", new ImageIcon(getClass().getResource("/qubexplorer/ui/images/arrow_refresh_small.png"))) {
 
         {
@@ -222,25 +197,25 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
         @Override
         public void actionPerformed(ActionEvent ae) {
-            SummaryOptions summaryOptions=null;
-            if(issuesContainer instanceof SonarQube) {
-                SummarySettingsDialog dialog=new SummarySettingsDialog(null, true);
+            SummaryOptions summaryOptions = null;
+            if (issuesContainer instanceof SonarQube) {
+                SummarySettingsDialog dialog = new SummarySettingsDialog(null, true);
                 dialog.setClassifierType(SonarIssuesTopComponent.this.summaryOptions.getClassifierType());
                 for (IssueFilter filter : SonarIssuesTopComponent.this.summaryOptions.getFilters()) {
-                    if(filter instanceof AssigneesFilter) {
-                        dialog.setAssignees(((AssigneesFilter)filter).getAssignees().toArray(new String[0]));
+                    if (filter instanceof AssigneesFilter) {
+                        dialog.setAssignees(((AssigneesFilter) filter).getAssignees().toArray(new String[0]));
                     }
                 }
-                if(dialog.showDialog() == SummarySettingsDialog.Option.ACCEPT) {
-                    List<IssueFilter> filters=new LinkedList<>();
+                if (dialog.showDialog() == SummarySettingsDialog.Option.ACCEPT) {
+                    List<IssueFilter> filters = new LinkedList<>();
                     String[] asignees = dialog.getAssignees();
-                    if(asignees.length > 0) {
+                    if (asignees.length > 0) {
                         filters.add(new AssigneesFilter(asignees));
                     }
-                    summaryOptions=new SummaryOptions(dialog.getClassifierType(), filters);
+                    summaryOptions = new SummaryOptions(dialog.getClassifierType(), filters);
                 }
             }
-            if(summaryOptions != null) {
+            if (summaryOptions != null) {
                 TaskExecutor.execute(new SummaryTask(issuesContainer, projectContext, summaryOptions));
             }
         }
@@ -258,7 +233,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
 
     };
 
-    private final transient IssueEditorAnnotationAttacher attacher=new IssueEditorAnnotationAttacher();
+    private final transient IssueEditorAnnotationAttacher attacher = new IssueEditorAnnotationAttacher();
     private transient IssueLocation.ProjectKeyChecker projectKeyChecker;
 
     public SonarIssuesTopComponent() {
@@ -307,7 +282,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         attacher.setProjectContext(projectContext);
         setName(String.format("SonarQube - %s", ProjectUtils.getInformation(projectContext.getProject()).getDisplayName()));
     }
-    
+
     public void setProjectKeyChecker(IssueLocation.ProjectKeyChecker projectKeyChecker) {
         this.projectKeyChecker = projectKeyChecker;
         attacher.setProjectKeyChecker(projectKeyChecker);
@@ -322,17 +297,17 @@ public final class SonarIssuesTopComponent extends TopComponent {
         listIssuesAction.setEnabled(false);
         showRuleInfoAction.setEnabled(false);
     }
-    
+
     public void setIssuesContainer(IssuesContainer issuesContainer) {
         this.issuesContainer = issuesContainer;
         reloadAction.setEnabled(issuesContainer instanceof SonarQube);
     }
-    
+
     public void setSummaryOptions(SummaryOptions<?> options) {
-        this.summaryOptions=options;
-        final StringBuilder builder=new StringBuilder();
+        this.summaryOptions = options;
+        final StringBuilder builder = new StringBuilder();
         options.getFilters().forEach((IssueFilter filter) -> {
-            if(builder.length() != 0) {
+            if (builder.length() != 0) {
                 builder.append("; ");
             }
             builder.append(filter.getDescription());
@@ -346,6 +321,29 @@ public final class SonarIssuesTopComponent extends TopComponent {
             TaskExecutor.execute(new RuleTask(sonarQube, rule, projectContext));
         } else {
             RuleDialog.showRule(WindowManager.getDefault().getMainWindow(), rule);
+        }
+    }
+
+    private void openIssueLocation(IssueLocation issueLocation) {
+        try {
+            FileObject fileObject = issueLocation.getFileObject(projectContext, projectKeyChecker);
+            if (fileObject == null) {
+                notifyFileObjectNotFound(issueLocation);
+            } else {
+                EditorCookie editorCookie = IssueLocation.getEditorCookie(fileObject);
+                if (editorCookie != null) {
+                    editorCookie.openDocument();
+                    editorCookie.open();
+                    Line line = issueLocation.getLine(editorCookie);
+                    line.show(Line.ShowOpenType.OPEN, Line.ShowVisibilityType.FOCUS);
+                }
+            }
+        } catch (IOException ex) {
+            LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+            Exceptions.printStackTrace(ex);
+        } catch (ProjectNotFoundException ex) {
+            String message = org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "ProjectNotFound", ex.getShortProjectKey());
+            DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(message, NotifyDescriptor.ERROR_MESSAGE));
         }
     }
 
@@ -409,10 +407,26 @@ public final class SonarIssuesTopComponent extends TopComponent {
             }
         });
         jScrollPane2.setViewportView(issuesTable);
+        Action openSelectedIssue=new AbstractAction("Open selected issue"){
+
+            {
+                putValue(Action.SHORT_DESCRIPTION, "Opens the location of this issue in the source code");
+            }
+
+            public void actionPerformed(ActionEvent event) {
+                IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
+                int selectedRow=issuesTable.getSelectedRow();
+                if(selectedRow != -1) {
+                    openIssueLocation(model.getIssueLocation(issuesTable.getRowSorter().convertRowIndexToModel(selectedRow)));
+                }
+            }
+
+        };
+
         issuesTable.getColumnModel().getColumn(0).setCellRenderer(new SeverityIconRenderer());
-        KeyStroke enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
-        //issuesTable.getInputMap(JXTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(enter, "gotoIssue");
-        //issuesTable.getActionMap().put("gotoIssue", gotoIssueAction);
+        KeyStroke enterIssueTable = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+        issuesTable.getInputMap(JXTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(enterIssueTable, "gotoIssue");
+        issuesTable.getActionMap().put("gotoIssue", openSelectedIssue);
 
         filterText.setText(org.openide.util.NbBundle.getMessage(SonarIssuesTopComponent.class, "SonarIssuesTopComponent.filterText.text")); // NOI18N
 
@@ -575,14 +589,13 @@ public final class SonarIssuesTopComponent extends TopComponent {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private int issuesTableClickedRow=-1;
-    
+
     private void issuesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMouseClicked
-        issuesTableClickedRow=issuesTable.rowAtPoint(evt.getPoint());
-        if (evt.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(evt) && issuesTableClickedRow != -1) {
+        int clickedRow = issuesTable.rowAtPoint(evt.getPoint());
+        issuesTable.putClientProperty("lastClickedRow", clickedRow);
+        if (evt.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(evt) && clickedRow != -1) {
             gotoIssueAction.actionPerformed(new ActionEvent(issuesTable, Event.ACTION_EVENT, "Go to Source"));
         }
-        issuesTableClickedRow=-1;
     }//GEN-LAST:event_issuesTableMouseClicked
 
     private void tableSummaryMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableSummaryMouseClicked
@@ -639,15 +652,17 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }//GEN-LAST:event_tableSummaryValueChanged
 
     private void issuesTableMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMousePressed
-        issuesTableClickedRow=issuesTable.rowAtPoint(evt.getPoint());
-        if (evt.isPopupTrigger() && issuesTableClickedRow != -1) {
+        int clickedRow = issuesTable.rowAtPoint(evt.getPoint());
+        issuesTable.putClientProperty("lastClickedRow", clickedRow);
+        if (evt.isPopupTrigger() && clickedRow != -1) {
             issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_issuesTableMousePressed
 
     private void issuesTableMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_issuesTableMouseReleased
-        issuesTableClickedRow=issuesTable.rowAtPoint(evt.getPoint());
-        if (evt.isPopupTrigger() && issuesTableClickedRow != -1) {
+        int clickedRow = issuesTable.rowAtPoint(evt.getPoint());
+        issuesTable.putClientProperty("lastClickedRow", clickedRow);
+        if (evt.isPopupTrigger() && clickedRow != -1) {
             issuesPopupMenu.show(issuesTable, evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_issuesTableMouseReleased
@@ -741,7 +756,7 @@ public final class SonarIssuesTopComponent extends TopComponent {
         issuesTable.getColumnExt("Full Path").setVisible(false);
         showIssuesCount();
         filterText.setText("");
-        if(isEditorAnnotationsEnabled()) {
+        if (isEditorAnnotationsEnabled()) {
             attacher.attachAnnotations(issues);
         }
     }
@@ -782,24 +797,24 @@ public final class SonarIssuesTopComponent extends TopComponent {
     }
 
     public void resetState() {
-        if(isEditorAnnotationsEnabled()) {
+        if (isEditorAnnotationsEnabled()) {
             attacher.detachAnnotations();
         }
         SimpleClassifierSummary emptySummary = new SimpleClassifierSummary();
         showSummary(summaryOptions, emptySummary);
     }
-    
+
     public void refreshEditorAnnotationsStatus() {
         IssuesTableModel model = (IssuesTableModel) issuesTable.getModel();
-        if(isEditorAnnotationsEnabled() && !attacher.isAttached() && model.getRowCount() > 0) {
+        if (isEditorAnnotationsEnabled() && !attacher.isAttached() && model.getRowCount() > 0) {
             attacher.attachAnnotations(model.getIssues());
-        }else if(!isEditorAnnotationsEnabled() && attacher.isAttached() && model.getRowCount() > 0) {
+        } else if (!isEditorAnnotationsEnabled() && attacher.isAttached() && model.getRowCount() > 0) {
             attacher.detachAnnotations();
         }
     }
-    
+
     public boolean isEditorAnnotationsEnabled() {
         return NbPreferences.forModule(SonarQubeOptionsPanel.class).getBoolean("editorAnnotations.enabled", true);
     }
-    
+
 }
