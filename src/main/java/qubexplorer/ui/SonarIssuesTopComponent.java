@@ -347,6 +347,35 @@ public final class SonarIssuesTopComponent extends TopComponent {
         }
     }
 
+    @Override
+    public void requestFocus() {
+        super.requestFocus();
+        if(tabbedPane.getSelectedIndex() == 0) {
+            tableSummary.requestFocus();
+        }else{
+            issuesTable.requestFocus();
+        }
+    }
+
+    @Override
+    public boolean requestFocusInWindow() {
+        super.requestFocusInWindow();
+        if(tabbedPane.getSelectedIndex() == 0) {
+            return tableSummary.requestFocusInWindow();
+        }else{
+            return issuesTable.requestFocusInWindow();
+        }
+    }
+
+    @Override
+    public boolean requestDefaultFocus() {
+        if(tabbedPane.getSelectedIndex() == 0) {
+            return tableSummary.requestFocusInWindow();
+        }else{
+            return issuesTable.requestFocusInWindow();
+        }
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
